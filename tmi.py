@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import inspect
 from tabulate import tabulate
 
 def d(**kwargs):
@@ -43,4 +44,31 @@ def where(rel, pred):
   return [rec for rec in rel if pred(rec)]
 assert [d(a=1, b=2)] == where(r, ceq('a', 1))
 assert [d(a=10, b=20)] == where(r, pnot(ceq('a', 1)))
-s(where(r, pnot(ceq('a', 1))))
+
+def un_where(out, rel, pred):
+  assert all(map(pred, out))
+  return where(rel, pnot(pred)) + out
+
+def check_node_arg_lists(forwards, backwards):
+  fargs = inspect.getargspec(forwards)
+  bargs = inspect.getargspec(backwards)
+  assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
+  assert fargs.varargs == None
+  assert fargs.keywords == None
+  assert fargs.defaults == None
+  assert bargs.varargs == None
+  assert bargs.keywords == None
+  assert bargs.defaults == None
+
+class Node(object):
+  def __init__(self, forwards, backwards):
+    check_node_arg_lists(forwards, backwards)
+    self.forwards = forwards;
+    self.backwards = backwards;
+
+  def __str__(self):
+    return type(self).__name__ + '(' + ', '.join(inspect.getargspec(self.forwards).args) + ')'
+
+Where = Node(where, un_where)
+assert 'Node(rel, pred)' == str(Where)
+print Where
