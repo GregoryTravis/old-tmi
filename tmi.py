@@ -49,18 +49,33 @@ def un_where(out, rel, pred):
   assert all(map(pred, out))
   return where(rel, pnot(pred)) + out
 
+def unimplementedBackwards():
+  raise 'UnimplementedBackwards'
+
 def check_node_arg_lists(forwards, backwards):
   fargs = inspect.getargspec(forwards)
-  bargs = inspect.getargspec(backwards)
-  assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
   assert fargs.varargs == None
   assert fargs.keywords == None
   assert fargs.defaults == None
+  if backwards == unimplementedBackwards:
+    return
+  bargs = inspect.getargspec(backwards)
+  assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
   assert bargs.varargs == None
   assert bargs.keywords == None
   assert bargs.defaults == None
 
 class Node(object):
+  def __init__(self, nodeConstructor, arglist):
+    self.nodeConstructor = nodeConstructor
+    self.arglist = arglist
+
+  def __str__(self):
+    return type(self.nodeConstructor).__name__ + '(' + ', '.join(map(str, self.arglist)) + ')'
+
+  def __repr__(self): return self.__str__()
+
+class NodeConstructor(object):
   def __init__(self, forwards, backwards):
     check_node_arg_lists(forwards, backwards)
     self.forwards = forwards;
@@ -69,6 +84,26 @@ class Node(object):
   def __str__(self):
     return type(self).__name__ + '(' + ', '.join(inspect.getargspec(self.forwards).args) + ')'
 
-Where = Node(where, un_where)
-assert 'Node(rel, pred)' == str(Where)
-print Where
+  def __repr__(self): return self.__str__()
+
+  def __call__(self, *args, **kwargs):
+    assert len(kwargs) == 0
+    return Node(self, list(args))
+
+def UNodeConstructor(forwards):
+  return NodeConstructor(forwards, unimplementedBackwards)
+
+def Constant(x):
+  return UNodeConstructor(lambda: x)()
+
+def isnode(n): return type(n) == Node
+
+Where = NodeConstructor(where, un_where)
+assert 'NodeConstructor(rel, pred)' == str(Where)
+assert isnode(Where(1))
+assert not isnode(12)
+
+print Where(1)
+print Constant(2)
+# How to give nodes a name?  How about make them classes with two methods, then post-process (and an error if you don't)
+# Lift constants
