@@ -40,70 +40,91 @@ assert not pnot(ceq('a', 1))(d(a=1, b=2, c=3))
 assert not pnot(ceq('c', 3))(d(a=1, b=2, c=3))
 assert pnot(ceq('a', 2))(d(a=1, b=2))
 
-def where(rel, pred):
-  return [rec for rec in rel if pred(rec)]
-assert [d(a=1, b=2)] == where(r, ceq('a', 1))
-assert [d(a=10, b=20)] == where(r, pnot(ceq('a', 1)))
-
-def un_where(out, rel, pred):
-  assert all(map(pred, out))
-  return where(rel, pnot(pred)) + out
-
 def unimplementedBackwards():
-  raise 'UnimplementedBackwards'
+  raise NotImplementedError
 
-def check_node_arg_lists(forwards, backwards):
+def check_node_arg_lists(cls):
+  forwards = cls.forwards
   fargs = inspect.getargspec(forwards)
   assert fargs.varargs == None
   assert fargs.keywords == None
   assert fargs.defaults == None
-  if backwards == unimplementedBackwards:
+
+  if issubclass(cls, UNode):
     return
+
+  backwards = cls.backwards
   bargs = inspect.getargspec(backwards)
   assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
   assert bargs.varargs == None
   assert bargs.keywords == None
   assert bargs.defaults == None
 
+def check_argspec_match(forwardsFunction, (args, kwargs)):
+  assert len(kwargs) == 0
+  assert len(inspect.getargspec(forwardsFunction).args) == len(args)
+
+def isnode(n): return issubclass(type(n), Node)
+
+def nodeLift(o): return o if isnode(o) else Constant(o)
+
 class Node(object):
-  def __init__(self, nodeConstructor, arglist):
-    self.nodeConstructor = nodeConstructor
-    self.arglist = arglist
+  def __repr__(self):
+    return type(self).__name__ + '(' + ', '.join(map(str, self.args)) + ')'
+  def __str__(self): return self.__repr__()
 
-  def __str__(self):
-    return type(self.nodeConstructor).__name__ + '(' + ', '.join(map(str, self.arglist)) + ')'
+def node(cls):
+  assert issubclass(cls, Node)
 
-  def __repr__(self): return self.__str__()
+  # Create and install ctor
+  def ctor(self, *args, **kwargs):
+    check_argspec_match(cls.forwards, (args, kwargs))
+    self.args = map(nodeLift, args)
+  cls.__init__ = ctor
 
-class NodeConstructor(object):
-  def __init__(self, forwards, backwards):
-    check_node_arg_lists(forwards, backwards)
-    self.forwards = forwards;
-    self.backwards = backwards;
+  # Check f/b argspec compatibility
+  check_node_arg_lists(cls)
 
-  def __str__(self):
-    return type(self).__name__ + '(' + ', '.join(inspect.getargspec(self.forwards).args) + ')'
+  # read() and write()
 
-  def __repr__(self): return self.__str__()
+  cls.forwards = staticmethod(cls.forwards)
+  cls.backwards = staticmethod(cls.backwards)
 
-  def __call__(self, *args, **kwargs):
-    assert len(kwargs) == 0
-    return Node(self, list(args))
+  return cls
 
-def UNodeConstructor(forwards):
-  return NodeConstructor(forwards, unimplementedBackwards)
+class UNode(Node):
+  @staticmethod
+  def backwards():
+    raise NotImplementedError
 
-def Constant(x):
-  return UNodeConstructor(lambda: x)()
+def Constant(o):
+  @node
+  class Constant_(UNode):
+    @staticmethod
+    def forwards():
+      return o
+    def __repr__(self):
+      return str(o)
+    def __str__(self): return self.__repr__()
+  return Constant_()
 
-def isnode(n): return type(n) == Node
+assert isnode(Constant(1))
+assert not isnode(1)
 
-Where = NodeConstructor(where, un_where)
-assert 'NodeConstructor(rel, pred)' == str(Where)
-assert isnode(Where(1))
-assert not isnode(12)
+@node
+class Where(Node):
+  def forwards(rel, pred):
+    return [rec for rec in rel if pred(rec)]
 
-print Where(1)
-print Constant(2)
-# How to give nodes a name?  How about make them classes with two methods, then post-process (and an error if you don't)
-# Lift constants
+  def backwards(out, rel, pred):
+    assert all(map(pred, out))
+    return where(rel, pnot(pred)) + out
+ 
+assert 12 == Constant(12).forwards()
+
+w = Where(r, ceq('a', 1))
+print w
+
+#assert [d(a=1, b=2)] == where(r, ceq('a', 1))
+#assert [d(a=10, b=20)] == where(r, pnot(ceq('a', 1)))
+
