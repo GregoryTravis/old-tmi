@@ -50,12 +50,9 @@ def check_node_arg_lists(cls):
   assert fargs.keywords == None
   assert fargs.defaults == None
 
-  if issubclass(cls, UNode):
-    return
-
   backwards = cls.backwards
   bargs = inspect.getargspec(backwards)
-  assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
+  assert ['out'] == bargs.args, (fargs.args, bargs.args)
   assert bargs.varargs == None
   assert bargs.keywords == None
   assert bargs.defaults == None
@@ -67,6 +64,10 @@ def check_argspec_match(forwardsFunction, (args, kwargs)):
 def isnode(n): return issubclass(type(n), Node)
 
 def nodeLift(o): return o if isnode(o) else Constant(o)
+
+def read(node):
+  forwards = node.forwards
+  return forwards(*map(read, node.args))
 
 class Node(object):
   def __repr__(self):
@@ -85,24 +86,23 @@ def node(cls):
   # Check f/b argspec compatibility
   check_node_arg_lists(cls)
 
-  # read() and write()
-
-  cls.forwards = staticmethod(cls.forwards)
-  cls.backwards = staticmethod(cls.backwards)
+  cls.forwards = staticmethod(cls.__dict__['forwards'])
+  cls.backwards = staticmethod(cls.__dict__['backwards'])
 
   return cls
 
 class UNode(Node):
-  @staticmethod
-  def backwards():
+  def backwards(out):
     raise NotImplementedError
 
 def Constant(o):
   @node
   class Constant_(UNode):
-    @staticmethod
     def forwards():
       return o
+    # Why is this needed?  Without it, node() can't find a backwards method to alter.
+    def backwards(out):
+      raise NotImplementedError
     def __repr__(self):
       return str(o)
     def __str__(self): return self.__repr__()
@@ -116,15 +116,13 @@ class Where(Node):
   def forwards(rel, pred):
     return [rec for rec in rel if pred(rec)]
 
-  def backwards(out, rel, pred):
+  def backwards(out):
     assert all(map(pred, out))
-    return where(rel, pnot(pred)) + out
+    return d(rel=(where(rel, pnot(pred)) + out))
  
-assert 12 == Constant(12).forwards()
+assert 12 == read(Constant(12))
 
-w = Where(r, ceq('a', 1))
-print w
+assert [{'a': 1, 'b': 2}] == read(Where(r, ceq('a', 1)))
+assert [{'a': 10, 'b': 20}] == read(Where(r, pnot(ceq('a', 1))))
 
-#assert [d(a=1, b=2)] == where(r, ceq('a', 1))
-#assert [d(a=10, b=20)] == where(r, pnot(ceq('a', 1)))
-
+# write(), commit()
