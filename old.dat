@@ -1,5 +1,25 @@
 {
   "player": [
-    {"name": "greg"}
+    {"player_id": 0, "name": "greg"},
+    {"player_id": 1, "name": "james"},
+    {"player_id": 3, "name": "will"}
+  ],
+
+  "card": [
+    {"card_id": 0, "name": "blah", "type": "battle", "points": -3, "description": "just bored"},
+    {"card_id": 1, "name": "11/9", "type": "battle", "points": -3, "description": "always forget"}
+  ],
+
+  "game": [
+    {"game_id": 0, "time": 12},
+    {"game_id": 1, "time": 14}
+  ],
+
+  "hand": [
+    {"game_id": 0, "player_id": 0, "card_id": 0},
+    {"game_id": 0, "player_id": 0, "card_id": 1},
+    {"game_id": 0, "player_id": 1, "card_id": 0},
+    {"game_id": 0, "player_id": 3, "card_id": 1},
+    {"game_id": 1, "player_id": 3, "card_id": 0}
   ]
 }
