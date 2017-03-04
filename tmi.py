@@ -1,5 +1,8 @@
 # -*- coding: UTF-8 -*-
 import inspect
+import json
+import os
+
 from collections import defaultdict, deque
 from tabulate import tabulate
 
@@ -92,7 +95,13 @@ def read(node):
   forwards = node.forwards
   return forwards(*map(read, node.args))
 
-writes = deque()
+writes = None
+
+def resetWrites():
+  global writes
+  writes = deque()
+resetWrites()
+
 #@trace
 def write(node, value):
   global writes
@@ -121,11 +130,11 @@ def commit():
   # Only one value per node.
   assert all([len(values) < 2 for serial, values in accum.iteritems()]), list(accum.iteritems())
 
-  # - write node 0 to diszk
+  # - write node 0 to disk
   # print 'FINAL', accum
 
   # Reset
-  writes = defaultdict(list)
+  resetWrites()
 
 class Node(object):
   def __repr__(self):
@@ -159,18 +168,17 @@ def Constant(o):
   class Constant_(UNode):
     def forwards():
       return o
-    # Why is this needed?  Without it, node() can't find a backwards method to alter.
+    # todo Why is this needed?  Without it, node() can't find a backwards method to alter.
     def backwards(out):
       raise NotImplementedError
     def __repr__(self):
       return str(o)
-    def __str__(self): return self.__repr__()
   return Constant_()
 
 def Box(o):
   box = [o]
   @node
-  class Box_(UNode):
+  class Box_(Node):
     def forwards():
       return box[0]
     def backwards(out):
@@ -178,11 +186,25 @@ def Box(o):
       return {}
     def __repr__(self):
       return 'Box(' + str(box[0]) + ')'
-    def __str__(self): return self.__repr__()
   return Box_()
 
 assert isnode(Constant(1))
 assert not isnode(1)
+
+assert '1' == str(Constant(1)), str(Constant(1))
+assert 'Box(1)' == str(Box(1))
+
+def File(filename):
+  @node
+  class File_(Node):
+    def forwards():
+      with open(filename) as f:
+        return json.load(f)
+    def backwards(out):
+      with open(filename, 'w') as f:
+        json.dump(out, f)
+      return {}
+  return File_()
 
 @node
 class Where(Node):
@@ -202,4 +224,12 @@ b = Box(r)
 w = Where(b, ceq('a', 1))
 write(w, [d(a=1, b=200)])
 commit()
-print 'haha', read(b)
+assert [{'a': 10, 'b': 20}, {'a': 1, 'b': 200}] == read(b)
+
+with open('tmp.dat', 'w') as f: f.write('{}')
+f = File('tmp.dat')
+write(f, read(b)) # TODO shouldn't need read
+commit()
+f2 = File('tmp.dat')
+assert read(b) == read(f2)
+os.remove('tmp.dat')
