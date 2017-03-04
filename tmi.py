@@ -214,7 +214,28 @@ class Where(Node):
   def backwards(out, rel, pred):
     assert all(map(pred, out))
     return d(rel=([rec for rec in rel if not pred(rec)] + out))
- 
+
+def setfield(d, k, v):
+  assert type(d) == dict
+  return {kk: v if k == kk else vv for kk, vv in d.iteritems()}
+
+@node
+class Deref(Node):
+  def forwards(rec, field):
+    return rec[field]
+  def backwards(out, rec, field):
+    return { 'rec': setfield(rec, field, out) }
+
+@node
+class One(Node):
+  def forwards(rel):
+    assert type(rel) == list
+    assert len(rel) == 1
+    return rel[0]
+  def backwards(out, rel):
+    assert type(out) == dict
+    return { 'rel': [out] }
+
 assert 12 == read(Constant(12))
 
 assert [{'a': 1, 'b': 2}] == read(Where(r, ceq('a', 1)))
@@ -233,3 +254,6 @@ commit()
 f2 = File('tmp.dat')
 assert read(b) == read(f2)
 os.remove('tmp.dat')
+
+assert {'a': 1, 'b': 200} == read(One(w))
+assert 1 == read(Deref(One(w), 'a'))
