@@ -9,10 +9,31 @@ from tabulate import tabulate
 def d(**kwargs):
   return dict(**kwargs)
 
-def ss(rel):
+def rel_renderer(rel):
+  if type(rel) != list or not all([type(row) == dict for row in rel]): return None
   cols = rel[0].keys() if len(rel) > 0 else ['']
   return tabulate([[rec[f] for f in cols] for rec in rel], cols, tablefmt='fancy_grid')
-assert ss([d(a=1, b=2), d(a=10, b=20)]) == u'╒═════╤═════╕\n│   a │   b │\n╞═════╪═════╡\n│   1 │   2 │\n├─────┼─────┤\n│  10 │  20 │\n╘═════╧═════╛'
+assert (u'╒═════╤═════╕\n│   a │   b │\n╞═════╪═════╡\n│   1 │   2 │\n├─────┼─────┤\n│  10 │  20 │\n╘═════╧═════╛' ==
+  rel_renderer([d(a=1, b=2), d(a=10, b=20)]))
+
+def node_renderer(node):
+  if not isnode(node): return None
+  return ss(read(node))
+
+ss_renderers = [
+  rel_renderer,
+  node_renderer,
+]
+
+def ss(o):
+  for renderer in ss_renderers:
+    s = renderer(o)
+    if s: return s
+  return str(o)
+
+def ss_install_renderer(renderer):
+  global ss_renderers
+  ss_renderers.append(renderer)
 
 trace_indentation = 0
 def trace(f):
@@ -257,3 +278,5 @@ os.remove('tmp.dat')
 
 assert {'a': 1, 'b': 200} == read(One(w))
 assert 1 == read(Deref(One(w), 'a'))
+assert ss(read(w)) == ss(w)
+
