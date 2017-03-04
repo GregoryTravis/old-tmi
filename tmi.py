@@ -279,3 +279,90 @@ os.remove('tmp.dat')
 assert {'a': 1, 'b': 200} == read(One(w))
 assert 1 == read(Deref(One(w), 'a'))
 assert ss(read(w)) == ss(w)
+
+def common_fields(left, right):
+  return set(left.keys()).intersection(set(right.keys())) 
+
+assert set(['b', 'c']) == common_fields(dict(a=1, b=2, c=3), dict(b=3, c=4, d=5)), common_fields(dict(a=1, b=2, c=3), dict(b=3, c=4, d=5))
+assert set([]) == common_fields(dict(a=1, b=2), dict(c=3, d=4))
+
+def eq_on(rela, relb, fields):
+  return all([rela[field] == relb[field] for field in fields])
+
+assert eq_on(dict(a=1, b=2, c=3), dict(b=2, c=3, d=4), ['b', 'c'])
+assert not eq_on(dict(a=1, b=2, c=3), dict(b=20, c=3, d=4), ['b', 'c'])
+assert not eq_on(dict(a=1, b=2, c=3), dict(b=2, c=30, d=4), ['b', 'c'])
+assert eq_on(dict(a=1, b=2, c=3), dict(b=20, c=3, d=4), ['c'])
+assert eq_on(dict(a=1, b=2, c=3), dict(b=2, c=30, d=4), ['b'])
+
+# Record union, but may have common fields if they are equal on them
+def omerge(rela, relb):
+  assert eq_on(rela, relb, common_fields(rela, relb))
+  all_fields = set(rela.keys()).union(set(relb.keys()))
+  return {k: (rela[k] if k in rela else relb[k]) for k in all_fields}
+
+assert dict(a=1, b=2, c=3, d=4) == omerge(dict(a=1, b=2, c=3), dict(b=2, c=3, d=4))
+assert dict(a=1, b=20, c=3, d=4) == omerge(dict(a=1, c=3), dict(b=20, c=3, d=4))
+assert dict(a=1, b=2, c=30, d=4) == omerge(dict(a=1, b=2), dict(b=2, c=30, d=4))
+
+@node
+class Join(UNode):
+  def forwards(left, right):
+    if len(left) == 0 or len(right) == 0:
+      return []
+    join_fields = common_fields(left[0], right[0])
+    assert len(join_fields) > 0
+    return [omerge(lrow, rrow) for lrow in left for rrow in right if eq_on(lrow, rrow, join_fields)]
+  # TODO get rid of this
+  def backwards(out, left, right):
+    raise NotImplementedError
+
+db = File('old.dat')
+player = Deref(db, 'player')
+card = Deref(db, 'card')
+game = Deref(db, 'game')
+hand = Deref(db, 'hand')
+
+# Make hashable.
+def frz(o):
+  if type(o) == list:
+    return tuple(map(frz, o))
+  elif type(o) == dict:
+    return frozenset(map(frz, o.items()))
+  elif type(o) == tuple:
+    return tuple(map(frz, o))
+  elif type(o) in [int, float, str, unicode]:
+    return o
+  else:
+    assert False, (o, type(o))
+
+# Two relations are equal, treating the lists as sets.
+def releq(rela, relb):
+  return set(frz(rela)) == set(frz(relb))
+
+def check_join_commutative(a, b):
+  assert releq(read(Join(a, b)), read(Join(b, a)))
+
+def check_join_associative_3(a, b, c):
+  assert releq(read(Join(a, Join(b, c))), read(Join(Join(a, b), c)))
+
+#def check_join_associative_4(a, b, c, d):
+  #join_associative_3(a, b, Join(c, d))
+  #join_associative_3(a, Join(b, c), d)
+  #join_associative_3(Join(a, b), c, d)
+
+# TODO this is not comprehensive.
+
+check_join_commutative(player, hand)
+check_join_commutative(game, hand)
+check_join_commutative(card, hand)
+check_join_commutative(card, Join(hand, player))
+check_join_commutative(card, Join(hand, game))
+check_join_commutative(card, Join(player, Join(hand, game)))
+check_join_commutative(player, Join(card, Join(hand, game)))
+check_join_commutative(game, Join(player, Join(hand, card)))
+
+check_join_associative_3(player, hand, card)
+check_join_associative_3(player, Join(game, hand), card)
+check_join_associative_3(game, Join(player, hand), card)
+check_join_associative_3(game, Join(card, hand), player)

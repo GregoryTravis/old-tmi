@@ -6,8 +6,8 @@
   ],
 
   "card": [
-    {"card_id": 0, "name": "blah", "type": "battle", "points": -3, "description": "just bored"},
-    {"card_id": 1, "name": "11/9", "type": "battle", "points": -3, "description": "always forget"}
+    {"card_id": 0, "card_name": "blah", "type": "battle", "points": -3, "description": "just bored"},
+    {"card_id": 1, "card_name": "11/9", "type": "lifestyle", "points": 5, "description": "always forget"}
   ],
 
   "game": [
