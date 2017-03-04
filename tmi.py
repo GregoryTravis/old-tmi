@@ -279,4 +279,3 @@ os.remove('tmp.dat')
 assert {'a': 1, 'b': 200} == read(One(w))
 assert 1 == read(Deref(One(w), 'a'))
 assert ss(read(w)) == ss(w)
-

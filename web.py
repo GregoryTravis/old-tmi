@@ -41,13 +41,17 @@ def exec_call(module, s):
 def pre(s):
   return '<pre>%s</pre>' % s
 
+def webfmt(s):
+  return pre(s.encode('utf-8'))
+
 def webmain(module):
   print 'Content-type: text/html\n'
   try:
     qs = getQueryString()
     if qs == '':
       qs = DEFAULT_QUERY_STRING
-    print exec_call(module, qs)
+    q = exec_call(module, qs)
+    print webfmt(exec_call(module, qs))
   except Exception as e:
     print pre(traceback.format_exc())
 
