@@ -1,0 +1,1 @@
+sudo httpd -f server/httpd.conf -d . -k stop
