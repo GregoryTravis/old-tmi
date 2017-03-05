@@ -35,14 +35,20 @@ def exec_call(module, s):
   (funname, args) = json.loads(urllib.unquote(s))
   fun = module.__dict__[funname]
   return fun(*args)
-  print funs
-  print module.main
 
 def pre(s):
   return '<pre>%s</pre>' % s
 
+def flatten(o):
+  if type(o) == str or type(o) == unicode:
+    return o
+  else:
+    return ''.join(map(flatten, o))
+
+assert 'abc' == flatten(['a', ('b',), [['c']]])
+
 def webfmt(s):
-  return pre(s.encode('utf-8'))
+  return flatten(s).encode('utf-8')
 
 def webmain(module):
   print 'Content-type: text/html\n'
@@ -54,4 +60,3 @@ def webmain(module):
     print webfmt(exec_call(module, qs))
   except Exception as e:
     print pre(traceback.format_exc())
-
