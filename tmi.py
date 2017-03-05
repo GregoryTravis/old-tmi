@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 import inspect
+import itertools
 import json
+import operator
 import os
 
 from collections import defaultdict, deque
@@ -225,6 +227,8 @@ def File(filename):
       with open(filename, 'w') as f:
         json.dump(out, f)
       return {}
+    def __repr__(self):
+      return 'File(' + filename + ')'
   return File_()
 
 @node
@@ -350,6 +354,42 @@ def check_join_associative_3(a, b, c):
   #join_associative_3(a, b, Join(c, d))
   #join_associative_3(a, Join(b, c), d)
   #join_associative_3(Join(a, b), c, d)
+
+def same(os, comparator=operator.eq):
+  if len(os) < 2:
+    return True
+  return all([comparator(os[0], o) for o in os[1:]])
+
+assert same([1, 1, 1, 1])
+assert same([1, 1])
+assert same([1])
+assert same([])
+assert not same([2, 1, 1, 1])
+assert not same([2, 1])
+assert not same([[dict(a=1, b=2), dict(c=3, d=4)], [dict(c=3, d=4), dict(a=1, b=2)]])
+assert same([[dict(a=1, b=2), dict(c=3, d=4)], [dict(c=3, d=4), dict(a=1, b=2)]], releq)
+
+def chain_join(rels):
+  assert len(rels) > 0
+  if len(rels) == 1:
+    return rels[0]
+  else:
+    return Join(chain_join(rels[:-1]), rels[-1])
+
+# TODO Rid of these reads
+assert read(Join(Join(Join(hand, game), player), card)) == read(chain_join([hand, game, player, card]))
+assert read(Join(hand, game)) == read(chain_join([hand, game]))
+assert read(hand) == read(chain_join([hand]))
+
+# All orderings of a star join configuration: a center (that must be part of
+# any join) and branches (which can come in any order).
+def check_star_join_permutations(center, branches):
+  branch_permutations = map(list, itertools.permutations(branches))
+  # The center must be the first or second in the list
+  permutations = [[center] + bp for bp in branch_permutations] + [[bp[0]] + [center] + bp[1:] for bp in branch_permutations]
+  assert same(map(chain_join, permutations), lambda a, b: releq(read(a), read(b)))
+
+check_star_join_permutations(hand, [player, game, card])
 
 # TODO this is not comprehensive.
 
