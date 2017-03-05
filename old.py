@@ -1,8 +1,9 @@
 from tmi import *
-from web import call, mkform
+from web import call, mkform, setCookie
 from tags import *
 
 def hey(blah):
+  setCookie('tmilogin', blah['a'])
   return ['hey ', str(blah)]
 
 def main():

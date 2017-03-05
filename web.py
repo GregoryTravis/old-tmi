@@ -1,4 +1,5 @@
 import cgi
+import Cookie
 import json
 import os
 import sys
@@ -52,22 +53,47 @@ assert 'abc' == flatten(['a', ('b',), [['c']]])
 def webfmt(s):
   return flatten(s).encode('utf-8')
 
+COOKIE_PREFIX = 'tmi'
+_cookies = {}
+
+def readCookies():
+  global _cookies
+  if 'HTTP_COOKIE' not in os.environ: return
+  c = Cookie.SimpleCookie()
+  c.load(os.environ['HTTP_COOKIE'])
+  _cookies = {k[len(COOKIE_PREFIX):]: v.value for k, v in c.iteritems() if k.startswith(COOKIE_PREFIX)}
+
+def setCookie(k, v):
+  global _cookies
+  _cookies[k] = v
+
+def cookies():
+  return _cookies
+
+def generateCookieHeader():
+  return '\n'.join(['Set-Cookie: %s%s=%s' % (COOKIE_PREFIX, k, urllib.quote(v)) for k, v in _cookies.iteritems()])
+
 def webmain(module):
-  print 'Content-type: text/html\n'
+  readCookies()
   request_method = os.environ['REQUEST_METHOD']
+  result = None
   try:
     if request_method == 'GET':
       qs = getQueryString()
       if qs == '':
         qs = DEFAULT_QUERY_STRING
       q = exec_call(module, qs)
-      print webfmt(exec_call(module, qs))
+      result = webfmt(exec_call(module, qs))
     elif request_method == 'POST':
       field_storage = cgi.FieldStorage()
       rec = {k: field_storage[k].value for k in field_storage if k != '_destfun'}
-      print module.__dict__[field_storage['_destfun'].value](rec)
+      result = module.__dict__[field_storage['_destfun'].value](rec)
     else:
       assert False
+    print 'Content-type: text/html'
+    print generateCookieHeader()
+    print ''
+    print result
   except Exception as e:
     print pre(traceback.format_exc())
 
