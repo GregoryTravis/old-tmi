@@ -1,6 +1,9 @@
 from tmi import *
-from web import call
+from web import call, mkform
 from tags import *
+
+def hey(blah):
+  return ['hey ', str(blah)]
 
 def main():
   db = File('old.dat')
@@ -8,4 +11,4 @@ def main():
   card = Deref(db, 'card')
   game = Deref(db, 'game')
   hand = Deref(db, 'hand')
-  return ['con', b('sequences')]
+  return mkform(hey, D(a=1, b=2, c=3))
