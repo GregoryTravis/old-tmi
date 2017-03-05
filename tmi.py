@@ -110,13 +110,15 @@ def get_node_serial():
   return ret
 
 def isnode(n): return issubclass(type(n), Node)
+def islnode(n): return issubclass(type(n), LNode)
 
 def nodeLift(o): return o if isnode(o) else Constant(o)
 
+def reader(node): return lambda: read(node)
+
 #@trace
 def read(node):
-  forwards = node.forwards
-  return forwards(*map(read, node.args))
+  return node.forwards(*[reader(arg) if islnode(node) else read(arg) for arg in node.args])
 
 writes = None
 
@@ -183,7 +185,12 @@ def node(cls):
 
   return cls
 
+# Unidirectional
 class UNode(Node):
+  pass
+
+# Lazy -- inputs are passed as thunks rather than values
+class LNode(UNode):
   pass
 
 def Constant(o):
@@ -434,3 +441,13 @@ assert releq([D(b=2), D(b=20)], read(Proj(la, ['b'])))
 assert 3 == len(read(Proj(la, ['a', 'b'])))
 assert 2 == len(read(Proj(la, ['a'])))
 assert 2 == len(read(Proj(la, ['b'])))
+
+@node
+class If(LNode):
+  def forwards(b, t, e):
+    b = b()
+    assert type(b) == bool
+    return t() if b else e()
+
+assert 2 == read(If(True, 2, 3))
+assert 3 == read(If(False, 2, 3))
