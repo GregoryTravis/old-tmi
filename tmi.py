@@ -83,9 +83,6 @@ assert not pnot(ceq('a', 1))(d(a=1, b=2, c=3))
 assert not pnot(ceq('c', 3))(d(a=1, b=2, c=3))
 assert pnot(ceq('a', 2))(d(a=1, b=2))
 
-def unimplementedBackwards():
-  raise NotImplementedError
-
 def check_node_arg_lists(cls):
   forwards = cls.forwards
   fargs = inspect.getargspec(forwards)
@@ -93,12 +90,13 @@ def check_node_arg_lists(cls):
   assert fargs.keywords == None
   assert fargs.defaults == None
 
-  backwards = cls.backwards
-  bargs = inspect.getargspec(backwards)
-  assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
-  assert bargs.varargs == None
-  assert bargs.keywords == None
-  assert bargs.defaults == None
+  if not issubclass(cls, UNode):
+    backwards = cls.backwards
+    bargs = inspect.getargspec(backwards)
+    assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
+    assert bargs.varargs == None
+    assert bargs.keywords == None
+    assert bargs.defaults == None
 
 def check_argspec_match(forwardsFunction, (args, kwargs)):
   assert len(kwargs) == 0
@@ -180,13 +178,13 @@ def node(cls):
   check_node_arg_lists(cls)
 
   cls.forwards = staticmethod(cls.__dict__['forwards'])
-  cls.backwards = staticmethod(cls.__dict__['backwards'])
+  if not issubclass(cls, UNode):
+    cls.backwards = staticmethod(cls.__dict__['backwards'])
 
   return cls
 
 class UNode(Node):
-  def backwards(out):
-    raise NotImplementedError
+  pass
 
 def Constant(o):
   @node
@@ -194,8 +192,6 @@ def Constant(o):
     def forwards():
       return o
     # todo Why is this needed?  Without it, node() can't find a backwards method to alter.
-    def backwards(out):
-      raise NotImplementedError
     def __repr__(self):
       return str(o)
   return Constant_()
@@ -319,9 +315,6 @@ class Join(UNode):
     join_fields = common_fields(left[0], right[0])
     assert len(join_fields) > 0
     return [omerge(lrow, rrow) for lrow in left for rrow in right if eq_on(lrow, rrow, join_fields)]
-  # TODO get rid of this
-  def backwards(out, left, right):
-    raise NotImplementedError
 
 db = File('old.dat')
 player = Deref(db, 'player')
@@ -425,8 +418,6 @@ assert [1, 2, 3] == remove_duplicates([1, 2, 1, 1, 2, 2, 1, 1, 2, 3, 3, 3])
 class Proj(UNode):
   def forwards(rel, fields):
     return remove_duplicates([{k: rec[k] for k in fields} for rec in rel])
-  def backwards(out, rel, fields):
-    raise NotImplementedError
 
 la = [
   D(a=1, b=2, c=3),
