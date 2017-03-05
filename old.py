@@ -7,7 +7,8 @@ def foo(a, b):
   card = Deref(db, 'card')
   game = Deref(db, 'game')
   hand = Deref(db, 'hand')
-  return ss(Join(game, Join(player, Join(card, hand))))
+  k = Join(game, Join(player, Join(card, hand)))
+  return ss(k) + '\n' + ss(Proj(k, ['points', 'time']))
 
 def main():
   return 'OLDMAIN ' + call('fuu', foo, 'xx', 'yy')

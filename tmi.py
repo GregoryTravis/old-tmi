@@ -5,6 +5,8 @@ import json
 import operator
 import os
 
+D = dict
+
 from collections import defaultdict, deque
 from tabulate import tabulate
 
@@ -406,3 +408,38 @@ check_join_associative_3(player, hand, card)
 check_join_associative_3(player, Join(game, hand), card)
 check_join_associative_3(game, Join(player, hand), card)
 check_join_associative_3(game, Join(card, hand), player)
+
+def remove_duplicates(os):
+  seen = set()
+  out = []
+  for o in os:
+    fo = frz(o)
+    if fo not in seen:
+      seen.add(fo)
+      out.append(o)
+  return out
+
+assert [1, 2, 3] == remove_duplicates([1, 2, 1, 1, 2, 2, 1, 1, 2, 3, 3, 3])
+
+@node
+class Proj(UNode):
+  def forwards(rel, fields):
+    return remove_duplicates([{k: rec[k] for k in fields} for rec in rel])
+  def backwards(out, rel, fields):
+    raise NotImplementedError
+
+la = [
+  D(a=1, b=2, c=3),
+  D(a=1, b=2, c=30),
+  D(a=1, b=2, c=31),
+  D(a=1, b=20, c=3),
+  D(a=1, b=20, c=30),
+  D(a=1, b=20, c=31),
+  D(a=10, b=20, c=30),
+]
+assert releq([D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)], read(Proj(la, ['a', 'b'])))
+assert releq([D(a=1), D(a=10)], read(Proj(la, ['a'])))
+assert releq([D(b=2), D(b=20)], read(Proj(la, ['b'])))
+assert 3 == len(read(Proj(la, ['a', 'b'])))
+assert 2 == len(read(Proj(la, ['a'])))
+assert 2 == len(read(Proj(la, ['b'])))
