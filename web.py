@@ -6,6 +6,7 @@ import sys
 import traceback
 import urllib
 from tags import *
+from tmi import *
 
 DEFAULT_QUERY_STRING = json.dumps(('main', []))
 
@@ -45,8 +46,10 @@ def pre(s):
 def flatten(o):
   if type(o) == str or type(o) == unicode:
     return o
-  else:
+  elif type(o) in [set, list, tuple]:
     return ''.join(map(flatten, o))
+  else:
+    assert False, (o, type(o))
 
 assert 'abc' == flatten(['a', ('b',), [['c']]])
 
@@ -63,12 +66,13 @@ def readCookies():
   c.load(os.environ['HTTP_COOKIE'])
   _cookies = {k[len(COOKIE_PREFIX):]: v.value for k, v in c.iteritems() if k.startswith(COOKIE_PREFIX)}
 
-def setCookie(k, v):
-  global _cookies
-  _cookies[k] = v
-
-def cookies():
-  return _cookies
+@node
+class Cookies(Node):
+  def forwards():
+    return _cookies
+  def backwards(out):
+    global _cookies
+    _cookies = out
 
 def generateCookieHeader():
   return '\n'.join(['Set-Cookie: %s%s=%s' % (COOKIE_PREFIX, k, urllib.quote(v)) for k, v in _cookies.iteritems()])
@@ -83,17 +87,21 @@ def webmain(module):
       if qs == '':
         qs = DEFAULT_QUERY_STRING
       q = exec_call(module, qs)
-      result = webfmt(exec_call(module, qs))
+      result = exec_call(module, qs)
     elif request_method == 'POST':
       field_storage = cgi.FieldStorage()
       rec = {k: field_storage[k].value for k in field_storage if k != '_destfun'}
       result = module.__dict__[field_storage['_destfun'].value](rec)
     else:
       assert False
+
+    commit()
+
     print 'Content-type: text/html'
     print generateCookieHeader()
     print ''
-    print result
+    yaya = read(result)
+    print webfmt(read(result))
   except Exception as e:
     print pre(traceback.format_exc())
 

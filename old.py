@@ -1,10 +1,20 @@
 from tmi import *
-from web import call, mkform, setCookie
+from web import call, mkform, Cookies
 from tags import *
 
-def hey(blah):
-  setCookie('tmilogin', blah['a'])
-  return ['hey ', str(blah)]
+cookies = Cookies()
+def IsLoggedIn():
+  return HasField(Cookies(), 'tmilogin')
+
+def PlayerMenu():
+  return List('Hello, ', Deref(Cookies(), 'tmilogin'))
+
+def loginRcv(formdata):
+  write(Deref(cookies, 'tmilogin'), Deref(formdata, 'username'))
+  return PlayerMenu()
+
+def Login():
+  return mkform(loginRcv, { 'username': '' })
 
 def main():
   db = File('old.dat')
@@ -12,4 +22,5 @@ def main():
   card = Deref(db, 'card')
   game = Deref(db, 'game')
   hand = Deref(db, 'hand')
-  return mkform(hey, D(a=1, b=2, c=3))
+
+  return If(IsLoggedIn(), PlayerMenu(), Login())

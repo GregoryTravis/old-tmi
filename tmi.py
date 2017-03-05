@@ -86,7 +86,6 @@ assert pnot(ceq('a', 2))(d(a=1, b=2))
 def check_node_arg_lists(cls):
   forwards = cls.forwards
   fargs = inspect.getargspec(forwards)
-  assert fargs.varargs == None
   assert fargs.keywords == None
   assert fargs.defaults == None
 
@@ -94,13 +93,18 @@ def check_node_arg_lists(cls):
     backwards = cls.backwards
     bargs = inspect.getargspec(backwards)
     assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
-    assert bargs.varargs == None
     assert bargs.keywords == None
     assert bargs.defaults == None
 
 def check_argspec_match(forwardsFunction, (args, kwargs)):
   assert len(kwargs) == 0
-  assert len(inspect.getargspec(forwardsFunction).args) == len(args)
+  argspec = inspect.getargspec(forwardsFunction)
+  if argspec.varargs == None:
+    # Args must exactly match.
+    assert len(argspec.args) == len(args)
+  else:
+    # Args must be at least as many as the non-varargs ones.
+    assert len(argspec.args) <= len(args)
 
 node_serial = 0
 def get_node_serial():
@@ -148,6 +152,7 @@ def commit():
   accum = defaultdict(list)
   while len(writes) > 0:
     (node, value) = writes.popleft()
+    value = read(value) if isnode(value) else value
     accum[node.serial].append(value)
     writes.extend(propagateOne(node, value))
 
@@ -255,6 +260,16 @@ class Deref(Node):
     return rec[field]
   def backwards(out, rec, field):
     return { 'rec': setfield(rec, field, out) }
+
+@node
+class HasField(UNode):
+  def forwards(rec, field):
+    return field in rec.keys()
+
+@node
+class List(UNode):
+  def forwards(*args):
+    return args
 
 @node
 class One(Node):
