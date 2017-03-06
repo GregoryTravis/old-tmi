@@ -4,13 +4,10 @@
 import sys
 sys.dont_write_bytecode = True
 
-import traceback
+import httpwrap
 
-try:
+with httpwrap.HttpWrap():
+  import tmi
   import old
   import web
-
   web.webmain(old)
-except:
-  print 'Content-type: text/html\n'
-  print '<pre>' + traceback.format_exc()
