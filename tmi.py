@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import copy
 import inspect
 import itertools
 import json
@@ -252,9 +253,22 @@ class Where(Node):
     assert all(map(pred, out))
     return d(rel=([rec for rec in rel if not pred(rec)] + out))
 
-def setfield(d, k, v):
+# Don't care if field is there or not.
+def setOrAddField(d, k, v):
   assert type(d) == dict
-  return {kk: v if k == kk else vv for kk, vv in d.iteritems()}
+  ret = copy.copy(d)
+  ret[k] = v
+  return ret
+
+# Set a field that's already there.
+def setfield(d, k, v):
+  assert k in d
+  return setOrAddField(d, k, v)
+
+# Set a field that's not there yet.
+def addfield(d, k, v):
+  assert k not in d
+  return setOrAddField(d, k, v)
 
 @node
 class Deref(Node):
@@ -490,3 +504,10 @@ class Equals(UNode):
     return a == b
 
 assert read(And(Equals(2, 2), Not(Equals(2, 3))))
+
+@node
+class DerefOrNew(Node):
+  def forwards(rec, field):
+    return rec[field]
+  def backwards(out, rec, field):
+    return { 'rec': setOrAddField(rec, field, out) }

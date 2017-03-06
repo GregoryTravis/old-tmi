@@ -1,24 +1,24 @@
 from tmi import *
-from web import call, mkform, Cookies
+from web import link, mkform, Cookies, redirect
 from tags import *
 
 cookies = Cookies()
 def IsLoggedIn():
-  return And(HasField(Cookies(), 'tmilogin'), Not(Equals(Deref(cookies, 'tmilogin'), '')))
+  return And(HasField(Cookies(), 'login'), Not(Equals(Deref(cookies, 'login'), '')))
 
 def logout():
-  write(Deref(cookies, 'tmilogin'), '')
+  write(Deref(cookies, 'login'), '')
   return main()
 
 def Footer():
-  return List(br(), call('logout', logout))
+  return List(br(), link('logout', logout))
 
 def PlayerMenu():
-  return List('Hello, ', Deref(Cookies(), 'tmilogin'), Footer())
+  return List('Hello, ', Deref(Cookies(), 'login'), Footer())
 
 def loginRcv(formdata):
-  write(Deref(cookies, 'tmilogin'), Deref(formdata, 'username'))
-  return PlayerMenu()
+  write(DerefOrNew(cookies, 'login'), Deref(formdata, 'username'))
+  return redirect(PlayerMenu)
 
 def Login():
   return mkform(loginRcv, { 'username': '' })

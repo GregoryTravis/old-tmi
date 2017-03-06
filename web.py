@@ -27,13 +27,15 @@ def getScript():
     script = script[len(os.environ['CONTEXT_DOCUMENT_ROOT'])+1:]
   return script
 
-def link(url, text):
+def ahref(text, url):
   return '<a href="%s">%s</a>' % (url, text)
 
-def call(text, f, *args, **kwargs):
+def call(f, *args, **kwargs):
   assert len(kwargs) == 0
-  url = '/' + getScript() + '?' + urllib.quote(json.dumps((f.__name__, args)))
-  return link(url, text)
+  return '/' + getScript() + '?' + urllib.quote(json.dumps((f.__name__, args)))
+
+def link(text, f, *args, **kwargs):
+  return ahref(text, call(f, *args, **kwargs))
 
 def exec_call(module, s):
   (funname, args) = json.loads(urllib.unquote(s))
@@ -82,7 +84,6 @@ def webmain(module):
   readCookies()
   request_method = os.environ['REQUEST_METHOD']
   result = None
-  #print 'Content-type: text/html\n'
   if request_method == 'GET':
     qs = getQueryString()
     if qs == '':
@@ -91,16 +92,29 @@ def webmain(module):
   elif request_method == 'POST':
     field_storage = cgi.FieldStorage()
     rec = {k: field_storage[k].value for k in field_storage if k != '_destfun'}
-    result = module.__dict__[field_storage['_destfun'].value](rec)
+    destfun = field_storage['_destfun'].value
+    result = module.__dict__[destfun](rec)
   else:
     assert False
 
   commit()
 
-  print 'Content-type: text/html'
-  print generateCookieHeader()
-  print ''
-  print webfmt(read(result))
+  # TODO this is hacky.
+  if type(result) == dict and result.keys() == ['redirect']:
+    print generateCookieHeader()
+    print 'Location: ' + result['redirect']
+    # Necessary to force an external redirect which is necessary for cookies to
+    # work across the redirect.
+    print 'Status: 302'
+    print ''
+  else:
+    print 'Content-type: text/html'
+    print generateCookieHeader()
+    print ''
+    print webfmt(read(result))
+
+def redirect(f, *args):
+  return {'redirect': call(f, *args)}
 
 def listjoin(os, glue):
   if len(os) < 2:
