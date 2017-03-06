@@ -73,6 +73,7 @@ class Cookies(Node):
   def backwards(out):
     global _cookies
     _cookies = out
+    return {}
 
 def generateCookieHeader():
   return '\n'.join(['Set-Cookie: %s%s=%s' % (COOKIE_PREFIX, k, urllib.quote(v)) for k, v in _cookies.iteritems()])
@@ -81,29 +82,25 @@ def webmain(module):
   readCookies()
   request_method = os.environ['REQUEST_METHOD']
   result = None
-  try:
-    if request_method == 'GET':
-      qs = getQueryString()
-      if qs == '':
-        qs = DEFAULT_QUERY_STRING
-      q = exec_call(module, qs)
-      result = exec_call(module, qs)
-    elif request_method == 'POST':
-      field_storage = cgi.FieldStorage()
-      rec = {k: field_storage[k].value for k in field_storage if k != '_destfun'}
-      result = module.__dict__[field_storage['_destfun'].value](rec)
-    else:
-      assert False
+  #print 'Content-type: text/html\n'
+  if request_method == 'GET':
+    qs = getQueryString()
+    if qs == '':
+      qs = DEFAULT_QUERY_STRING
+    result = exec_call(module, qs)
+  elif request_method == 'POST':
+    field_storage = cgi.FieldStorage()
+    rec = {k: field_storage[k].value for k in field_storage if k != '_destfun'}
+    result = module.__dict__[field_storage['_destfun'].value](rec)
+  else:
+    assert False
 
-    commit()
+  commit()
 
-    print 'Content-type: text/html'
-    print generateCookieHeader()
-    print ''
-    yaya = read(result)
-    print webfmt(read(result))
-  except Exception as e:
-    print pre(traceback.format_exc())
+  print 'Content-type: text/html'
+  print generateCookieHeader()
+  print ''
+  print webfmt(read(result))
 
 def listjoin(os, glue):
   if len(os) < 2:
@@ -116,10 +113,10 @@ assert [1] == listjoin([1], 0)
 assert [] == listjoin([], 0)
 
 def mkform(destfun, rec):
-  return form(
+  return ('Login:', br(), form(
     hidden('_destfun', destfun.__name__),
-    listjoin([input(name=k, value=v) for k, v in rec.iteritems()], br()),
+    listjoin([[k, input(name=k, value=v)] for k, v in rec.iteritems()], br()),
     br(),
     button('Submit'),
     method='POST',
-    action='/' + getScript() + '?')
+    action='/' + getScript() + '?'))

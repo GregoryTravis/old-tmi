@@ -4,10 +4,17 @@ from tags import *
 
 cookies = Cookies()
 def IsLoggedIn():
-  return HasField(Cookies(), 'tmilogin')
+  return And(HasField(Cookies(), 'tmilogin'), Not(Equals(Deref(cookies, 'tmilogin'), '')))
+
+def logout():
+  write(Deref(cookies, 'tmilogin'), '')
+  return main()
+
+def Footer():
+  return List(br(), call('logout', logout))
 
 def PlayerMenu():
-  return List('Hello, ', Deref(Cookies(), 'tmilogin'))
+  return List('Hello, ', Deref(Cookies(), 'tmilogin'), Footer())
 
 def loginRcv(formdata):
   write(Deref(cookies, 'tmilogin'), Deref(formdata, 'username'))

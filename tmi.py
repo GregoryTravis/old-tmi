@@ -114,6 +114,7 @@ def get_node_serial():
   return ret
 
 def isnode(n): return issubclass(type(n), Node)
+def isunode(n): return issubclass(type(n), UNode)
 def islnode(n): return issubclass(type(n), LNode)
 
 def nodeLift(o): return o if isnode(o) else Constant(o)
@@ -154,7 +155,8 @@ def commit():
     (node, value) = writes.popleft()
     value = read(value) if isnode(value) else value
     accum[node.serial].append(value)
-    writes.extend(propagateOne(node, value))
+    if not isunode(node):
+      writes.extend(propagateOne(node, value))
 
   # TODO: check for duplicates
   # Only one value per node.
@@ -466,3 +468,25 @@ class If(LNode):
 
 assert 2 == read(If(True, 2, 3))
 assert 3 == read(If(False, 2, 3))
+
+@node
+class And(LNode):
+  def forwards(a, b):
+    return a() and b()
+
+assert read(And(True, True))
+assert not read(And(True, False))
+assert not read(And(False, True))
+assert not read(And(False, False))
+
+@node
+class Not(UNode):
+  def forwards(b):
+    return not b
+
+@node
+class Equals(UNode):
+  def forwards(a, b):
+    return a == b
+
+assert read(And(Equals(2, 2), Not(Equals(2, 3))))
