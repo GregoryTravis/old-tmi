@@ -102,10 +102,22 @@ def invitationList(player_id):
       '')
   )
 
+def readyToPlay(game_id, player_id):
+  pass
+
+def inProgressGamesList(player_id):
+  games_invited_to = Apply(RelFunf(invitation, ['player_id'], ['game_id']), player_id)
+  games_with_unaccepted_invitations = Apply(RelFunf(invitation, ['accepted'], ['game_id']), False)
+  games_ready_to_go = Difference(games_invited_to, games_with_unaccepted_invitations)
+  return List('Games in progress: ',
+    ListJoin(
+      Map(lambda game_id: link(game_id, readyToPlay, game_id, player_id), games_ready_to_go), ' '))
+
 def PlayerMenu():
   return List(Header(),
     link('create game', CreateGame), br(),
-    invitationList(currentPlayerId()),
+    invitationList(currentPlayerId()), br(),
+    inProgressGamesList(currentPlayerId()), br(),
     Footer())
 
 def loginAs(name):

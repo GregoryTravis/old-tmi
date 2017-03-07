@@ -567,10 +567,13 @@ class DerefOrNew(Node):
   def backwards(out, rec, field):
     return { 'rec': setOrAddField(rec, field, out) }
 
+def column(rel, field):
+  return set([rec[field] for rec in rel])
+
 @node
 class Column(UNode):
   def forwards(rel, field):
-    return set([rec[field] for rec in rel])
+    return column(rel, field)
 
 assert set([1, 10]) == read(Column([D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)], 'a'))
 
@@ -642,6 +645,9 @@ def disjoint(os1, os2):
 def union(os1, os2):
   return set(os1).union(set(os2))
 
+def seteq(os1, os2):
+  return set(os1) == set(os2)
+
 def relfun(rel, domain, range):
   assert len(domain) > 0 and len(range) > 0 and disjoint(domain, range)
   rel = proj(rel, union(domain, range))
@@ -667,6 +673,19 @@ assert D(c=30) == relfun1(voo, ['a'], ['c'])(D(a=10))
 assert D(a=1) == relfun1(voo, ['b', 'c'], ['a'])(D(b=2, c=3))
 assert D(a=1) == relfun1(voo, ['c'], ['a'])(D(c=3))
 
+def relfunf(rel, domain, range):
+  assert len(domain) == 1 and len(range) == 1
+  infield = domain[0]
+  outfield = range[0]
+  return lambda x: column(relfun(rel, domain, range)({infield: x}), outfield)
+
+assert seteq([2, 20], relfunf(voo, ['a'], ['b'])(1))
+assert seteq([1, 10], relfunf(voo, ['b'], ['a'])(20))
+assert seteq([1, 10], relfunf(voo, ['c'], ['a'])(30))
+assert seteq([20], relfunf(voo, ['a'], ['b'])(10))
+assert seteq([30], relfunf(voo, ['a'], ['c'])(10))
+assert seteq([1], relfunf(voo, ['c'], ['a'])(3))
+
 def relfun1f(rel, domain, range):
   assert len(domain) == 1 and len(range) == 1
   infield = domain[0]
@@ -688,6 +707,11 @@ class RelFun1(UNode):
     return relfun1(rel, domain, range)
 
 @node
+class RelFunf(UNode):
+  def forwards(rel, domain, range):
+    return relfunf(rel, domain, range)
+
+@node
 class RelFun1f(UNode):
   def forwards(rel, domain, range):
     return relfun1f(rel, domain, range)
@@ -703,12 +727,23 @@ class Apply(UNode):
 assert releq([D(a=1)], read(Apply(RelFun(voo, ['c'], ['a']), (D(c=3)))))
 assert D(a=1) == read(Apply(RelFun1(voo, ['c'], ['a']), (D(c=3))))
 
+def setlike(os):
+  return type(os) in set([list, set])
+
+@node
+class Difference(UNode):
+  def forwards(s0, s1):
+    assert setlike(s0) and setlike(s1)
+    return list(set(s0).difference(set(s1)))
+
+assert seteq([1, 2, 3], read(Difference([1, 2, 3, 4, 5], [4, 5, 6])))
+
 # TODO
 # Rec(), and then get rid of a read()
 # Rel->fun operator!
 # RelFun callable?  There's nothing else you do with them
+# The relfun*f ones shouldn't need domain and range lists, there's just one
 # m->1 relfun with positional args
 # All these trivial node wrappers
 # Operators
-# RelFunF2F -- rid of input/output field names
 # Move more complex things out to big joins
