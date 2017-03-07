@@ -258,6 +258,15 @@ assert not read(Pnot(Feq('a', 1)))(d(a=1, b=2, c=3))
 assert not read(Pnot(Feq('c', 3)))(d(a=1, b=2, c=3))
 assert read(Pnot(Feq('a', 2)))(d(a=1, b=2))
 
+@node
+class Pand(UNode):
+  def forwards(preda, predb):
+    return lambda rec: preda(rec) and predb(rec)
+assert read(Pand(Feq('a', 1), Feq('b', 2)))(d(a=1, b=2))
+assert not read(Pand(Feq('a', 1), Feq('b', 2)))(d(a=10, b=2))
+assert not read(Pand(Feq('a', 1), Feq('b', 2)))(d(a=1, b=20))
+assert not read(Pand(Feq('a', 1), Feq('b', 2)))(d(a=10, b=20))
+
 def File(filename):
   @node
   class File_(Node):

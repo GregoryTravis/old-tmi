@@ -17,8 +17,7 @@ def currentPlayerName():
   return Deref(cookies, 'login')
 
 def currentPlayerId():
-  # TODO rid of this read.
-  return Deref(One(Where(player, lambda rec: rec['name'] == read(currentPlayerName()))), 'player_id')
+  return Deref(One(Where(player, Feq('name', currentPlayerName()))), 'player_id')
 
 def IsLoggedIn():
   return And(HasField(Cookies(), 'login'), Not(Equals(currentPlayerName(), '')))
@@ -48,7 +47,7 @@ def CreateGame():
   return redirect(AddPlayersToGame, game_id)
 
 def players_invited_to_game(game_id):
-  return Column(Where(Join(player, invitation), lambda rec: rec['game_id'] == game_id), 'name')
+  return Column(Where(Join(player, invitation), Feq('game_id', game_id)), 'name')
 
 def AddPlayersToGame(game_id):
   return List('Add players to game ', game_id,
@@ -60,10 +59,11 @@ def AddPlayersToGame(game_id):
     Footer())
 
 # Shouldn't be able to invite players after game has started.
+# Shouldn't be able to invite yourself to a game.
 def AddPlayersToGameRcv(rec):
   game_id = rec['game_id']
   player_name = rec['player_name']
-  player_id = Deref(One(Where(player, lambda rec: rec['name'] == player_name)), 'player_id')
+  player_id = Deref(One(Where(player, Feq('name', player_name))), 'player_id')
   write(invitation, Union(invitation, Rel(AddField({'game_id': game_id, 'accepted': False, 'inviter': read(currentPlayerId())}, 'player_id', player_id))))
   return redirect(AddPlayersToGame, game_id)
 
@@ -72,7 +72,8 @@ def DoneAddingPlayersToGame(game_id):
 
 def acceptInvitation(_invitation):
   write(
-    Deref(One(Where(invitation, lambda rec: rec['game_id'] == _invitation['game_id'] and rec['player_id'] == _invitation['player_id'])),
+    # TODO should be a Receq but need projrec for that.
+    Deref(One(Where(invitation, Pand(Feq('game_id', _invitation['game_id']), Feq('player_id', _invitation['player_id'])))),
       'accepted'),
     True)
   return PlayerMenu()
@@ -80,10 +81,12 @@ def acceptInvitation(_invitation):
 # TODO
 # Get rid of this read()
 # Make predcate nodes
+# Receq, subrec (test that fails without subrec)
+# Rec()?
 # Rel->fun operator!
 # Move more complex things out to big joins
 def playerName(player_id):
-  return Deref(One(Where(player, lambda rec: rec['player_id'] == read(player_id))), 'name')
+  return Deref(One(Where(player, Feq('player_id', player_id))), 'name')
 
 def askToAcceptInvitation(invitation):
   return List(Header(),
@@ -95,12 +98,13 @@ def askToAcceptInvitation(invitation):
 
 def invitationList(player_id):
   #print >>sys.stderr, player_id, read(player_id)
-  #print >>sys.stderr, read(Column(Where(invitation, lambda rec: rec['player_id'] == read(player_id)), 'game_id'))
+  #print >>sys.stderr, read(Column(Where(invitation, Feq('player_id', player_id)), 'game_id'))
   return List(
     'Pending invitations: ',
     ListJoin(
       Map(lambda invitation: link(invitation['game_id'], askToAcceptInvitation, invitation),
-        Where(invitation, lambda rec: rec['player_id'] == read(player_id) and rec['accepted'] == False)), ' ')
+        Where(invitation, Pand(Feq('player_id', player_id), Feq('accepted', False)))),
+      '')
   )
 
 def PlayerMenu():
