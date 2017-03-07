@@ -11,6 +11,7 @@ import json
 import operator
 import os
 
+# TODO redundant
 D = dict
 
 from collections import defaultdict, deque
@@ -68,26 +69,6 @@ r = [
   d(a=1, b=2),
   d(a=10, b=20),
 ]
-
-# True if equal to srec on all fields of srec
-def receq(srec): return lambda rec: all([rec[col] == srec[col] for col in srec.keys()])
-
-assert receq(d(a=1))(d(a=1, b=2))
-assert receq(d(a=1))(d(a=1, b=2, c=3))
-assert receq(d(c=3))(d(a=1, b=2, c=3))
-assert not receq(d(a=2))(d(a=1, b=2))
-
-def feq(col, value): return receq({ col: value })
-assert feq('a', 1)(d(a=1, b=2))
-assert feq('a', 1)(d(a=1, b=2, c=3))
-assert feq('c', 3)(d(a=1, b=2, c=3))
-assert not feq('a', 2)(d(a=1, b=2))
-
-def pnot(pred): return lambda x: not pred(x)
-assert not pnot(feq('a', 1))(d(a=1, b=2))
-assert not pnot(feq('a', 1))(d(a=1, b=2, c=3))
-assert not pnot(feq('c', 3))(d(a=1, b=2, c=3))
-assert pnot(feq('a', 2))(d(a=1, b=2))
 
 def check_node_arg_lists(cls):
   forwards = cls.forwards
@@ -243,6 +224,40 @@ assert not isnode(1)
 assert '1' == str(Constant(1)), str(Constant(1))
 assert 'Box(1)' == str(Box(1))
 
+# True if equal to srec on all fields of srec
+def receq(srec): return lambda rec: all([rec[col] == srec[col] for col in srec.keys()])
+@node
+class Receq(UNode):
+  def forwards(srec):
+    return receq(srec)
+
+assert read(Receq(d(a=1)))(d(a=1, b=2))
+assert read(Receq(d(a=1)))(d(a=1, b=2, c=3))
+assert read(Receq(d(c=3)))(d(a=1, b=2, c=3))
+assert not read(Receq(d(a=2)))(d(a=1, b=2))
+
+# TODO is this a job for an adapter?
+def feq(col, value): return receq({ col: value })
+@node
+class Feq(UNode):
+  def forwards(col, value):
+    return feq(col, value)
+
+assert read(Feq('a', 1))(d(a=1, b=2))
+assert read(Feq('a', 1))(d(a=1, b=2, c=3))
+assert read(Feq('c', 3))(d(a=1, b=2, c=3))
+assert not read(Feq('a', 2))(d(a=1, b=2))
+
+def pnot(pred): return lambda x: not pred(x)
+@node
+class Pnot(UNode):
+  def forwards(pred):
+    return pnot(pred)
+assert not read(Pnot(Feq('a', 1)))(d(a=1, b=2))
+assert not read(Pnot(Feq('a', 1)))(d(a=1, b=2, c=3))
+assert not read(Pnot(Feq('c', 3)))(d(a=1, b=2, c=3))
+assert read(Pnot(Feq('a', 2)))(d(a=1, b=2))
+
 def File(filename):
   @node
   class File_(Node):
@@ -314,11 +329,11 @@ class One(Node):
 
 assert 12 == read(Constant(12))
 
-assert [{'a': 1, 'b': 2}] == read(Where(r, feq('a', 1)))
-assert [{'a': 10, 'b': 20}] == read(Where(r, pnot(feq('a', 1))))
+assert [{'a': 1, 'b': 2}] == read(Where(r, Feq('a', 1)))
+assert [{'a': 10, 'b': 20}] == read(Where(r, Pnot(Feq('a', 1))))
 
 b = Box(r)
-w = Where(b, feq('a', 1))
+w = Where(b, Feq('a', 1))
 write(w, [d(a=1, b=200)])
 commit()
 assert [{'a': 10, 'b': 20}, {'a': 1, 'b': 200}] == read(b)
