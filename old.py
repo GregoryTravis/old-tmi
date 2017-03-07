@@ -64,7 +64,7 @@ def AddPlayersToGameRcv(rec):
   game_id = rec['game_id']
   player_name = rec['player_name']
   player_id = Deref(One(Where(player, lambda rec: rec['name'] == player_name)), 'player_id')
-  write(invitation, Union(invitation, Rel(AddField({'game_id': game_id, 'accepted': False}, 'player_id', player_id))))
+  write(invitation, Union(invitation, Rel(AddField({'game_id': game_id, 'accepted': False, 'inviter': read(currentPlayerId())}, 'player_id', player_id))))
   return redirect(AddPlayersToGame, game_id)
 
 def DoneAddingPlayersToGame(game_id):
@@ -77,9 +77,16 @@ def acceptInvitation(_invitation):
     True)
   return PlayerMenu()
 
+# TODO
+# Get rid of this read()
+# Make predcate nodes
+# Rel->fun operator!
+def playerName(player_id):
+  return Deref(One(Where(player, lambda rec: rec['player_id'] == read(player_id))), 'name')
+
 def askToAcceptInvitation(invitation):
   return List(Header(),
-    'Accept invitation from _ to game ', Deref(invitation, 'game_id'), '? ',
+    'Accept invitation from ', playerName(Deref(invitation, 'inviter')), ' to game ', Deref(invitation, 'game_id'), '? ',
     link('Yes', acceptInvitation, invitation), ' ',
     link('No', PlayerMenu), br(),
     Footer()
