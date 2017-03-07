@@ -70,24 +70,24 @@ r = [
 ]
 
 # True if equal to srec on all fields of srec
-def sreceq(srec): return lambda rec: all([rec[col] == srec[col] for col in srec.keys()])
+def receq(srec): return lambda rec: all([rec[col] == srec[col] for col in srec.keys()])
 
-assert sreceq(d(a=1))(d(a=1, b=2))
-assert sreceq(d(a=1))(d(a=1, b=2, c=3))
-assert sreceq(d(c=3))(d(a=1, b=2, c=3))
-assert not sreceq(d(a=2))(d(a=1, b=2))
+assert receq(d(a=1))(d(a=1, b=2))
+assert receq(d(a=1))(d(a=1, b=2, c=3))
+assert receq(d(c=3))(d(a=1, b=2, c=3))
+assert not receq(d(a=2))(d(a=1, b=2))
 
-def ceq(col, value): return sreceq({ col: value })
-assert ceq('a', 1)(d(a=1, b=2))
-assert ceq('a', 1)(d(a=1, b=2, c=3))
-assert ceq('c', 3)(d(a=1, b=2, c=3))
-assert not ceq('a', 2)(d(a=1, b=2))
+def feq(col, value): return receq({ col: value })
+assert feq('a', 1)(d(a=1, b=2))
+assert feq('a', 1)(d(a=1, b=2, c=3))
+assert feq('c', 3)(d(a=1, b=2, c=3))
+assert not feq('a', 2)(d(a=1, b=2))
 
 def pnot(pred): return lambda x: not pred(x)
-assert not pnot(ceq('a', 1))(d(a=1, b=2))
-assert not pnot(ceq('a', 1))(d(a=1, b=2, c=3))
-assert not pnot(ceq('c', 3))(d(a=1, b=2, c=3))
-assert pnot(ceq('a', 2))(d(a=1, b=2))
+assert not pnot(feq('a', 1))(d(a=1, b=2))
+assert not pnot(feq('a', 1))(d(a=1, b=2, c=3))
+assert not pnot(feq('c', 3))(d(a=1, b=2, c=3))
+assert pnot(feq('a', 2))(d(a=1, b=2))
 
 def check_node_arg_lists(cls):
   forwards = cls.forwards
@@ -314,11 +314,11 @@ class One(Node):
 
 assert 12 == read(Constant(12))
 
-assert [{'a': 1, 'b': 2}] == read(Where(r, ceq('a', 1)))
-assert [{'a': 10, 'b': 20}] == read(Where(r, pnot(ceq('a', 1))))
+assert [{'a': 1, 'b': 2}] == read(Where(r, feq('a', 1)))
+assert [{'a': 10, 'b': 20}] == read(Where(r, pnot(feq('a', 1))))
 
 b = Box(r)
-w = Where(b, ceq('a', 1))
+w = Where(b, feq('a', 1))
 write(w, [d(a=1, b=200)])
 commit()
 assert [{'a': 10, 'b': 20}, {'a': 1, 'b': 200}] == read(b)

@@ -81,6 +81,7 @@ def acceptInvitation(_invitation):
 # Get rid of this read()
 # Make predcate nodes
 # Rel->fun operator!
+# Move more complex things out to big joins
 def playerName(player_id):
   return Deref(One(Where(player, lambda rec: rec['player_id'] == read(player_id))), 'name')
 
