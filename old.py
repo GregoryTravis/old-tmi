@@ -13,6 +13,8 @@ invitation = Deref(db, 'invitation')
 
 player_name_to_id = RelFun1f(player, ['name'], ['player_id'])
 player_id_to_name = RelFun1f(player, ['player_id'], ['name'])
+games_invited_to = RelFunf(invitation, ['player_id'], ['game_id'])
+games_with_unaccepted_invitations = RelFunf(invitation, ['accepted'], ['game_id'])(False)
 
 cookies = Cookies()
 
@@ -20,7 +22,7 @@ def currentPlayerName():
   return Deref(cookies, 'login')
 
 def currentPlayerId():
-  return Apply(player_name_to_id, currentPlayerName())
+  return player_name_to_id(currentPlayerName())
 
 def IsLoggedIn():
   return And(HasField(Cookies(), 'login'), Not(Equals(currentPlayerName(), '')))
@@ -66,7 +68,7 @@ def AddPlayersToGame(game_id):
 def AddPlayersToGameRcv(rec):
   game_id = rec['game_id']
   player_name = rec['player_name']
-  player_id = Apply(player_name_to_id, player_name)
+  player_id = player_name_to_id(player_name)
   write(invitation, Union(invitation, Rel(AddField({'game_id': game_id, 'accepted': False, 'inviter': read(currentPlayerId())}, 'player_id', player_id))))
   return redirect(AddPlayersToGame, game_id)
 
@@ -81,7 +83,7 @@ def acceptInvitation(_invitation):
   return PlayerMenu()
 
 def playerName(player_id):
-  return Apply(player_id_to_name, player_id)
+  return player_id_to_name(player_id)
 
 def askToAcceptInvitation(invitation):
   return List(Header(),
@@ -106,9 +108,7 @@ def readyToPlay(game_id, player_id):
   pass
 
 def inProgressGamesList(player_id):
-  games_invited_to = Apply(RelFunf(invitation, ['player_id'], ['game_id']), player_id)
-  games_with_unaccepted_invitations = Apply(RelFunf(invitation, ['accepted'], ['game_id']), False)
-  games_ready_to_go = Difference(games_invited_to, games_with_unaccepted_invitations)
+  games_ready_to_go = Difference(games_invited_to(player_id), games_with_unaccepted_invitations)
   return List('Games in progress: ',
     ListJoin(
       Map(lambda game_id: link(game_id, readyToPlay, game_id, player_id), games_ready_to_go), ' '))

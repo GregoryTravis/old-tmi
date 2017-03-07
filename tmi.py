@@ -696,23 +696,28 @@ assert 20 == relfun1f(voo, ['a'], ['b'])(10)
 assert 30 == relfun1f(voo, ['a'], ['c'])(10)
 assert 1 == relfun1f(voo, ['c'], ['a'])(3)
 
+class FUNode(UNode):
+  def __call__(self, *args, **kwargs):
+    assert len(kwargs) == 0
+    return Apply(self, *args)
+
 @node
-class RelFun(UNode):
+class RelFun(FUNode):
   def forwards(rel, domain, range):
     return relfun(rel, domain, range)
 
 @node
-class RelFun1(UNode):
+class RelFun1(FUNode):
   def forwards(rel, domain, range):
     return relfun1(rel, domain, range)
 
 @node
-class RelFunf(UNode):
+class RelFunf(FUNode):
   def forwards(rel, domain, range):
     return relfunf(rel, domain, range)
 
 @node
-class RelFun1f(UNode):
+class RelFun1f(FUNode):
   def forwards(rel, domain, range):
     return relfun1f(rel, domain, range)
 
