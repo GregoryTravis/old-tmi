@@ -11,13 +11,15 @@ hand = Deref(db, 'hand')
 player_game = Deref(db, 'player_game')
 invitation = Deref(db, 'invitation')
 
+player_name_to_id = RelFun1f(player, ['name'], ['player_id'])
+
 cookies = Cookies()
 
 def currentPlayerName():
   return Deref(cookies, 'login')
 
 def currentPlayerId():
-  return Deref(One(Where(player, Feq('name', currentPlayerName()))), 'player_id')
+  return Apply(player_name_to_id, currentPlayerName())
 
 def IsLoggedIn():
   return And(HasField(Cookies(), 'login'), Not(Equals(currentPlayerName(), '')))

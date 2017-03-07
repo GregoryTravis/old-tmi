@@ -279,10 +279,12 @@ def File(filename):
       return 'File(' + filename + ')'
   return File_()
 
+def where(rel, pred):
+  return [rec for rec in rel if pred(rec)]
 @node
 class Where(Node):
   def forwards(rel, pred):
-    return [rec for rec in rel if pred(rec)]
+    return where(rel, pred)
 
   def backwards(out, rel, pred):
     assert all(map(pred, out))
@@ -326,12 +328,15 @@ class List(UNode):
   def forwards(*args):
     return args
 
+def one(rel):
+  assert type(rel) == list
+  assert len(rel) == 1, rel
+  return rel[0]
+
 @node
 class One(Node):
   def forwards(rel):
-    assert type(rel) == list
-    assert len(rel) == 1
-    return rel[0]
+    return one(rel)
   def backwards(out, rel):
     assert type(out) == dict
     return { 'rel': [out] }
@@ -500,10 +505,12 @@ class Subrec(UNode):
 
 assert read(Receq(Subrec(d(a=1, c=3), ['a'])))(d(a=1, b=2))
 
+def proj(rel, fields):
+  return remove_duplicates([subrec(rec, fields) for rec in rel])
 @node
 class Proj(UNode):
   def forwards(rel, fields):
-    return remove_duplicates([subrec(rec, fields) for rec in rel])
+    return proj(rel, fields)
 
 la = [
   D(a=1, b=2, c=3),
@@ -619,10 +626,88 @@ class Add(UNode):
   def forwards(a, b):
     return a + b
 
+voo = [
+  D(a=1, b=2, c=3),
+  D(a=1, b=2, c=30),
+  D(a=1, b=2, c=31),
+  D(a=1, b=20, c=3),
+  D(a=1, b=20, c=30),
+  D(a=1, b=20, c=31),
+  D(a=10, b=20, c=30),
+]
+
+def disjoint(os1, os2):
+  return len(set(os1).intersection(set(os2))) == 0
+
+def union(os1, os2):
+  return set(os1).union(set(os2))
+
+def relfun(rel, domain, range):
+  assert len(domain) > 0 and len(range) > 0 and disjoint(domain, range)
+  rel = proj(rel, union(domain, range))
+  def _f(domrec):
+    assert set(domrec.keys()) == set(domain), (domrec.keys(), set(domain))
+    return proj(where(rel, receq(domrec)), range)
+  return _f
+
+def relfun1(rel, domain, range):
+  return lambda domrec: one(relfun(rel, domain, range)(domrec))
+
+assert releq([D(b=2), D(b=20)], relfun(voo, ['a'], ['b'])(D(a=1)))
+assert releq([D(a=1), D(a=10)], relfun(voo, ['b'], ['a'])(D(b=20)))
+assert releq([D(a=1), D(a=10)], relfun(voo, ['c'], ['a'])(D(c=30)))
+assert releq([D(b=20)], relfun(voo, ['a'], ['b'])(D(a=10)))
+assert releq([D(c=30)], relfun(voo, ['a'], ['c'])(D(a=10)))
+assert releq([D(a=1)], relfun(voo, ['b', 'c'], ['a'])(D(b=2, c=3)))
+assert releq([D(a=1), D(a=10)], relfun(voo, ['b', 'c'], ['a'])(D(b=20, c=30)))
+assert releq([D(a=1)], relfun(voo, ['c'], ['a'])(D(c=3)))
+
+assert D(b=20) == relfun1(voo, ['a'], ['b'])(D(a=10))
+assert D(c=30) == relfun1(voo, ['a'], ['c'])(D(a=10))
+assert D(a=1) == relfun1(voo, ['b', 'c'], ['a'])(D(b=2, c=3))
+assert D(a=1) == relfun1(voo, ['c'], ['a'])(D(c=3))
+
+def relfun1f(rel, domain, range):
+  assert len(domain) == 1 and len(range) == 1
+  infield = domain[0]
+  outfield = range[0]
+  return lambda x: one(relfun(rel, domain, range)({infield: x}))[outfield]
+
+assert 20 == relfun1f(voo, ['a'], ['b'])(10)
+assert 30 == relfun1f(voo, ['a'], ['c'])(10)
+assert 1 == relfun1f(voo, ['c'], ['a'])(3)
+
+@node
+class RelFun(UNode):
+  def forwards(rel, domain, range):
+    return relfun(rel, domain, range)
+
+@node
+class RelFun1(UNode):
+  def forwards(rel, domain, range):
+    return relfun1(rel, domain, range)
+
+@node
+class RelFun1f(UNode):
+  def forwards(rel, domain, range):
+    return relfun1f(rel, domain, range)
+
+assert releq([D(a=1)], read(RelFun(voo, ['c'], ['a']))(D(c=3)))
+assert D(a=1) == read(RelFun1(voo, ['c'], ['a']))(D(c=3))
+
+@node
+class Apply(UNode):
+  def forwards(f, *args):
+    return f(*args)
+
+assert releq([D(a=1)], read(Apply(RelFun(voo, ['c'], ['a']), (D(c=3)))))
+assert D(a=1) == read(Apply(RelFun1(voo, ['c'], ['a']), (D(c=3))))
+
 # TODO
-# Get rid of this read()
-# Make predcate nodes
-# Receq, subrec (test that fails without subrec)
-# Rec()?
+# Rec(), and then get rid of a read()
 # Rel->fun operator!
+# RelFun callable?  There's nothing else you do with them
+# All these trivial node wrappers
+# Operators
+# RelFunF2F -- rid of input/output field names
 # Move more complex things out to big joins
