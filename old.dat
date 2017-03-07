@@ -21,5 +21,8 @@
     {"game_id": 0, "player_id": 1, "card_id": 0},
     {"game_id": 0, "player_id": 3, "card_id": 1},
     {"game_id": 1, "player_id": 3, "card_id": 0}
+  ],
+
+  "invitation": [
   ]
 }

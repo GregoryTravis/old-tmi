@@ -23,9 +23,9 @@ class HttpWrap(object):
     if not self.properly_formatted(out) or len(err) > 0:
       out = 'Content-type: text/plain\n\n' + out
     if len(err) > 0:
-      out += '<hr><hr>' + err
+      out += '<hr><hr><pre>' + err
     if exc_type != None:
-      out += '<hr><hr>qq' + ''.join(traceback.format_exception(exc_type, exc_value, tb))
+      out += '<hr><hr><pre>' + ''.join(traceback.format_exception(exc_type, exc_value, tb))
     print out
     return True
 

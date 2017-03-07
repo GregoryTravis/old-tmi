@@ -32,6 +32,7 @@ def ahref(text, url):
 
 def call(f, *args, **kwargs):
   assert len(kwargs) == 0
+  args = map(readIfNode, args)
   return '/' + getScript() + '?' + urllib.quote(json.dumps((f.__name__, args)))
 
 def link(text, f, *args, **kwargs):
@@ -50,6 +51,8 @@ def flatten(o):
     return o
   elif type(o) in [set, list, tuple]:
     return ''.join(map(flatten, o))
+  elif type(o) in [int, float]:
+    return str(o)
   else:
     assert False, (o, type(o))
 
@@ -99,6 +102,8 @@ def webmain(module):
 
   commit()
 
+  assert result != None
+
   # TODO this is hacky.
   if type(result) == dict and result.keys() == ['redirect']:
     print generateCookieHeader()
@@ -111,7 +116,7 @@ def webmain(module):
     print 'Content-type: text/html'
     print generateCookieHeader()
     print ''
-    print webfmt(read(result))
+    print webfmt(readIfNode(result))
 
 def redirect(f, *args):
   return {'redirect': call(f, *args)}
@@ -126,11 +131,17 @@ assert [1, 0, 2, 0, 3] == listjoin([1, 2, 3], 0)
 assert [1] == listjoin([1], 0)
 assert [] == listjoin([], 0)
 
-def mkform(destfun, rec):
-  return ('Login:', br(), form(
+def mkform(destfun, rec, hidden_rec={}):
+  return form(
     hidden('_destfun', destfun.__name__),
     listjoin([[k, input(name=k, value=v)] for k, v in rec.iteritems()], br()),
+    listjoin([[k, hidden(k, v)] for k, v in hidden_rec.iteritems()], br()),
     br(),
     button('Submit'),
     method='POST',
-    action='/' + getScript() + '?'))
+    action='/' + getScript() + '?')
+
+@node
+class ListJoin(UNode):
+  def forwards(os, glue):
+    return listjoin(list(os), glue)

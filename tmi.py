@@ -119,6 +119,7 @@ def isunode(n): return issubclass(type(n), UNode)
 def islnode(n): return issubclass(type(n), LNode)
 
 def nodeLift(o): return o if isnode(o) else Constant(o)
+def readIfNode(n): return read(n) if isnode(n) else n
 
 def reader(node): return lambda: read(node)
 
@@ -154,7 +155,7 @@ def commit():
   accum = defaultdict(list)
   while len(writes) > 0:
     (node, value) = writes.popleft()
-    value = read(value) if isnode(value) else value
+    value = readIfNode(value)
     accum[node.serial].append(value)
     if not isunode(node):
       writes.extend(propagateOne(node, value))
@@ -238,7 +239,7 @@ def File(filename):
         return json.load(f)
     def backwards(out):
       with open(filename, 'w') as f:
-        json.dump(out, f)
+        json.dump(out, f, sort_keys=True, indent=2)
       return {}
     def __repr__(self):
       return 'File(' + filename + ')'
@@ -265,10 +266,14 @@ def setfield(d, k, v):
   assert k in d
   return setOrAddField(d, k, v)
 
+assert D(a=1, b=2, c=30) == setfield(D(a=1, b=2, c=3), 'c', 30)
+
 # Set a field that's not there yet.
 def addfield(d, k, v):
   assert k not in d
   return setOrAddField(d, k, v)
+
+assert D(a=1, b=2, c=30) == addfield(D(a=1, b=2), 'c', 30)
 
 @node
 class Deref(Node):
@@ -511,3 +516,49 @@ class DerefOrNew(Node):
     return rec[field]
   def backwards(out, rec, field):
     return { 'rec': setOrAddField(rec, field, out) }
+
+@node
+class Column(UNode):
+  def forwards(rel, field):
+    return set([rec[field] for rec in rel])
+
+assert set([1, 10]) == read(Column([D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)], 'a'))
+
+@node
+class Min(UNode):
+  def forwards(st):
+    return min(*map(int, st))
+
+@node
+class Max(UNode):
+  def forwards(st):
+    return max(*map(int, st))
+
+assert 1 == read(Min(set([1, 1, 2, 3, 3])))
+assert 3 == read(Max(set([1, 1, 2, 3, 3])))
+
+@node
+class Str(UNode):
+  def forwards(s):
+    return str(s)
+
+assert '1' == read(Str(Constant(1)))
+
+@node
+class Union(UNode):
+  def forwards(rela, relb):
+    return remove_duplicates(rela + relb)
+
+assert [D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)] == read(Union([D(a=1, b=2), D(a=1, b=20)], [D(a=10, b=20)]))
+
+@node
+class AddField(UNode):
+  def forwards(rec, field, value):
+    return addfield(rec, field, value)
+
+@node
+class Rel(UNode):
+  def forwards(*recs):
+    return list(recs)
+
+assert [D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)] == read(Rel(D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)))
