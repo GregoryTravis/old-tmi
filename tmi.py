@@ -128,6 +128,13 @@ def readIfNode(n): return read(n) if isnode(n) else n
 
 def reader(node): return lambda: read(node)
 
+# We can't really distinguish between the empty relation and a list
+def isrel(rel): return type(rel) == list and (len(rel) == 0 or type(rel[0]) == dict)
+
+assert isrel([])
+assert isrel([D(a=1)])
+assert not isrel(D(a=1))
+
 #@trace
 def read(node):
   return node.forwards(*[reader(arg) if islnode(node) else read(arg) for arg in node.args])
@@ -376,7 +383,7 @@ def frz(o):
     return frozenset(map(frz, o.items()))
   elif type(o) == tuple:
     return tuple(map(frz, o))
-  elif type(o) in [int, float, str, unicode]:
+  elif type(o) in [int, float, str, unicode, bool]:
     return o
   else:
     assert False, (o, type(o))
@@ -565,3 +572,16 @@ class Rel(UNode):
     return list(recs)
 
 assert [D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)] == read(Rel(D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)))
+
+# Can only map native functions.
+@node
+class Map(UNode):
+  def forwards(f, os):
+    return map(f, os)
+
+assert [2, 4, 6] == read(Map(lambda x: x * 2, Constant([1, 2, 3])))
+
+@node
+class Add(UNode):
+  def forwards(a, b):
+    return a + b

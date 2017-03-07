@@ -13,18 +13,34 @@ invitation = Deref(db, 'invitation')
 
 cookies = Cookies()
 
+def currentPlayerName():
+  return Deref(cookies, 'login')
+
+def currentPlayerId():
+  # TODO rid of this read.
+  return Deref(One(Where(player, lambda rec: rec['name'] == read(currentPlayerName()))), 'player_id')
+
 def IsLoggedIn():
-  return And(HasField(Cookies(), 'login'), Not(Equals(Deref(cookies, 'login'), '')))
+  return And(HasField(Cookies(), 'login'), Not(Equals(currentPlayerName(), '')))
 
 def logout():
-  write(Deref(cookies, 'login'), '')
+  write(currentPlayerName(), '')
   return main()
 
 def Footer():
-  return List(br(), link('logout', logout))
+  return List(br(), link('home', PlayerMenu), ' ', link('logout', logout), br(),
+    'Switch: ',
+    ListJoin(
+      Map(lambda player: link(player['name'], loginAs, player['name']),
+        player),
+      ' ')
+  )
+
+def Header():
+  return List('Hello, ', currentPlayerName(), br())
 
 def next_id(rel, id_field):
-  return Str(Max(Column(rel, id_field)))
+  return Str(Add(Max(Column(rel, id_field)), 1))
 
 def CreateGame():
   game_id = next_id(game, 'game_id')
@@ -43,25 +59,54 @@ def AddPlayersToGame(game_id):
     link('done', DoneAddingPlayersToGame, game_id),
     Footer())
 
+# Shouldn't be able to invite players after game has started.
 def AddPlayersToGameRcv(rec):
   game_id = rec['game_id']
   player_name = rec['player_name']
   player_id = Deref(One(Where(player, lambda rec: rec['name'] == player_name)), 'player_id')
-  write(invitation, Union(invitation, Rel(AddField({'game_id': game_id}, 'player_id', player_id))))
+  write(invitation, Union(invitation, Rel(AddField({'game_id': game_id, 'accepted': False}, 'player_id', player_id))))
   return redirect(AddPlayersToGame, game_id)
 
 def DoneAddingPlayersToGame(game_id):
   return 'Done'
 
+def acceptInvitation(_invitation):
+  write(
+    Deref(One(Where(invitation, lambda rec: rec['game_id'] == _invitation['game_id'] and rec['player_id'] == _invitation['player_id'])),
+      'accepted'),
+    True)
+  return PlayerMenu()
+
+def askToAcceptInvitation(invitation):
+  return List(Header(),
+    'Accept invitation from _ to game ', Deref(invitation, 'game_id'), '? ',
+    link('Yes', acceptInvitation, invitation), ' ',
+    link('No', PlayerMenu), br(),
+    Footer()
+  )
+
+def invitationList(player_id):
+  #print >>sys.stderr, player_id, read(player_id)
+  #print >>sys.stderr, read(Column(Where(invitation, lambda rec: rec['player_id'] == read(player_id)), 'game_id'))
+  return List(
+    'Pending invitations: ',
+    ListJoin(
+      Map(lambda invitation: link(invitation['game_id'], askToAcceptInvitation, invitation),
+        Where(invitation, lambda rec: rec['player_id'] == read(player_id) and rec['accepted'] == False)), ' ')
+  )
+
 def PlayerMenu():
-  return List('Hello, ', Deref(Cookies(), 'login'), 
-    '<br>',
-    link('create game', CreateGame),
+  return List(Header(),
+    link('create game', CreateGame), br(),
+    invitationList(currentPlayerId()),
     Footer())
 
-def loginRcv(formdata):
-  write(DerefOrNew(cookies, 'login'), Deref(formdata, 'username'))
+def loginAs(name):
+  write(DerefOrNew(cookies, 'login'), name)
   return redirect(PlayerMenu)
+
+def loginRcv(formdata):
+  return loginAs(Deref(formdata, 'username'))
 
 def Login():
   return List('Login:', br(), mkform(loginRcv, { 'username': '' }))
