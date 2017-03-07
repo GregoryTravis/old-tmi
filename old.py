@@ -72,19 +72,11 @@ def DoneAddingPlayersToGame(game_id):
 
 def acceptInvitation(_invitation):
   write(
-    # TODO should be a Receq but need projrec for that.
-    Deref(One(Where(invitation, Pand(Feq('game_id', _invitation['game_id']), Feq('player_id', _invitation['player_id'])))),
+    Deref(One(Where(invitation, Receq(Subrec(_invitation, ['game_id', 'player_id'])))),
       'accepted'),
     True)
   return PlayerMenu()
 
-# TODO
-# Get rid of this read()
-# Make predcate nodes
-# Receq, subrec (test that fails without subrec)
-# Rec()?
-# Rel->fun operator!
-# Move more complex things out to big joins
 def playerName(player_id):
   return Deref(One(Where(player, Feq('player_id', player_id))), 'name')
 

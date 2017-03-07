@@ -491,10 +491,19 @@ def remove_duplicates(os):
 
 assert [1, 2, 3] == remove_duplicates([1, 2, 1, 1, 2, 2, 1, 1, 2, 3, 3, 3])
 
+def subrec(rec, fields):
+  return {k: rec[k] for k in fields}
+@node
+class Subrec(UNode):
+  def forwards(rec, fields):
+    return subrec(rec, fields)
+
+assert read(Receq(Subrec(d(a=1, c=3), ['a'])))(d(a=1, b=2))
+
 @node
 class Proj(UNode):
   def forwards(rel, fields):
-    return remove_duplicates([{k: rec[k] for k in fields} for rec in rel])
+    return remove_duplicates([subrec(rec, fields) for rec in rel])
 
 la = [
   D(a=1, b=2, c=3),
@@ -609,3 +618,11 @@ assert [2, 4, 6] == read(Map(lambda x: x * 2, Constant([1, 2, 3])))
 class Add(UNode):
   def forwards(a, b):
     return a + b
+
+# TODO
+# Get rid of this read()
+# Make predcate nodes
+# Receq, subrec (test that fails without subrec)
+# Rec()?
+# Rel->fun operator!
+# Move more complex things out to big joins
