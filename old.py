@@ -32,7 +32,7 @@ def CreateGame():
   return redirect(AddPlayersToGame, game_id)
 
 def players_invited_to_game(game_id):
-  return Column(Where(invitation, lambda rec: rec['game_id'] == game_id), 'player_id')
+  return Column(Where(Join(player, invitation), lambda rec: rec['game_id'] == game_id), 'name')
 
 def AddPlayersToGame(game_id):
   return List('Add players to game ', game_id,
