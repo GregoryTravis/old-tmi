@@ -12,6 +12,7 @@ player_game = Deref(db, 'player_game')
 invitation = Deref(db, 'invitation')
 
 player_name_to_id = RelFun1f(player, ['name'], ['player_id'])
+player_id_to_name = RelFun1f(player, ['player_id'], ['name'])
 
 cookies = Cookies()
 
@@ -65,7 +66,7 @@ def AddPlayersToGame(game_id):
 def AddPlayersToGameRcv(rec):
   game_id = rec['game_id']
   player_name = rec['player_name']
-  player_id = Deref(One(Where(player, Feq('name', player_name))), 'player_id')
+  player_id = Apply(player_name_to_id, player_name)
   write(invitation, Union(invitation, Rel(AddField({'game_id': game_id, 'accepted': False, 'inviter': read(currentPlayerId())}, 'player_id', player_id))))
   return redirect(AddPlayersToGame, game_id)
 
@@ -80,7 +81,7 @@ def acceptInvitation(_invitation):
   return PlayerMenu()
 
 def playerName(player_id):
-  return Deref(One(Where(player, Feq('player_id', player_id))), 'name')
+  return Apply(player_id_to_name, player_id)
 
 def askToAcceptInvitation(invitation):
   return List(Header(),

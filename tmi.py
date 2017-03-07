@@ -707,6 +707,7 @@ assert D(a=1) == read(Apply(RelFun1(voo, ['c'], ['a']), (D(c=3))))
 # Rec(), and then get rid of a read()
 # Rel->fun operator!
 # RelFun callable?  There's nothing else you do with them
+# m->1 relfun with positional args
 # All these trivial node wrappers
 # Operators
 # RelFunF2F -- rid of input/output field names
