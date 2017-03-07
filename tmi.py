@@ -1,4 +1,8 @@
 # -*- coding: UTF-8 -*-
+# These two lines must be first, or it shall be too late.
+import sys
+sys.dont_write_bytecode = True
+
 import copy
 import inspect
 import io
