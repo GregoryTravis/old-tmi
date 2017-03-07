@@ -1,10 +1,12 @@
 # -*- coding: UTF-8 -*-
+import ast
 import copy
 import inspect
 import itertools
 import json
 import operator
 import os
+import pprint
 
 D = dict
 
@@ -236,10 +238,10 @@ def File(filename):
   class File_(Node):
     def forwards():
       with open(filename) as f:
-        return json.load(f)
+        return ast.literal_eval(f.read())
     def backwards(out):
       with open(filename, 'w') as f:
-        json.dump(out, f, sort_keys=True, indent=2)
+        f.write(pprint.pformat(out))
       return {}
     def __repr__(self):
       return 'File(' + filename + ')'
