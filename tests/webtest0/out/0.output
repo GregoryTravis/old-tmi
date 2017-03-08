@@ -1,0 +1,4 @@
+Content-type: text/html
+
+
+Login:<br/><form action="/run-old.cgi?" method="POST"><input type="hidden" name="_destfun" value="loginRcv"/>username<input name="username" value=""/><br/><button>Submit</button></form>

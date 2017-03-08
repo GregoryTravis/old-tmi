@@ -1,0 +1,4 @@
+Content-type: text/html
+Set-Cookie: tmilogin=greg
+
+Hello, greg<br/><a href="/run-old.cgi?%5B%22CreateGame%22%2C%20%5B%5D%5D">create game</a><br/>Pending invitations: <br/>Games in progress: <a href="/run-old.cgi?%5B%22readyToPlay%22%2C%20%5B%222%22%2C%200%5D%5D">2</a> <a href="/run-old.cgi?%5B%22readyToPlay%22%2C%20%5B%224%22%2C%200%5D%5D">4</a><br/><br/><a href="/run-old.cgi?%5B%22PlayerMenu%22%2C%20%5B%5D%5D">home</a> <a href="/run-old.cgi?%5B%22logout%22%2C%20%5B%5D%5D">logout</a><br/>Switch: <a href="/run-old.cgi?%5B%22loginAs%22%2C%20%5B%22greg%22%5D%5D">greg</a> <a href="/run-old.cgi?%5B%22loginAs%22%2C%20%5B%22james%22%5D%5D">james</a> <a href="/run-old.cgi?%5B%22loginAs%22%2C%20%5B%22will%22%5D%5D">will</a>

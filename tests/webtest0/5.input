@@ -1,0 +1,1 @@
+{'QUERY_STRING': '', 'form_data': {'game_id': '6', '_destfun': 'AddPlayersToGameRcv', 'player_name': 'james'}, 'REQUEST_METHOD': 'POST', 'HTTP_COOKIE': 'tmilogin=greg'}

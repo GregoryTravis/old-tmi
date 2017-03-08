@@ -751,6 +751,8 @@ class Rec(UNode):
 assert {'haha': 7, 'asdf': 10} == read(Rec(asdf=Box(10), haha=Add(3, 4)))
 
 # TODO
+# initial db in recording
+# common code around run_things()
 # m->1 relfunSM with positional args
 # Slices for invitations etc
 # All these trivial node wrappers

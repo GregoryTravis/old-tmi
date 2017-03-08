@@ -1,7 +1,9 @@
 import cgi
 import Cookie
+import io
 import json
 import os
+import shutil
 import sys
 import traceback
 import urllib
@@ -82,13 +84,55 @@ def get_inputs():
     'form_data': form_data,
   }
 
+def record(inputs, output):
+  isRecording = os.path.exists('recording')
+  if not isRecording:
+    return
+  # Shouldn't hard-code Old here.
+  if not os.path.exists('recording/out'):
+    os.mkdir('recording/out')
+  db = read(File('old.dat'))
+  if os.path.exists('recording/counter'):
+    with open('recording/counter') as f:
+      counter = int(f.read())
+  else:
+    counter = 0
+    # Also the initial copy
+    shutil.copyfile('old.dat', 'recording/initial.db')
+  with open('recording/counter', 'w') as f:
+    f.write(str(counter + 1))
+  with open('recording/%s.input' % counter, 'w') as f:
+    f.write(str(inputs))
+  with open('recording/out/%s.output' % counter, 'w') as f:
+    f.write(str(output))
+  with open('recording/out/%s.db' % counter, 'w') as f:
+    f.write(str(db))
+
 def webmain(module):
   inputs = get_inputs()
   result = run_things(module, inputs)
   assert result != None
   commit()
   output = format_result(result)
+  record(inputs, output)
   sys.stdout.write(output)
+
+def webtestmain(module, recording):
+  # TODO hack
+  sys.argv[0] = 'run-old.cgi'
+  counter = 0
+  shutil.copyfile('%s/initial.db' % recording, 'old.dat')
+  while os.path.exists('%s/%s.input' % (recording, counter)):
+    inputs = io.readdat('%s/%s.input' % (recording, counter))
+
+    result = run_things(module, inputs)
+    assert result != None
+    commit()
+    output = format_result(result)
+    record(inputs, output)
+
+    counter += 1
+  print '-', recording, counter
 
 def run_things(module, inputs):
   readCookies(inputs['HTTP_COOKIE'])

@@ -48,7 +48,7 @@ def next_id(rel, id_field):
 
 def CreateGame():
   game_id = next_id(game, 'game_id')
-  write(game, Union(game, Rel(Rec(time=time.time(), game_id=game_id))))
+  write(game, Union(game, Rel(Rec(time=0, game_id=game_id))))
   return redirect(AddPlayersToGame, game_id)
 
 def players_invited_to_game(game_id):

@@ -1,0 +1,4 @@
+Set-Cookie: tmilogin=james
+Location: /run-old.cgi?%5B%22PlayerMenu%22%2C%20%5B%5D%5D
+Status: 302
+
