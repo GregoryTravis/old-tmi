@@ -2,6 +2,7 @@ import cgi
 import Cookie
 import io
 import json
+import lib
 import os
 import shutil
 import sys
@@ -38,18 +39,6 @@ def exec_call(module, s):
 
 def pre(s):
   return '<pre>%s</pre>' % s
-
-def flatten(o):
-  if type(o) == str or type(o) == unicode:
-    return o
-  elif type(o) in [set, list, tuple]:
-    return ''.join(map(flatten, o))
-  elif type(o) in [int, float]:
-    return str(o)
-  else:
-    assert False, (o, type(o))
-
-assert 'abc' == flatten(['a', ('b',), [['c']]])
 
 COOKIE_PREFIX = 'tmi'
 _cookies = {}
@@ -163,25 +152,15 @@ def format_result(result):
     return (
       'Content-type: text/html\n' +
       generateCookieHeader() + '\n\n' +
-      flatten(readIfNode(result)).encode('utf-8'))
+      lib.flatten(readIfNode(result)).encode('utf-8'))
 
 def redirect(f, *args):
   return {'redirect': call(f, *args)}
 
-def listjoin(os, glue):
-  if len(os) < 2:
-    return os
-  else:
-    return [os[0], glue] + listjoin(os[1:], glue)
-
-assert [1, 0, 2, 0, 3] == listjoin([1, 2, 3], 0)
-assert [1] == listjoin([1], 0)
-assert [] == listjoin([], 0)
-
 def mkform(destfun, rec, hidden_rec={}):
   return form(
     hidden('_destfun', destfun.__name__),
-    listjoin([[k, input(name=k, value=v)] for k, v in rec.iteritems()], br()),
+    lib.listjoin([[k, input(name=k, value=v)] for k, v in rec.iteritems()], br()),
     [hidden(k, v) for k, v in hidden_rec.iteritems()],
     br(),
     button('Submit'),
@@ -191,4 +170,4 @@ def mkform(destfun, rec, hidden_rec={}):
 @node
 class ListJoin(UNode):
   def forwards(os, glue):
-    return listjoin(list(os), glue)
+    return lib.listjoin(list(os), glue)
