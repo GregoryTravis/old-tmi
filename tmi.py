@@ -335,7 +335,7 @@ class List(UNode):
     return args
 
 def one(rel):
-  assert type(rel) == list
+  assert type(rel) == list, rel
   assert len(rel) == 1, rel
   return rel[0]
 
@@ -574,14 +574,14 @@ class DerefOrNew(Node):
     return { 'rec': setOrAddField(rec, field, out) }
 
 def column(rel, field):
-  return set([rec[field] for rec in rel])
+  return list(set([rec[field] for rec in rel]))
 
 @node
 class Column(UNode):
   def forwards(rel, field):
     return column(rel, field)
 
-assert set([1, 10]) == read(Column([D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)], 'a'))
+assert set([1, 10]) == set(read(Column([D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)], 'a')))
 
 @node
 class Min(UNode):
@@ -680,27 +680,21 @@ assert D(a=1) == relfunS(voo, ['b', 'c'], ['a'])(D(b=2, c=3))
 assert D(a=1) == relfunS(voo, ['c'], ['a'])(D(c=3))
 
 def relfunM(rel, domain, range):
-  assert len(domain) == 1 and len(range) == 1
-  infield = domain[0]
-  outfield = range[0]
-  return lambda x: column(relfunSM(rel, domain, range)({infield: x}), outfield)
+  return lambda x: column(relfunSM(rel, [domain], [range])({domain: x}), range)
 
-assert seteq([2, 20], relfunM(voo, ['a'], ['b'])(1))
-assert seteq([1, 10], relfunM(voo, ['b'], ['a'])(20))
-assert seteq([1, 10], relfunM(voo, ['c'], ['a'])(30))
-assert seteq([20], relfunM(voo, ['a'], ['b'])(10))
-assert seteq([30], relfunM(voo, ['a'], ['c'])(10))
-assert seteq([1], relfunM(voo, ['c'], ['a'])(3))
+assert seteq([2, 20], relfunM(voo, 'a', 'b')(1))
+assert seteq([1, 10], relfunM(voo, 'b', 'a')(20))
+assert seteq([1, 10], relfunM(voo, 'c', 'a')(30))
+assert seteq([20], relfunM(voo, 'a', 'b')(10))
+assert seteq([30], relfunM(voo, 'a', 'c')(10))
+assert seteq([1], relfunM(voo, 'c', 'a')(3))
 
 def relfun(rel, domain, range):
-  assert len(domain) == 1 and len(range) == 1
-  infield = domain[0]
-  outfield = range[0]
-  return lambda x: one(relfunSM(rel, domain, range)({infield: x}))[outfield]
+  return lambda x: one(relfunM(rel, domain, range)(x))
 
-assert 20 == relfun(voo, ['a'], ['b'])(10)
-assert 30 == relfun(voo, ['a'], ['c'])(10)
-assert 1 == relfun(voo, ['c'], ['a'])(3)
+assert 20 == relfun(voo, 'a', 'b')(10)
+assert 30 == relfun(voo, 'a', 'c')(10)
+assert 1 == relfun(voo, 'c', 'a')(3)
 
 class FUNode(UNode):
   def __call__(self, *args, **kwargs):
@@ -757,8 +751,6 @@ class Rec(UNode):
 assert {'haha': 7, 'asdf': 10} == read(Rec(asdf=Box(10), haha=Add(3, 4)))
 
 # TODO
-# Rec(), and then get rid of a read()
-# The relfunSM*f ones shouldn't need domain and range lists, there's just one
 # m->1 relfunSM with positional args
 # Slices for invitations etc
 # All these trivial node wrappers

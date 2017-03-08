@@ -11,10 +11,10 @@ hand = Deref(db, 'hand')
 player_game = Deref(db, 'player_game')
 invitation = Deref(db, 'invitation')
 
-player_name_to_id = RelFun(player, ['name'], ['player_id'])
-player_id_to_name = RelFun(player, ['player_id'], ['name'])
-games_invited_to = RelFunM(invitation, ['player_id'], ['game_id'])
-games_with_unaccepted_invitations = RelFunM(invitation, ['accepted'], ['game_id'])(False)
+player_name_to_id = RelFun(player, 'name', 'player_id')
+player_id_to_name = RelFun(player, 'player_id', 'name')
+games_invited_to = RelFunM(invitation, 'player_id', 'game_id')
+games_with_unaccepted_invitations = RelFunM(invitation, 'accepted', 'game_id')(False)
 
 cookies = Cookies()
 
