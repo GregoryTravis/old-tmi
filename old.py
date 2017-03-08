@@ -48,7 +48,7 @@ def next_id(rel, id_field):
 
 def CreateGame():
   game_id = next_id(game, 'game_id')
-  write(game, Union(game, Rel(AddField({'time': time.time()}, 'game_id', game_id))))
+  write(game, Union(game, Rel(Rec(time=time.time(), game_id=game_id))))
   return redirect(AddPlayersToGame, game_id)
 
 def players_invited_to_game(game_id):
@@ -69,7 +69,7 @@ def AddPlayersToGameRcv(rec):
   game_id = rec['game_id']
   player_name = rec['player_name']
   player_id = player_name_to_id(player_name)
-  write(invitation, Union(invitation, Rel(AddField({'game_id': game_id, 'accepted': False, 'inviter': read(currentPlayerId())}, 'player_id', player_id))))
+  write(invitation, Union(invitation, Rel(Rec(game_id=game_id, accepted=False, inviter=currentPlayerId(), player_id=player_id))))
   return redirect(AddPlayersToGame, game_id)
 
 def DoneAddingPlayersToGame(game_id):

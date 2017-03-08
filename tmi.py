@@ -73,18 +73,15 @@ r = [
 def check_node_arg_lists(cls):
   forwards = cls.forwards
   fargs = inspect.getargspec(forwards)
-  assert fargs.keywords == None
   assert fargs.defaults == None
 
   if not issubclass(cls, UNode):
     backwards = cls.backwards
     bargs = inspect.getargspec(backwards)
     assert ['out'] + fargs.args == bargs.args, (fargs.args, bargs.args)
-    assert bargs.keywords == None
     assert bargs.defaults == None
 
-def check_argspec_match(forwardsFunction, (args, kwargs)):
-  assert len(kwargs) == 0
+def check_argspec_match(cls, forwardsFunction, (args, kwargs)):
   argspec = inspect.getargspec(forwardsFunction)
   if argspec.varargs == None:
     # Args must exactly match.
@@ -92,6 +89,12 @@ def check_argspec_match(forwardsFunction, (args, kwargs)):
   else:
     # Args must be at least as many as the non-varargs ones.
     assert len(argspec.args) <= len(args)
+  if argspec.keywords == None:
+    # No keywords allowed
+    assert len(kwargs) == 0
+  else:
+    # No keywords for bidirectional, just because I haven't thought about it.
+    assert issubclass(cls, UNode)
 
 node_serial = 0
 def get_node_serial():
@@ -118,7 +121,9 @@ assert not isrel(D(a=1))
 
 #@trace
 def read(node):
-  return node.forwards(*[reader(arg) if islnode(node) else read(arg) for arg in node.args])
+  return node.forwards(
+    *[reader(arg) if islnode(node) else read(arg) for arg in node.args],
+    **{k: reader(kwarg) if islnode(node) else read(kwarg) for k, kwarg in node.kwargs.iteritems()})
 
 writes = None
 
@@ -173,9 +178,10 @@ def node(cls):
 
   # Create and install ctor
   def ctor(self, *args, **kwargs):
-    check_argspec_match(cls.forwards, (args, kwargs))
+    check_argspec_match(cls, cls.forwards, (args, kwargs))
     self.serial = get_node_serial()
     self.args = map(nodeLift, args)
+    self.kwargs = {k: nodeLift(v) for k, v in kwargs.iteritems()}
   cls.__init__ = ctor
 
   # Check f/b argspec compatibility
@@ -743,12 +749,18 @@ class Difference(UNode):
 
 assert seteq([1, 2, 3], read(Difference([1, 2, 3, 4, 5], [4, 5, 6])))
 
+@node
+class Rec(UNode):
+  def forwards(**kwargs):
+    return dict(**kwargs)
+
+assert {'haha': 7, 'asdf': 10} == read(Rec(asdf=Box(10), haha=Add(3, 4)))
+
 # TODO
 # Rec(), and then get rid of a read()
-# Rel->fun operator!
-# RelFun callable?  There's nothing else you do with them
 # The relfun*f ones shouldn't need domain and range lists, there's just one
 # m->1 relfun with positional args
+# Slices for invitations etc
 # All these trivial node wrappers
 # Operators
 # Move more complex things out to big joins
