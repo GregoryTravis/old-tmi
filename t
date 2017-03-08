@@ -8,5 +8,11 @@ fi
 mkdir recording
 python test-old.py tests/webtest0
 diff -qr recording/out tests/webtest0/out
-rm -r recording
+
+if [ $? -eq 0 ]; then
+  rm -r recording
+else
+  diff -r recording/out tests/webtest0/out
+fi
+
 ./reset-db

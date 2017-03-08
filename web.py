@@ -182,7 +182,7 @@ def mkform(destfun, rec, hidden_rec={}):
   return form(
     hidden('_destfun', destfun.__name__),
     listjoin([[k, input(name=k, value=v)] for k, v in rec.iteritems()], br()),
-    listjoin([[k, hidden(k, v)] for k, v in hidden_rec.iteritems()], br()),
+    [hidden(k, v) for k, v in hidden_rec.iteritems()],
     br(),
     button('Submit'),
     method='POST',

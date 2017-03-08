@@ -754,7 +754,11 @@ assert {'haha': 7, 'asdf': 10} == read(Rec(asdf=Box(10), haha=Add(3, 4)))
 # initial db in recording
 # common code around run_things()
 # m->1 relfunSM with positional args
+# relfun that takes a rec and returns the complement of fields
+# relfun: '*' to mean 'all fields'
 # Slices for invitations etc
+# missing newlines in form; hide hidden field names
+# done back to the menu
 # All these trivial node wrappers
 # Operators
 # Move more complex things out to big joins
