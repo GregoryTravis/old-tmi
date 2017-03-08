@@ -654,7 +654,7 @@ def union(os1, os2):
 def seteq(os1, os2):
   return set(os1) == set(os2)
 
-def relfun(rel, domain, range):
+def relfunSM(rel, domain, range):
   assert len(domain) > 0 and len(range) > 0 and disjoint(domain, range)
   rel = proj(rel, union(domain, range))
   def _f(domrec):
@@ -662,45 +662,45 @@ def relfun(rel, domain, range):
     return proj(where(rel, receq(domrec)), range)
   return _f
 
-def relfun1(rel, domain, range):
-  return lambda domrec: one(relfun(rel, domain, range)(domrec))
+def relfunS(rel, domain, range):
+  return lambda domrec: one(relfunSM(rel, domain, range)(domrec))
 
-assert releq([D(b=2), D(b=20)], relfun(voo, ['a'], ['b'])(D(a=1)))
-assert releq([D(a=1), D(a=10)], relfun(voo, ['b'], ['a'])(D(b=20)))
-assert releq([D(a=1), D(a=10)], relfun(voo, ['c'], ['a'])(D(c=30)))
-assert releq([D(b=20)], relfun(voo, ['a'], ['b'])(D(a=10)))
-assert releq([D(c=30)], relfun(voo, ['a'], ['c'])(D(a=10)))
-assert releq([D(a=1)], relfun(voo, ['b', 'c'], ['a'])(D(b=2, c=3)))
-assert releq([D(a=1), D(a=10)], relfun(voo, ['b', 'c'], ['a'])(D(b=20, c=30)))
-assert releq([D(a=1)], relfun(voo, ['c'], ['a'])(D(c=3)))
+assert releq([D(b=2), D(b=20)], relfunSM(voo, ['a'], ['b'])(D(a=1)))
+assert releq([D(a=1), D(a=10)], relfunSM(voo, ['b'], ['a'])(D(b=20)))
+assert releq([D(a=1), D(a=10)], relfunSM(voo, ['c'], ['a'])(D(c=30)))
+assert releq([D(b=20)], relfunSM(voo, ['a'], ['b'])(D(a=10)))
+assert releq([D(c=30)], relfunSM(voo, ['a'], ['c'])(D(a=10)))
+assert releq([D(a=1)], relfunSM(voo, ['b', 'c'], ['a'])(D(b=2, c=3)))
+assert releq([D(a=1), D(a=10)], relfunSM(voo, ['b', 'c'], ['a'])(D(b=20, c=30)))
+assert releq([D(a=1)], relfunSM(voo, ['c'], ['a'])(D(c=3)))
 
-assert D(b=20) == relfun1(voo, ['a'], ['b'])(D(a=10))
-assert D(c=30) == relfun1(voo, ['a'], ['c'])(D(a=10))
-assert D(a=1) == relfun1(voo, ['b', 'c'], ['a'])(D(b=2, c=3))
-assert D(a=1) == relfun1(voo, ['c'], ['a'])(D(c=3))
+assert D(b=20) == relfunS(voo, ['a'], ['b'])(D(a=10))
+assert D(c=30) == relfunS(voo, ['a'], ['c'])(D(a=10))
+assert D(a=1) == relfunS(voo, ['b', 'c'], ['a'])(D(b=2, c=3))
+assert D(a=1) == relfunS(voo, ['c'], ['a'])(D(c=3))
 
-def relfunf(rel, domain, range):
+def relfunM(rel, domain, range):
   assert len(domain) == 1 and len(range) == 1
   infield = domain[0]
   outfield = range[0]
-  return lambda x: column(relfun(rel, domain, range)({infield: x}), outfield)
+  return lambda x: column(relfunSM(rel, domain, range)({infield: x}), outfield)
 
-assert seteq([2, 20], relfunf(voo, ['a'], ['b'])(1))
-assert seteq([1, 10], relfunf(voo, ['b'], ['a'])(20))
-assert seteq([1, 10], relfunf(voo, ['c'], ['a'])(30))
-assert seteq([20], relfunf(voo, ['a'], ['b'])(10))
-assert seteq([30], relfunf(voo, ['a'], ['c'])(10))
-assert seteq([1], relfunf(voo, ['c'], ['a'])(3))
+assert seteq([2, 20], relfunM(voo, ['a'], ['b'])(1))
+assert seteq([1, 10], relfunM(voo, ['b'], ['a'])(20))
+assert seteq([1, 10], relfunM(voo, ['c'], ['a'])(30))
+assert seteq([20], relfunM(voo, ['a'], ['b'])(10))
+assert seteq([30], relfunM(voo, ['a'], ['c'])(10))
+assert seteq([1], relfunM(voo, ['c'], ['a'])(3))
 
-def relfun1f(rel, domain, range):
+def relfun(rel, domain, range):
   assert len(domain) == 1 and len(range) == 1
   infield = domain[0]
   outfield = range[0]
-  return lambda x: one(relfun(rel, domain, range)({infield: x}))[outfield]
+  return lambda x: one(relfunSM(rel, domain, range)({infield: x}))[outfield]
 
-assert 20 == relfun1f(voo, ['a'], ['b'])(10)
-assert 30 == relfun1f(voo, ['a'], ['c'])(10)
-assert 1 == relfun1f(voo, ['c'], ['a'])(3)
+assert 20 == relfun(voo, ['a'], ['b'])(10)
+assert 30 == relfun(voo, ['a'], ['c'])(10)
+assert 1 == relfun(voo, ['c'], ['a'])(3)
 
 class FUNode(UNode):
   def __call__(self, *args, **kwargs):
@@ -708,35 +708,35 @@ class FUNode(UNode):
     return Apply(self, *args)
 
 @node
+class RelFunSM(FUNode):
+  def forwards(rel, domain, range):
+    return relfunSM(rel, domain, range)
+
+@node
+class RelFunS(FUNode):
+  def forwards(rel, domain, range):
+    return relfunS(rel, domain, range)
+
+@node
+class RelFunM(FUNode):
+  def forwards(rel, domain, range):
+    return relfunM(rel, domain, range)
+
+@node
 class RelFun(FUNode):
   def forwards(rel, domain, range):
     return relfun(rel, domain, range)
 
-@node
-class RelFun1(FUNode):
-  def forwards(rel, domain, range):
-    return relfun1(rel, domain, range)
-
-@node
-class RelFunf(FUNode):
-  def forwards(rel, domain, range):
-    return relfunf(rel, domain, range)
-
-@node
-class RelFun1f(FUNode):
-  def forwards(rel, domain, range):
-    return relfun1f(rel, domain, range)
-
-assert releq([D(a=1)], read(RelFun(voo, ['c'], ['a']))(D(c=3)))
-assert D(a=1) == read(RelFun1(voo, ['c'], ['a']))(D(c=3))
+assert releq([D(a=1)], read(RelFunSM(voo, ['c'], ['a']))(D(c=3)))
+assert D(a=1) == read(RelFunS(voo, ['c'], ['a']))(D(c=3))
 
 @node
 class Apply(UNode):
   def forwards(f, *args):
     return f(*args)
 
-assert releq([D(a=1)], read(Apply(RelFun(voo, ['c'], ['a']), (D(c=3)))))
-assert D(a=1) == read(Apply(RelFun1(voo, ['c'], ['a']), (D(c=3))))
+assert releq([D(a=1)], read(Apply(RelFunSM(voo, ['c'], ['a']), (D(c=3)))))
+assert D(a=1) == read(Apply(RelFunS(voo, ['c'], ['a']), (D(c=3))))
 
 def setlike(os):
   return type(os) in set([list, set])
@@ -758,8 +758,8 @@ assert {'haha': 7, 'asdf': 10} == read(Rec(asdf=Box(10), haha=Add(3, 4)))
 
 # TODO
 # Rec(), and then get rid of a read()
-# The relfun*f ones shouldn't need domain and range lists, there's just one
-# m->1 relfun with positional args
+# The relfunSM*f ones shouldn't need domain and range lists, there's just one
+# m->1 relfunSM with positional args
 # Slices for invitations etc
 # All these trivial node wrappers
 # Operators
