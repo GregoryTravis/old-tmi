@@ -2,5 +2,5 @@ db = File('old.dat')
 player = Deref(db, 'player')
 
 def main():
-  One(Where(player, Feq('player_id', 0))).name <- 'gmt'
+  Where(player, Feq('player_id', 0))._.name <- 'gmt'
   player

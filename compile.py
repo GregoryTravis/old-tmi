@@ -5,6 +5,10 @@ sys.dont_write_bytecode = True
 from ast import *
 from lib import *
 
+def err(s):
+  print 'Error:\n  %s' % s
+  sys.exit(1)
+
 def pd(t): print dump(t)
 
 def cj(os): return listjoin(os, ', ')
@@ -14,6 +18,12 @@ def s(s): return ['\'', s, '\'']
 
 #def indent(os): return ['  ', listjoin(os, '  '), '\n']
 def indentlines(os): return ['  ', listjoin(os, '\n  '), '\n']
+
+def compile_attribute_expression(t):
+  if t.attr == '_':
+    return ['One(', compile_exp(t.value), ')']
+  else:
+    return ['Deref(', compile_exp(t.value), ', ', s(t.attr), ')']
 
 def compile_exp(t):
   if type(t) == Call:
@@ -25,7 +35,7 @@ def compile_exp(t):
   elif type(t) == Num:
     return t.n
   elif type(t) == Attribute:
-    return ['Deref(', compile_exp(t.value), ', ', s(t.attr), ')']
+    return compile_attribute_expression(t)
   else:
     assert False, (t, dump(t))
 
@@ -42,13 +52,23 @@ def compile_retexp(t):
   return ['return ', compile_exp(t.value)]
 
 def compile_write(t):
-  assert type(t) == Expr
+  if type(t) == Assign:
+    err('You mean <- here')
+  assert type(t) == Expr, t
   t = t.value
   assert len(t.ops) == 1 and type(t.ops[0]) == Lt
-  assert len(t.comparators) == 1 and type(t.comparators[0].op) == USub
   lhs = t.left
-  rhs = t.comparators[0].operand
-  return ['write(', compile_exp(lhs), ', ', compile_exp(rhs), ')']
+  assert len(t.comparators) == 1
+  pd(t.comparators[0])
+  if type(t.comparators[0]) == UnaryOp and type(t.comparators[0].op) == USub:
+    # The most common format, where (a <- b) is parsed as (a < -(b))
+    rhs = compile_exp(t.comparators[0].operand)
+  elif type(t.comparators[0]) == Num:
+    # If the rhs is a number, then (a <- 12) is parsed as (a < -12) where -12 is a constant Num
+    rhs = -(t.comparators[0].n)
+  else:
+    assert False, dump(t)
+  return ['write(', compile_exp(lhs), ', ', rhs, ')']
 
 def compile_def_body(ts):
   return indentlines(map(compile_write, ts[:-1]) + [compile_retexp(ts[-1])])
