@@ -10,15 +10,6 @@ from tmi import *
 
 DEFAULT_QUERY_STRING = json.dumps(('main', []))
 
-def getQueryString():
-  if 'QUERY_STRING' in os.environ:
-    return os.environ['QUERY_STRING']
-  elif len(sys.argv) > 1:
-    assert len(sys.argv) == 2
-    return sys.argv[1]
-  else:
-    return ''
-
 def getScript():
   script = sys.argv[0]
   if script.startswith('./'):
@@ -58,17 +49,15 @@ def flatten(o):
 
 assert 'abc' == flatten(['a', ('b',), [['c']]])
 
-def webfmt(s):
-  return flatten(s).encode('utf-8')
-
 COOKIE_PREFIX = 'tmi'
 _cookies = {}
 
-def readCookies():
+def readCookies(http_cookie):
   global _cookies
-  if 'HTTP_COOKIE' not in os.environ: return
+  if http_cookie == None:
+    return
   c = Cookie.SimpleCookie()
-  c.load(os.environ['HTTP_COOKIE'])
+  c.load(http_cookie)
   _cookies = {k[len(COOKIE_PREFIX):]: v.value for k, v in c.iteritems() if k.startswith(COOKIE_PREFIX)}
 
 @node
@@ -83,40 +72,54 @@ class Cookies(Node):
 def generateCookieHeader():
   return '\n'.join(['Set-Cookie: %s%s=%s' % (COOKIE_PREFIX, k, urllib.quote(v)) for k, v in _cookies.iteritems()])
 
+def get_inputs():
+  field_storage = cgi.FieldStorage()
+  form_data = {k: field_storage[k].value for k in field_storage}
+  return {
+    'HTTP_COOKIE': os.environ.get('HTTP_COOKIE', None),
+    'REQUEST_METHOD': os.environ['REQUEST_METHOD'],
+    'QUERY_STRING': os.environ['QUERY_STRING'],
+    'form_data': form_data,
+  }
+
 def webmain(module):
-  readCookies()
-  request_method = os.environ['REQUEST_METHOD']
+  inputs = get_inputs()
+  result = run_things(module, inputs)
+  assert result != None
+  commit()
+  output = format_result(result)
+  sys.stdout.write(output)
+
+def run_things(module, inputs):
+  readCookies(inputs['HTTP_COOKIE'])
+  request_method = inputs['REQUEST_METHOD']
   result = None
   if request_method == 'GET':
-    qs = getQueryString()
+    qs = inputs['QUERY_STRING']
     if qs == '':
       qs = DEFAULT_QUERY_STRING
-    result = exec_call(module, qs)
+    return exec_call(module, qs)
   elif request_method == 'POST':
-    field_storage = cgi.FieldStorage()
-    rec = {k: field_storage[k].value for k in field_storage if k != '_destfun'}
-    destfun = field_storage['_destfun'].value
-    result = module.__dict__[destfun](rec)
+    # Should remove _destfun from the formdata
+    fd = inputs['form_data']
+    return module.__dict__[fd['_destfun']](fd)
   else:
     assert False
 
-  commit()
-
-  assert result != None
-
+def format_result(result):
   # TODO this is hacky.
   if type(result) == dict and result.keys() == ['redirect']:
-    print generateCookieHeader()
-    print 'Location: ' + result['redirect']
-    # Necessary to force an external redirect which is necessary for cookies to
-    # work across the redirect.
-    print 'Status: 302'
-    print ''
+    return (
+      generateCookieHeader() + '\n' +
+      'Location: ' + result['redirect'] + '\n' +
+      # Necessary to force an external redirect which is necessary for cookies to
+      # work across the redirect.
+      'Status: 302\n\n')
   else:
-    print 'Content-type: text/html'
-    print generateCookieHeader()
-    print ''
-    print webfmt(readIfNode(result))
+    return (
+      'Content-type: text/html\n' +
+      generateCookieHeader() + '\n\n' +
+      flatten(readIfNode(result)).encode('utf-8'))
 
 def redirect(f, *args):
   return {'redirect': call(f, *args)}
