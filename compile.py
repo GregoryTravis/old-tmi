@@ -9,6 +9,10 @@ def err(s):
   print 'Error:\n  %s' % s
   sys.exit(1)
 
+def foldr(f, e, xs):
+  return e if len(xs) == 0 else f(xs[0], foldr(f, e, xs[1:]))
+assert [1, [2, [3, [4, [5, []]]]]] == foldr((lambda a, b: [a, b]), [], (1, 2, 3, 4, 5))
+
 def pd(t): print dump(t)
 
 def cj(os): return listjoin(os, ', ')
@@ -25,6 +29,26 @@ def compile_attribute_expression(t):
   else:
     return ['Deref(', compile_exp(t.value), ', ', s(t.attr), ')']
 
+def compile_predexp_clause(t):
+  pd(t)
+  assert type(t) == Compare and len(t.ops) == 1 and type(t.ops[0]) == Eq and len(t.comparators) == 1
+  assert type(t.left) == Name
+  return ['Feq(', s(t.left.id), ', ', compile_exp(t.comparators[0]), ')']
+
+def compile_predexp(t):
+  if type(t) == Compare:
+    return compile_predexp_clause(t)
+  assert type(t) == Tuple
+  assert len(t.elts) >= 2
+  celts = map(compile_predexp_clause, t.elts)
+  return foldr((lambda a, b: ['Pand(', a, ', ', b, ')']), celts[-1], celts[:-1])
+
+def compile_where_expression(t):
+  assert type(t) == BinOp and type(t.op) == Div
+  rel = t.left
+  pred = compile_predexp(t.right)
+  return ['Where(', compile_exp(rel), ', ', pred, ')']
+
 def compile_exp(t):
   if type(t) == Call:
     return [t.func.id, '(', cj(map(compile_exp, t.args)), ')']
@@ -36,6 +60,8 @@ def compile_exp(t):
     return t.n
   elif type(t) == Attribute:
     return compile_attribute_expression(t)
+  elif type(t) == BinOp and type(t.op) == Div:
+    return compile_where_expression(t)
   else:
     assert False, (t, dump(t))
 
@@ -59,7 +85,6 @@ def compile_write(t):
   assert len(t.ops) == 1 and type(t.ops[0]) == Lt
   lhs = t.left
   assert len(t.comparators) == 1
-  pd(t.comparators[0])
   if type(t.comparators[0]) == UnaryOp and type(t.comparators[0].op) == USub:
     # The most common format, where (a <- b) is parsed as (a < -(b))
     rhs = compile_exp(t.comparators[0].operand)

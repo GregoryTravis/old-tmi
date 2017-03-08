@@ -1,0 +1,7 @@
+rm -f old.tmi.py
+python compile.py old.tmi && python old.tmi.py && rm old.tmi.py
+if [ $? -ne 0 ]; then
+  if [ -e old.tmi.py ]; then
+    cat old.tmi.py
+  fi
+fi

@@ -2,5 +2,6 @@ db = File('old.dat')
 player = Deref(db, 'player')
 
 def main():
-  Where(player, Feq('player_id', 0))._.name <- 'gmt'
+  #(player/(player_id==0, name=='gmt'))._.name <- 'greg'
+  (player/(player_id==0))._.name <- 'gmt'
   player
