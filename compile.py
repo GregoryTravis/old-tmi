@@ -10,6 +10,7 @@ def pd(t): print dump(t)
 def cj(os): return listjoin(os, ', ')
 def nlj(os): return listjoin(os, '\n')
 def spj(os): return listjoin(os, ' ')
+def s(s): return ['\'', s, '\'']
 
 #def indent(os): return ['  ', listjoin(os, '  '), '\n']
 def indentlines(os): return ['  ', listjoin(os, '\n  '), '\n']
@@ -18,11 +19,13 @@ def compile_exp(t):
   if type(t) == Call:
     return [t.func.id, '(', cj(map(compile_exp, t.args)), ')']
   elif type(t) == Str:
-    return ['\'', t.s, '\'']
+    return s(t.s)
   elif type(t) == Name:
     return t.id
   elif type(t) == Num:
     return t.n
+  elif type(t) == Attribute:
+    return ['Deref(', compile_exp(t.value), ', ', s(t.attr), ')']
   else:
     assert False, (t, dump(t))
 
@@ -83,7 +86,9 @@ from tags import *
 """
 
 postlude = """
-s(main())
+v = main()
+commit()
+s(v)
 """
 
 src = prelude + flatten(compile_body(t)) + postlude
