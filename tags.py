@@ -2,6 +2,7 @@ _TAGS = ['a', 'b', 'br', 'button', 'font', 'form', 'i', 'input', 'pre']
 
 def maketag(name):
   globals()[name] = lambda *args, **kwargs: tag(name, *args, **kwargs)
+  globals()[name].__name__ = name
 
 def tag(tag_name, *args, **kwargs):
   open = ('<' + ' '.join([tag_name] + ['%s="%s"' % (k, v) for k, v in kwargs.iteritems()]) +

@@ -1,7 +1,7 @@
 import random
 import time
 from tmi import *
-from web import link, mkform, Cookies, redirect, ListJoin
+from web import link, mkform, Cookies, redirect, ListJoin, Link
 from tags import *
 
 CARDS_IN_HAND = 5
@@ -28,6 +28,7 @@ inviters_of_game = RelFunM(invitation, 'game_id', 'inviter')
 players_of_game = RelFunM(roster, 'game_id', 'player_id')
 game_next = RelFun(turn, 'game_id', 'next')
 games_of_player = RelFunM(roster, 'player_id', 'game_id')
+cards_of_g_p = RelFunSM(hand, ['game_id', 'player_id'], ['card_id'])
 
 cookies = Cookies()
 
@@ -95,6 +96,7 @@ def inviterOfGame(game_id):
   return SameGet(inviters_of_game(game_id))
 
 def generateCardsFor(game_id, player_id):
+  # Don't like this read() but this is the rng problem.
   ncards = read(Len(card))
   # This assumes the card ids are 0..N
   return Map(lambda card_id: Rec(game_id=game_id, player_id=player_id, card_id=card_id),
@@ -157,8 +159,33 @@ def playerIsNext(player_id, game_id):
 
 def readyToPlay(game_id, player_id):
   return If(playerIsNext(player_id, game_id),
-    'Your turn',
+    yourTurn(game_id, player_id),
     'Not your turn')
+
+def playCardOn(game_id, player_id, card_id, other_player_id):
+  return List('Ok', game_id, player_id, card_id, other_player_id)
+
+def playCardPickWho(game_id, player_id, card_id):
+  return List(Header(),
+    'It is your turn.', br(),
+    'Play card ', card_id, ' on:', br(),
+    ListJoin(
+      Map(
+        lambda other_player_id: Link(player_id_to_name(other_player_id), playCardOn, game_id, player_id, card_id, other_player_id),
+        Difference(players_of_game(game_id), List(player_id))),
+      br()),
+    Footer())
+
+def yourTurn(game_id, player_id):
+  return List(Header(),
+    'It is your turn.', br(),
+    'Pick a card to play:', br(),
+    ListJoin(
+      Map(
+        lambda card_id: link(card_id, playCardPickWho, game_id, player_id, card_id),
+        Map(lambda rec: Deref(rec, 'card_id'), cards_of_g_p(Rec(game_id=game_id, player_id=player_id)))),
+      br()),
+    Footer())
 
 def inProgressGamesList(player_id):
   #games_ready_to_go = Difference(games_invited_to(player_id), games_with_unaccepted_invitations)

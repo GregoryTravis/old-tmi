@@ -32,13 +32,17 @@ def call(f, *args, **kwargs):
 def link(text, f, *args, **kwargs):
   return ahref(text, call(f, *args, **kwargs))
 
+@node
+class Link(UNode):
+  def forwards(text, f, *args, **kwargs):
+    return link(text, f, *args, **kwargs)
+
+assert link('yeah', pre, 'text') == read(Link('yeah', pre, 'text'))
+
 def exec_call(module, s):
   (funname, args) = json.loads(urllib.unquote(s))
   fun = module.__dict__[funname]
   return fun(*args)
-
-def pre(s):
-  return '<pre>%s</pre>' % s
 
 COOKIE_PREFIX = 'tmi'
 _cookies = {}

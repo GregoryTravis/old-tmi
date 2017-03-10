@@ -819,6 +819,7 @@ assert [1] == read(SomeOr([1], [4]))
 assert [4] == read(SomeOr([], [4]))
 
 # TODO
+# Node stack
 # read() in conditional in old
 # --
 # Gameplay

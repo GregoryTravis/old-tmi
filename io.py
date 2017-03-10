@@ -7,4 +7,4 @@ def readdat(filename):
 
 def writedat(filename, data):
   with open(filename, 'w') as f:
-    f.write(pprint.pformat(data))
+    f.write(pprint.pformat(data, width=150))
