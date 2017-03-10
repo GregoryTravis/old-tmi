@@ -861,6 +861,7 @@ class Lazy(UNode):
 assert 2 == read(Lazy(lambda: Constant(2)))
 
 # TODO
+# Detect endgame and end game
 # Draw a card at start of turn
 # Links work even after you reset db to erase games
 # --
