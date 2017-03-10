@@ -847,8 +847,6 @@ assert 3 == read(Mod(10, 7))
 assert 7 == read(Mod(7, 10))
 
 # TODO
-# Pick card by name
-# Remove card from hand
 # Draw a card at start of turn
 # Can't play lifestyle on others
 # Links work even after you reset db to erase games
@@ -858,7 +856,8 @@ assert 7 == read(Mod(7, 10))
 # relfun that takes a rec and returns the complement of fields
 # relfun: '*' to mean 'all fields'
 # relfun: should be able to apply some (or none) of the args to get another
-# cannot write to relfuns (need proj)
+# relfuns are doing projs and therefore losing duplicates, thus could be false One()
+# should be able to write to non-M relfuns
 # Slices for invitations etc
 # Use // for Where1 or relfun?
 # missing newlines in form; hide hidden field names

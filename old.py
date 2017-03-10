@@ -191,7 +191,7 @@ def playCardOn(game_id, player_id, card_id, other_player_id):
 def playCardPickWho(game_id, player_id, card_id):
   return List(Header(),
     'It is your turn.', br(),
-    'Play card ', card_id, ' on:', br(),
+    'Play card "', card_name(card_id), '" on:', br(),
     ListJoin(
       Map(
         lambda other_player_id: Link(player_id_to_name(other_player_id), playCardOn, game_id, player_id, card_id, other_player_id),
@@ -205,7 +205,7 @@ def yourTurn(game_id, player_id):
     'Pick a card to play:', br(),
     ListJoin(
       Map(
-        lambda card_id: link(card_id, playCardPickWho, game_id, player_id, card_id),
+        lambda card_id: Link(card_name(card_id), playCardPickWho, game_id, player_id, card_id),
         Map(lambda rec: Deref(rec, 'card_id'), cards_of_g_p(Rec(game_id=game_id, player_id=player_id)))),
       br()),
     Footer())
