@@ -1,7 +1,13 @@
+import random
 import time
 from tmi import *
 from web import link, mkform, Cookies, redirect, ListJoin
 from tags import *
+
+CARDS_IN_HAND = 5
+
+# This is to allow testing to work.
+random.seed(0)
 
 db = File('old.dat')
 player = Deref(db, 'player')
@@ -17,8 +23,9 @@ player_name_to_id = RelFun(player, 'name', 'player_id')
 player_id_to_name = RelFun(player, 'player_id', 'name')
 games_invited_to = RelFunM(invitation, 'player_id', 'game_id')
 games_with_unaccepted_invitations = RelFunM(invitation, 'accepted', 'game_id')(False)
-players_of_game = RelFunM(invitation, 'game_id', 'player_id')
+invitees_of_game = RelFunM(invitation, 'game_id', 'player_id')
 inviters_of_game = RelFunM(invitation, 'game_id', 'inviter')
+players_of_game = RelFunM(roster, 'game_id', 'player_id')
 game_next = RelFun(turn, 'game_id', 'next')
 games_of_player = RelFunM(roster, 'player_id', 'game_id')
 
@@ -50,7 +57,7 @@ def Header():
   return List('Hello, ', currentPlayerName(), br())
 
 def next_id(rel, id_field):
-  return Str(Add(Max(Column(rel, id_field)), 1))
+  return Str(Add(Max(SomeOr(Column(rel, id_field), [0])), 1))
 
 def CreateGame():
   game_id = next_id(game, 'game_id')
@@ -87,12 +94,25 @@ def allInvitationsAccepted(game_id):
 def inviterOfGame(game_id):
   return SameGet(inviters_of_game(game_id))
 
+def generateCardsFor(game_id, player_id):
+  ncards = read(Len(card))
+  # This assumes the card ids are 0..N
+  return Map(lambda card_id: Rec(game_id=game_id, player_id=player_id, card_id=card_id),
+             Ntimes(lambda: random.randrange(0, ncards), CARDS_IN_HAND))
+
+def dealCards(game_id):
+  write(hand, Union(hand,
+    Flatten1(Map(lambda player_id: generateCardsFor(game_id, player_id),
+                 players_of_game(game_id)))))
+
 def createRoster(game_id):
-  players = Union(players_of_game(game_id), List(inviterOfGame(game_id)))
+  players = Union(invitees_of_game(game_id), List(inviterOfGame(game_id)))
   newRoster = Map(lambda rec, order: Rec(order=order, **rec),
     Map(lambda player_id: Rec(player_id=player_id, game_id=game_id), players),
     Sequence(0, Len(players)))
   write(roster, Union(roster, newRoster))
+  commit()
+  dealCards(game_id)
   commit()
   write(turn, Union(turn, Rel(Rec(game_id=game_id, next=0))))
 
@@ -102,7 +122,7 @@ def acceptInvitation(_invitation):
       'accepted'),
     True)
   commit() # TODO ugh
-  if allInvitationsAccepted(_invitation['game_id']):
+  if read(allInvitationsAccepted(_invitation['game_id'])):
     createRoster(_invitation['game_id'])
   return PlayerMenu()
 

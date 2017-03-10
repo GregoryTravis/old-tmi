@@ -1,1 +1,1 @@
-{'QUERY_STRING': '', 'form_data': {'game_id': '7', '_destfun': 'AddPlayersToGameRcv', 'player_name': 'james'}, 'REQUEST_METHOD': 'POST', 'HTTP_COOKIE': 'tmilogin=gmt'}
+{'QUERY_STRING': '%5B%22loginAs%22%2C%20%5B%22will%22%5D%5D', 'form_data': {}, 'REQUEST_METHOD': 'GET', 'HTTP_COOKIE': 'tmilogin=gmt'}

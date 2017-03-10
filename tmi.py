@@ -591,7 +591,8 @@ class Min(UNode):
 @node
 class Max(UNode):
   def forwards(st):
-    return max(*map(int, st))
+    # max() with 1 arg assumes an iterable.
+    return max(*map(int, st)) if len(st) > 1 else st[0]
 
 assert 1 == read(Min(set([1, 1, 2, 3, 3])))
 assert 3 == read(Max(set([1, 1, 2, 3, 3])))
@@ -625,9 +626,10 @@ assert [D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)] == read(Rel(D(a=1, b=2), D(a=1
 @node
 class Add(UNode):
   def forwards(a, b):
-    return a + b
+    return int(a) + int(b)
 
 assert 5 == read(Add(2, 3))
+assert 5 == read(Add('2', '3'))
 
 @node
 class Mul(UNode):
@@ -790,9 +792,36 @@ class SameGet(UNode):
     assert same(os)
     return os[0]
 
+assert 12 == read(SameGet([12, 12, 12, 12, 12]))
+
+@node
+class Ntimes(UNode):
+  def forwards(f, n):
+    return [f() for _ in xrange(0, n)]
+
+assert [3, 3, 3, 3] == read(Ntimes(lambda: 3, 4))
+
+@node
+class Flatten1(UNode):
+  def forwards(lists):
+    return list(itertools.chain(*lists))
+
+assert [1, 2, 3, 4, 5, [6]] == read(Flatten1([[1], [2, 3], [4, 5, [6]]]))
+
+# Return the argument if it's nonempty; otherwise, return 'otherwise'.
+@node
+class SomeOr(UNode):
+  def forwards(lst, otherwise):
+    return lst if len(lst) > 0 else otherwise
+
+assert [1, 2, 3] == read(SomeOr([1, 2, 3], [4]))
+assert [1] == read(SomeOr([1], [4]))
+assert [4] == read(SomeOr([], [4]))
+
 # TODO
-# RecExtend(), to remove another read
+# read() in conditional in old
 # --
+# Gameplay
 # m->1 relfunSM with positional args
 # relfun that takes a rec and returns the complement of fields
 # relfun: '*' to mean 'all fields'
