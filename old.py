@@ -29,6 +29,7 @@ players_of_game = RelFunM(roster, 'game_id', 'player_id')
 game_next = RelFun(turn, 'game_id', 'next')
 games_of_player = RelFunM(roster, 'player_id', 'game_id')
 cards_of_g_p = RelFunSM(hand, ['game_id', 'player_id'], ['card_id'])
+card_name = RelFun(card, 'card_id', 'card_name')
 
 cookies = Cookies()
 
@@ -110,7 +111,7 @@ def dealCards(game_id):
 def createRoster(game_id):
   players = Union(invitees_of_game(game_id), List(inviterOfGame(game_id)))
   newRoster = Map(lambda rec, order: Rec(order=order, **rec),
-    Map(lambda player_id: Rec(player_id=player_id, game_id=game_id), players),
+    Map(lambda player_id: Rec(player_id=player_id, game_id=game_id, score=30), players),
     Sequence(0, Len(players)))
   write(roster, Union(roster, newRoster))
   commit()
@@ -162,8 +163,30 @@ def readyToPlay(game_id, player_id):
     yourTurn(game_id, player_id),
     'Not your turn')
 
+def updatePlayerScore(game_id, player_id, card_id):
+  other_player_score = Deref(One(Where(roster, Receq(Rec(game_id=game_id, player_id=player_id)))), 'score')
+  card_points = Deref(One(Where(card, Feq('card_id', card_id))), 'points')
+  write(other_player_score, Add(other_player_score, card_points))
+
+def advanceTurn(game_id):
+  num_players_in_roster = Len(players_of_game(game_id))
+  next = Deref(One(Where(turn, Feq('game_id', game_id))), 'next')
+  write(next, Mod(Add(next, 1), num_players_in_roster))
+  commit()
+
+def removeCardFromHand(game_id, player_id, card_id):
+  # This really terrifies me.
+  write(hand, Where(hand, Pnot(Receq(Rec(game_id=game_id, card_id=card_id, player_id=player_id)))))
+
 def playCardOn(game_id, player_id, card_id, other_player_id):
-  return List('Ok', game_id, player_id, card_id, other_player_id)
+  updatePlayerScore(game_id, other_player_id, card_id)
+  commit()
+  advanceTurn(game_id)
+  commit()
+  removeCardFromHand(game_id, player_id, card_id)
+  return List(Header(),
+    'You played "', card_name(card_id) , '" on ', player_id_to_name(other_player_id), '.', br(),
+    Footer())
 
 def playCardPickWho(game_id, player_id, card_id):
   return List(Header(),

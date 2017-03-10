@@ -838,15 +838,27 @@ assert [1, 2, 3] == read(SomeOr([1, 2, 3], [4]))
 assert [1] == read(SomeOr([1], [4]))
 assert [4] == read(SomeOr([], [4]))
 
+@node
+class Mod(UNode):
+  def forwards(a, b):
+    return a % b
+
+assert 3 == read(Mod(10, 7))
+assert 7 == read(Mod(7, 10))
+
 # TODO
-# Node stack
-# read() in conditional in old
+# Pick card by name
+# Remove card from hand
+# Draw a card at start of turn
+# Can't play lifestyle on others
+# Links work even after you reset db to erase games
 # --
 # Gameplay
 # m->1 relfunSM with positional args
 # relfun that takes a rec and returns the complement of fields
 # relfun: '*' to mean 'all fields'
 # relfun: should be able to apply some (or none) of the args to get another
+# cannot write to relfuns (need proj)
 # Slices for invitations etc
 # Use // for Where1 or relfun?
 # missing newlines in form; hide hidden field names
