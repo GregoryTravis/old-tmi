@@ -846,8 +846,21 @@ class Mod(UNode):
 assert 3 == read(Mod(10, 7))
 assert 7 == read(Mod(7, 10))
 
+# For conditionals that are prodcedures, we have to thunk them natively.
+# This does not have to be an LNode since the argument is a thunk.
+@node
+class Lazy(UNode):
+  def forwards(thunk):
+    return read(thunk())
+
+assert 2 == read(Lazy(lambda: Constant(2)))
+
 # TODO
+# WHOA: If() laziness doesn't help with side-effect nodes, since the node constructors run
+# During commit after propagating writes, re-read them and check
 # Draw a card at start of turn
+# Lifestyle on table
+# Show stuff even if not your turn
 # Links work even after you reset db to erase games
 # --
 # Gameplay

@@ -27,4 +27,5 @@
              {u'name': u'will', u'player_id': 3},
              {u'name': 'gmt', u'player_id': 0}],
  u'roster': [],
+ u'table': [],
  u'turn': []}

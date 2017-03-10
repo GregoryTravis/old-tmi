@@ -18,6 +18,7 @@ roster = Deref(db, 'roster')
 player_game = Deref(db, 'player_game')
 invitation = Deref(db, 'invitation')
 turn = Deref(db, 'turn')
+table = Deref(db, 'table')
 
 player_name_to_id = RelFun(player, 'name', 'player_id')
 player_id_to_name = RelFun(player, 'player_id', 'name')
@@ -200,10 +201,15 @@ def playBattleCardPickWho(game_id, player_id, card_id):
       br()),
     Footer())
 
+def putLifestyleCardOnTable(game_id, player_id, card_id):
+  write(table, Union(table, Rel(Rec(game_id=game_id, player_id=player_id, card_id=card_id))))
+
 def playLifeStyleCard(game_id, player_id, card_id):
   updatePlayerScore(game_id, player_id, card_id)
   commit()
   advanceTurn(game_id)
+  commit()
+  putLifestyleCardOnTable(game_id, player_id, card_id)
   commit()
   removeCardFromHand(game_id, player_id, card_id)
   return List(Header(),
@@ -213,12 +219,18 @@ def playLifeStyleCard(game_id, player_id, card_id):
 def playCardDispatch(game_id, player_id, card_id):
   # Assumes only two kinds of cards.
   return If(Equals(card_type(card_id), 'battle'),
-            playBattleCardPickWho(game_id, player_id, card_id),
-            playLifeStyleCard(game_id, player_id, card_id))
+            Lazy(lambda: playBattleCardPickWho(game_id, player_id, card_id)),
+            Lazy(lambda: playLifeStyleCard(game_id, player_id, card_id)))
+
+def lifestyleCards(game_id, player_id):
+  return ListJoin(
+    Column(Where(Join(card, table), Receq(Rec(game_id=game_id, player_id=player_id))), 'card_name'),
+    ' ')
 
 def yourTurn(game_id, player_id):
   return List(Header(),
     'It is your turn.', br(),
+    'Your lifestyle cards: ', lifestyleCards(game_id, player_id), br(),
     'Pick a card to play:', br(),
     ListJoin(
       Map(
