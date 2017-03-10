@@ -163,7 +163,7 @@ def playerIsNext(player_id, game_id):
 def readyToPlay(game_id, player_id):
   return If(playerIsNext(player_id, game_id),
     yourTurn(game_id, player_id),
-    'Not your turn')
+    notYourTurn(game_id, player_id))
 
 def updatePlayerScore(game_id, player_id, card_id):
   other_player_score = Deref(One(Where(roster, Receq(Rec(game_id=game_id, player_id=player_id)))), 'score')
@@ -226,6 +226,12 @@ def lifestyleCards(game_id, player_id):
   return ListJoin(
     Column(Where(Join(card, table), Receq(Rec(game_id=game_id, player_id=player_id))), 'card_name'),
     ' ')
+
+def notYourTurn(game_id, player_id):
+  return List(Header(),
+    'It is not your turn.', br(),
+    'Your lifestyle cards: ', lifestyleCards(game_id, player_id), br(),
+    Footer())
 
 def yourTurn(game_id, player_id):
   return List(Header(),

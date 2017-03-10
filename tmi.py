@@ -862,8 +862,6 @@ assert 2 == read(Lazy(lambda: Constant(2)))
 
 # TODO
 # Draw a card at start of turn
-# Lifestyle on table
-# Show stuff even if not your turn
 # Links work even after you reset db to erase games
 # --
 # Gameplay
