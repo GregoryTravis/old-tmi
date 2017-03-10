@@ -622,18 +622,28 @@ class Rel(UNode):
 
 assert [D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)] == read(Rel(D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)))
 
-# Can only map native functions.
-@node
-class Map(UNode):
-  def forwards(f, os):
-    return map(f, os)
-
-assert [2, 4, 6] == read(Map(lambda x: x * 2, Constant([1, 2, 3])))
-
 @node
 class Add(UNode):
   def forwards(a, b):
     return a + b
+
+assert 5 == read(Add(2, 3))
+
+@node
+class Mul(UNode):
+  def forwards(a, b):
+    return a * b
+
+assert 6 == read(Mul(2, 3))
+
+# Can only map native functions.
+@node
+class Map(UNode):
+  def forwards(f, os):
+    return map(readIfNode, map(f, os))
+
+assert [2, 4, 6] == read(Map(lambda x: x * 2, Constant([1, 2, 3])))
+assert [2, 4, 6] == read(Map(lambda x: Mul(x, 2), Constant([1, 2, 3])))
 
 voo = [
   D(a=1, b=2, c=3),
@@ -770,9 +780,10 @@ assert 4 == read(Len(Sequence(2, 6)))
 class Map2(UNode):
   def forwards(f, xs, ys):
     assert len(xs) == len(ys)
-    return map(f, xs, ys)
+    return map(readIfNode, map(f, xs, ys))
 
 assert [10, 12, 14, 16] == read(Map2(lambda a, b: a+b, Sequence(0, 4), Sequence(10, 14)))
+assert [10, 12, 14, 16] == read(Map2(lambda a, b: Add(a, b), Sequence(0, 4), Sequence(10, 14)))
 
 @node
 class SameGet(UNode):
@@ -783,6 +794,7 @@ class SameGet(UNode):
 
 # TODO
 # Remove those reads from the createRoster Maps
+# Just have one Map() and have explicit len check
 # RecExtend(), to remove another read
 # --
 # m->1 relfunSM with positional args

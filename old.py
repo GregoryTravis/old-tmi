@@ -89,7 +89,7 @@ def inviterOfGame(game_id):
 
 def createRoster(game_id):
   players = Union(players_of_game(game_id), List(inviterOfGame(game_id)))
-  newRoster = Map2(lambda rec, order: read(Rec(order=order, **read(rec))),
+  newRoster = Map2(lambda rec, order: Rec(order=order, **rec),
     Map(lambda player_id: Rec(player_id=player_id, game_id=game_id), players),
     Sequence(0, Len(players)))
   write(roster, Union(roster, newRoster))
@@ -118,8 +118,6 @@ def askToAcceptInvitation(invitation):
   )
 
 def invitationList(player_id):
-  #print >>sys.stderr, player_id, read(player_id)
-  #print >>sys.stderr, read(Column(Where(invitation, Feq('player_id', player_id)), 'game_id'))
   return List(
     'Pending invitations: ',
     ListJoin(
