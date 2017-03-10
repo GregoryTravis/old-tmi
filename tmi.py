@@ -171,10 +171,12 @@ def commit():
 
   # Propagate to the left
   accum = defaultdict(list)
+  readbacks = []
   while len(writes) > 0:
     (node, value) = writes.popleft()
     value = readIfNode(value)
     accum[node.serial].append(value)
+    readbacks.append((node, value))
     if not isunode(node):
       writes.extend(propagateOne(node, value))
 
@@ -182,8 +184,11 @@ def commit():
   # Only one value per node.
   assert all([len(values) < 2 for serial, values in accum.iteritems()]), list(accum.iteritems())
 
-  # - write node 0 to disk
-  # print 'FINAL', accum
+  # Readback check.  Reading again from the node should give the value we just wrote.
+  for (node, value) in readbacks:
+    assert value == read(node)
+
+  # TODO: disk write should actually be done here, not inside File node.
 
   # Reset
   resetWrites()
@@ -856,8 +861,6 @@ class Lazy(UNode):
 assert 2 == read(Lazy(lambda: Constant(2)))
 
 # TODO
-# WHOA: If() laziness doesn't help with side-effect nodes, since the node constructors run
-# During commit after propagating writes, re-read them and check
 # Draw a card at start of turn
 # Lifestyle on table
 # Show stuff even if not your turn
