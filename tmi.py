@@ -10,6 +10,7 @@ import itertools
 import json
 import operator
 import os
+import pprint
 
 # TODO redundant
 D = dict
@@ -46,17 +47,21 @@ def ss_install_renderer(renderer):
   global ss_renderers
   ss_renderers.append(renderer)
 
+# Convert to string, but with bounded depth.
+def bstr(o):
+  return pprint.pformat(o, depth=2, width=130000)
+
 trace_indentation = 0
 def trace(f):
   def wrapped(*args, **kwargs):
     global trace_indentation
     prefix = '| ' * trace_indentation
     assert len(kwargs) == 0
-    print prefix + '-- ' + f.__name__ + '(' + ', '.join(map(str, args)) + ')'
+    print prefix + '+- ' + f.__name__ + '(' + ', '.join(map(str, args)) + ')'
     trace_indentation += 1
     ret = f(*args, **kwargs)
     trace_indentation -= 1
-    print prefix + '-> ' + str(ret)
+    print prefix + '-> ' + bstr(ret)
     return ret
   return wrapped
 
@@ -119,11 +124,26 @@ assert isrel([])
 assert isrel([D(a=1)])
 assert not isrel(D(a=1))
 
+node_stack = deque()
+def node_stack_push(node):
+  node_stack.append(node)
+def node_stack_pop(node):
+  popped = node_stack.pop()
+  assert popped == node
+
 #@trace
 def read(node):
-  return node.forwards(
-    *[reader(arg) if islnode(node) else read(arg) for arg in node.args],
-    **{k: reader(kwarg) if islnode(node) else read(kwarg) for k, kwarg in node.kwargs.iteritems()})
+  node_stack_push(node)
+  try:
+    ret = node.forwards(
+      *[reader(arg) if islnode(node) else read(arg) for arg in node.args],
+      **{k: reader(kwarg) if islnode(node) else read(kwarg) for k, kwarg in node.kwargs.iteritems()})
+  except:
+    for node in node_stack:
+      print '--', node
+    raise
+  node_stack_pop(node)
+  return ret
 
 writes = None
 
