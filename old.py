@@ -11,6 +11,7 @@ hand = Deref(db, 'hand')
 roster = Deref(db, 'roster')
 player_game = Deref(db, 'player_game')
 invitation = Deref(db, 'invitation')
+turn = Deref(db, 'turn')
 
 player_name_to_id = RelFun(player, 'name', 'player_id')
 player_id_to_name = RelFun(player, 'player_id', 'name')
@@ -18,6 +19,8 @@ games_invited_to = RelFunM(invitation, 'player_id', 'game_id')
 games_with_unaccepted_invitations = RelFunM(invitation, 'accepted', 'game_id')(False)
 players_of_game = RelFunM(invitation, 'game_id', 'player_id')
 inviters_of_game = RelFunM(invitation, 'game_id', 'inviter')
+game_next = RelFun(turn, 'game_id', 'next')
+games_of_player = RelFunM(roster, 'player_id', 'game_id')
 
 cookies = Cookies()
 
@@ -90,6 +93,8 @@ def createRoster(game_id):
     Map(lambda player_id: Rec(player_id=player_id, game_id=game_id), players),
     Sequence(0, Len(players)))
   write(roster, Union(roster, newRoster))
+  commit()
+  write(turn, Union(turn, Rel(Rec(game_id=game_id, next=0))))
 
 def acceptInvitation(_invitation):
   write(
@@ -123,11 +128,25 @@ def invitationList(player_id):
       '')
   )
 
+def whoIsNext(game_id):
+  next_ord = game_next(game_id)
+  return Deref(
+    RelFunS(roster, ['game_id', 'order'], ['player_id'])(Rec(game_id=game_id, order=next_ord)),
+    'player_id')
+
+def playerIsNext(player_id, game_id):
+  return Equals(player_id, whoIsNext(game_id))
+
 def readyToPlay(game_id, player_id):
-  pass
+  return If(playerIsNext(player_id, game_id),
+    'Your turn',
+    'Not your turn')
 
 def inProgressGamesList(player_id):
-  games_ready_to_go = Difference(games_invited_to(player_id), games_with_unaccepted_invitations)
+  #games_ready_to_go = Difference(games_invited_to(player_id), games_with_unaccepted_invitations)
+
+  # This does not check if the game is done
+  games_ready_to_go = games_of_player(player_id)
   return List('Games in progress: ',
     ListJoin(
       Map(lambda game_id: link(game_id, readyToPlay, game_id, player_id), games_ready_to_go), ' '))
