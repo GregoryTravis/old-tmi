@@ -1,4 +1,4 @@
-Content-type: text/html
 Set-Cookie: tmilogin=will
+Location: /run-old.cgi?%5B%22PlayerMenu%22%2C%20%5B%5D%5D
+Status: 302
 
-Hello, will<br/><a href="/run-old.cgi?%5B%22CreateGame%22%2C%20%5B%5D%5D">create game</a><br/>Pending invitations: <a href="/run-old.cgi?%5B%22askToAcceptInvitation%22%2C%20%5B%7B%22player_id%22%3A%203%2C%20%22game_id%22%3A%20%226%22%2C%20%22accepted%22%3A%20false%2C%20%22inviter%22%3A%200%7D%5D%5D">6</a><br/>Games in progress: <a href="/run-old.cgi?%5B%22readyToPlay%22%2C%20%5B%223%22%2C%203%5D%5D">3</a> <a href="/run-old.cgi?%5B%22readyToPlay%22%2C%20%5B%225%22%2C%203%5D%5D">5</a><br/><br/><a href="/run-old.cgi?%5B%22PlayerMenu%22%2C%20%5B%5D%5D">home</a> <a href="/run-old.cgi?%5B%22logout%22%2C%20%5B%5D%5D">logout</a><br/>Switch: <a href="/run-old.cgi?%5B%22loginAs%22%2C%20%5B%22greg%22%5D%5D">greg</a> <a href="/run-old.cgi?%5B%22loginAs%22%2C%20%5B%22james%22%5D%5D">james</a> <a href="/run-old.cgi?%5B%22loginAs%22%2C%20%5B%22will%22%5D%5D">will</a>
