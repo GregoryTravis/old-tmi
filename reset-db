@@ -1,1 +1,5 @@
 git checkout old.dat
+if [ -e _old.dat ]; then 
+  cp _old.dat old.dat
+  sd old.dat
+fi

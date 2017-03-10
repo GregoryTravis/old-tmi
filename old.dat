@@ -43,6 +43,7 @@
                   'game_id': '5',
                   'inviter': 0,
                   'player_id': 1}],
+ u'roster': [],
  u'player': [{u'name': u'james', u'player_id': 1},
              {u'name': u'will', u'player_id': 3},
              {u'name': 'gmt', u'player_id': 0}]}

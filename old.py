@@ -8,6 +8,7 @@ player = Deref(db, 'player')
 card = Deref(db, 'card')
 game = Deref(db, 'game')
 hand = Deref(db, 'hand')
+roster = Deref(db, 'roster')
 player_game = Deref(db, 'player_game')
 invitation = Deref(db, 'invitation')
 
@@ -15,6 +16,8 @@ player_name_to_id = RelFun(player, 'name', 'player_id')
 player_id_to_name = RelFun(player, 'player_id', 'name')
 games_invited_to = RelFunM(invitation, 'player_id', 'game_id')
 games_with_unaccepted_invitations = RelFunM(invitation, 'accepted', 'game_id')(False)
+players_of_game = RelFunM(invitation, 'game_id', 'player_id')
+inviters_of_game = RelFunM(invitation, 'game_id', 'inviter')
 
 cookies = Cookies()
 
@@ -75,11 +78,27 @@ def AddPlayersToGameRcv(rec):
 def DoneAddingPlayersToGame(game_id):
   return 'Done'
 
+def allInvitationsAccepted(game_id):
+  return Equals(0, Len(Where(invitation, Pand(Feq('accepted', False), Feq('game_id', game_id)))))
+
+def inviterOfGame(game_id):
+  return SameGet(inviters_of_game(game_id))
+
+def createRoster(game_id):
+  players = Union(players_of_game(game_id), List(inviterOfGame(game_id)))
+  newRoster = Map2(lambda rec, order: read(Rec(order=order, **read(rec))),
+    Map(lambda player_id: Rec(player_id=player_id, game_id=game_id), players),
+    Sequence(0, Len(players)))
+  write(roster, Union(roster, newRoster))
+
 def acceptInvitation(_invitation):
   write(
     Deref(One(Where(invitation, Receq(Subrec(_invitation, ['game_id', 'player_id'])))),
       'accepted'),
     True)
+  commit() # TODO ugh
+  if allInvitationsAccepted(_invitation['game_id']):
+    createRoster(_invitation['game_id'])
   return PlayerMenu()
 
 def playerName(player_id):

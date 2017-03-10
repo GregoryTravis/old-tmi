@@ -85,7 +85,7 @@ def check_argspec_match(cls, forwardsFunction, (args, kwargs)):
   argspec = inspect.getargspec(forwardsFunction)
   if argspec.varargs == None:
     # Args must exactly match.
-    assert len(argspec.args) == len(args)
+    assert len(argspec.args) == len(args), cls
   else:
     # Args must be at least as many as the non-varargs ones.
     assert len(argspec.args) <= len(args)
@@ -332,7 +332,7 @@ class HasField(UNode):
 @node
 class List(UNode):
   def forwards(*args):
-    return args
+    return list(args)
 
 def one(rel):
   assert type(rel) == list, rel
@@ -750,12 +750,47 @@ class Rec(UNode):
 
 assert {'haha': 7, 'asdf': 10} == read(Rec(asdf=Box(10), haha=Add(3, 4)))
 
+@node
+class Sequence(UNode):
+  def forwards(start, end):
+    return range(start, end)
+
+assert [2, 3, 4, 5] == read(Sequence(2, 6))
+
+@node
+class Len(UNode):
+  def forwards(os):
+    return len(os)
+
+assert 4 == read(Len(Sequence(2, 6)))
+
+# This is ill-formed -- treats the inputs as ordered.  Only suitable when the
+# order doesn't matter.
+@node
+class Map2(UNode):
+  def forwards(f, xs, ys):
+    assert len(xs) == len(ys)
+    return map(f, xs, ys)
+
+assert [10, 12, 14, 16] == read(Map2(lambda a, b: a+b, Sequence(0, 4), Sequence(10, 14)))
+
+@node
+class SameGet(UNode):
+  def forwards(os):
+    assert len(os) > 0
+    assert same(os)
+    return os[0]
+
 # TODO
+# Remove those reads from the createRoster Maps
+# RecExtend(), to remove another read
+# --
 # m->1 relfunSM with positional args
 # relfun that takes a rec and returns the complement of fields
 # relfun: '*' to mean 'all fields'
 # relfun: should be able to apply some (or none) of the args to get another
 # Slices for invitations etc
+# Use // for Where1 or relfun?
 # missing newlines in form; hide hidden field names
 # done back to the menu
 # All these trivial node wrappers
