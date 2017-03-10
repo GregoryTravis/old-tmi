@@ -636,14 +636,30 @@ class Mul(UNode):
 
 assert 6 == read(Mul(2, 3))
 
+def mapCompatible(f, args):
+  return len(args) == len(inspect.getargspec(f).args)
+
+@node
+class Sequence(UNode):
+  def forwards(start, end):
+    return range(start, end)
+
+assert [2, 3, 4, 5] == read(Sequence(2, 6))
+
 # Can only map native functions.
 @node
 class Map(UNode):
-  def forwards(f, os):
-    return map(readIfNode, map(f, os))
+  def forwards(f, *oss):
+    assert mapCompatible(f, oss)
+    assert same(map(len, oss))
+    return map(readIfNode, map(f, *oss))
 
+# 1 arg
 assert [2, 4, 6] == read(Map(lambda x: x * 2, Constant([1, 2, 3])))
 assert [2, 4, 6] == read(Map(lambda x: Mul(x, 2), Constant([1, 2, 3])))
+# 2 args
+assert [10, 12, 14, 16] == read(Map(lambda a, b: a+b, Sequence(0, 4), Sequence(10, 14)))
+assert [10, 12, 14, 16] == read(Map(lambda a, b: Add(a, b), Sequence(0, 4), Sequence(10, 14)))
 
 voo = [
   D(a=1, b=2, c=3),
@@ -761,29 +777,11 @@ class Rec(UNode):
 assert {'haha': 7, 'asdf': 10} == read(Rec(asdf=Box(10), haha=Add(3, 4)))
 
 @node
-class Sequence(UNode):
-  def forwards(start, end):
-    return range(start, end)
-
-assert [2, 3, 4, 5] == read(Sequence(2, 6))
-
-@node
 class Len(UNode):
   def forwards(os):
     return len(os)
 
 assert 4 == read(Len(Sequence(2, 6)))
-
-# This is ill-formed -- treats the inputs as ordered.  Only suitable when the
-# order doesn't matter.
-@node
-class Map2(UNode):
-  def forwards(f, xs, ys):
-    assert len(xs) == len(ys)
-    return map(readIfNode, map(f, xs, ys))
-
-assert [10, 12, 14, 16] == read(Map2(lambda a, b: a+b, Sequence(0, 4), Sequence(10, 14)))
-assert [10, 12, 14, 16] == read(Map2(lambda a, b: Add(a, b), Sequence(0, 4), Sequence(10, 14)))
 
 @node
 class SameGet(UNode):
@@ -793,8 +791,6 @@ class SameGet(UNode):
     return os[0]
 
 # TODO
-# Remove those reads from the createRoster Maps
-# Just have one Map() and have explicit len check
 # RecExtend(), to remove another read
 # --
 # m->1 relfunSM with positional args
