@@ -30,6 +30,7 @@ game_next = RelFun(turn, 'game_id', 'next')
 games_of_player = RelFunM(roster, 'player_id', 'game_id')
 cards_of_g_p = RelFunSM(hand, ['game_id', 'player_id'], ['card_id'])
 card_name = RelFun(card, 'card_id', 'card_name')
+card_type = RelFun(card, 'card_id', 'type')
 
 cookies = Cookies()
 
@@ -178,7 +179,7 @@ def removeCardFromHand(game_id, player_id, card_id):
   # This really terrifies me.
   write(hand, Where(hand, Pnot(Receq(Rec(game_id=game_id, card_id=card_id, player_id=player_id)))))
 
-def playCardOn(game_id, player_id, card_id, other_player_id):
+def playBattleCardOn(game_id, player_id, card_id, other_player_id):
   updatePlayerScore(game_id, other_player_id, card_id)
   commit()
   advanceTurn(game_id)
@@ -188,16 +189,32 @@ def playCardOn(game_id, player_id, card_id, other_player_id):
     'You played "', card_name(card_id) , '" on ', player_id_to_name(other_player_id), '.', br(),
     Footer())
 
-def playCardPickWho(game_id, player_id, card_id):
+def playBattleCardPickWho(game_id, player_id, card_id):
   return List(Header(),
     'It is your turn.', br(),
     'Play card "', card_name(card_id), '" on:', br(),
     ListJoin(
       Map(
-        lambda other_player_id: Link(player_id_to_name(other_player_id), playCardOn, game_id, player_id, card_id, other_player_id),
+        lambda other_player_id: Link(player_id_to_name(other_player_id), playBattleCardOn, game_id, player_id, card_id, other_player_id),
         Difference(players_of_game(game_id), List(player_id))),
       br()),
     Footer())
+
+def playLifeStyleCard(game_id, player_id, card_id):
+  updatePlayerScore(game_id, player_id, card_id)
+  commit()
+  advanceTurn(game_id)
+  commit()
+  removeCardFromHand(game_id, player_id, card_id)
+  return List(Header(),
+    'You played "', card_name(card_id) , '".', br(),
+    Footer())
+
+def playCardDispatch(game_id, player_id, card_id):
+  # Assumes only two kinds of cards.
+  return If(Equals(card_type(card_id), 'battle'),
+            playBattleCardPickWho(game_id, player_id, card_id),
+            playLifeStyleCard(game_id, player_id, card_id))
 
 def yourTurn(game_id, player_id):
   return List(Header(),
@@ -205,7 +222,7 @@ def yourTurn(game_id, player_id):
     'Pick a card to play:', br(),
     ListJoin(
       Map(
-        lambda card_id: Link(card_name(card_id), playCardPickWho, game_id, player_id, card_id),
+        lambda card_id: Link(card_name(card_id), playCardDispatch, game_id, player_id, card_id),
         Map(lambda rec: Deref(rec, 'card_id'), cards_of_g_p(Rec(game_id=game_id, player_id=player_id)))),
       br()),
     Footer())

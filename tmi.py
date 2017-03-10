@@ -848,7 +848,6 @@ assert 7 == read(Mod(7, 10))
 
 # TODO
 # Draw a card at start of turn
-# Can't play lifestyle on others
 # Links work even after you reset db to erase games
 # --
 # Gameplay
