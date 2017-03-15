@@ -175,8 +175,6 @@ def goToGame(game_id, player_id):
   return If(gameIsOver(game_id), gameOver(game_id, player_id), readyToPlay(game_id, player_id))
 
 def playersWithNonzeroScores(game_id):
-  # Generate this.
-  Fgt = lambda col, v: lambda rec: rec[col] > v
   return Column(Where(roster, Pand(Feq('game_id', game_id), Fgt('score', 0))), 'player_id')
 
 def gameIsOver(game_id):

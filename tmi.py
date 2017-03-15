@@ -256,6 +256,74 @@ assert not isnode(1)
 assert '1' == str(Constant(1)), str(Constant(1))
 assert 'Box(1)' == str(Box(1))
 
+@node
+class And(LNode):
+  def forwards(a, b):
+    return a() and b()
+
+assert read(And(True, True))
+assert not read(And(True, False))
+assert not read(And(False, True))
+assert not read(And(False, False))
+
+@node
+class Not(UNode):
+  def forwards(b):
+    return not b
+
+def opNode(op):
+  @node
+  class OpNode_(UNode):
+    def forwards(a, b):
+      return op(a, b)
+  opName = op.__name__.capitalize()
+  OpNode_.__name__ = opName
+  globals()[opName] = OpNode_
+
+def fopNode(op):
+  @node
+  class FopNode_(UNode):
+    def forwards(col, value):
+      return lambda rec: op(rec[col], value)
+  fopName = 'F' + op.__name__
+  FopNode_.__name__ = fopName
+  globals()[fopName] = FopNode_
+
+"""
+def fopNode(op):
+  opName = op.__name__.capitalize()
+  fopName = 'F' + op.__name__
+  opNode = globals()[opName]
+  f = lambda field, value: lambda rec: opNode(Deref(rec, field), value)
+  f.__name__ = fopName
+  globals[fopName] = f
+"""
+
+comparison_operators = [
+  operator.le,
+  operator.lt,
+  operator.eq,
+  operator.ne,
+  operator.ge,
+  operator.gt,
+]
+other_operators = [
+  operator.add,
+  operator.mul,
+]
+all_operators = comparison_operators + other_operators
+map(opNode, all_operators)
+map(fopNode, comparison_operators)
+
+assert read(Le(1, 2))
+assert read(Le(2, 2))
+assert not read(Le(2, 1))
+
+assert 5 == read(Add(2, 3))
+assert 6 == read(Mul(2, 3))
+
+assert read(And(Eq(2, 2), Not(Eq(2, 3))))
+
 # True if equal to srec on all fields of srec
 def receq(srec): return lambda rec: all([rec[col] == srec[col] for col in srec.keys()])
 @node
@@ -268,17 +336,14 @@ assert read(Receq(d(a=1)))(d(a=1, b=2, c=3))
 assert read(Receq(d(c=3)))(d(a=1, b=2, c=3))
 assert not read(Receq(d(a=2)))(d(a=1, b=2))
 
-# TODO is this a job for an adapter?
-def feq(col, value): return receq({ col: value })
-@node
-class Feq(UNode):
-  def forwards(col, value):
-    return feq(col, value)
-
 assert read(Feq('a', 1))(d(a=1, b=2))
 assert read(Feq('a', 1))(d(a=1, b=2, c=3))
 assert read(Feq('c', 3))(d(a=1, b=2, c=3))
 assert not read(Feq('a', 2))(d(a=1, b=2))
+assert read(Fgt('a', 0))(d(a=1, b=2))
+assert read(Fgt('a', 2))(d(a=3, b=2, c=3))
+assert read(Fgt('c', 2))(d(a=1, b=2, c=3))
+assert not read(Fgt('a', 20))(d(a=10, b=2))
 
 def pnot(pred): return lambda x: not pred(x)
 @node
@@ -571,21 +636,6 @@ assert 2 == read(If(True, 2, 3))
 assert 3 == read(If(False, 2, 3))
 
 @node
-class And(LNode):
-  def forwards(a, b):
-    return a() and b()
-
-assert read(And(True, True))
-assert not read(And(True, False))
-assert not read(And(False, True))
-assert not read(And(False, False))
-
-@node
-class Not(UNode):
-  def forwards(b):
-    return not b
-
-@node
 class DerefOrNew(Node):
   def forwards(rec, field):
     return rec[field]
@@ -641,42 +691,6 @@ class Rel(UNode):
     return list(recs)
 
 assert [D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)] == read(Rel(D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)))
-
-def opNode(op):
-  @node
-  class OpNode_(UNode):
-    def forwards(a, b):
-      return op(a, b)
-  OpNode_.__name__ = op.__name__.capitalize()
-  globals()[op.__name__.capitalize()] = OpNode_
-  #return OpNode_
-
-comparison_operators = [
-  operator.le,
-  operator.lt,
-  operator.eq,
-  operator.ne,
-  operator.ge,
-  operator.gt,
-]
-other_operators = [
-  operator.add,
-  operator.mul,
-]
-all_operators = comparison_operators + other_operators
-map(opNode, all_operators)
-#map fopNode(comparison_operators)
-
-assert read(Le(1, 2))
-assert read(Le(2, 2))
-assert not read(Le(2, 1))
-
-assert 5 == read(Add(2, 3))
-assert 6 == read(Mul(2, 3))
-
-opNode(operator.eq)
-
-assert read(And(Eq(2, 2), Not(Eq(2, 3))))
 
 def mapCompatible(f, args):
   return len(args) == len(inspect.getargspec(f).args)
