@@ -659,18 +659,24 @@ def opNode(op):
   globals()[op.__name__.capitalize()] = OpNode_
   #return OpNode_
 
-opNode(operator.le)
-opNode(operator.lt)
-opNode(operator.eq)
-opNode(operator.ne)
-opNode(operator.ge)
-opNode(operator.gt)
+comparison_operators = [
+  operator.le,
+  operator.lt,
+  operator.eq,
+  operator.ne,
+  operator.ge,
+  operator.gt,
+]
+other_operators = [
+  operator.mul,
+]
+all_operators = comparison_operators + other_operators
+map(opNode, all_operators)
+#map fopNode(comparison_operators)
 
 assert read(Le(1, 2))
 assert read(Le(2, 2))
 assert not read(Le(2, 1))
-
-opNode(operator.mul)
 
 assert 6 == read(Mul(2, 3))
 
