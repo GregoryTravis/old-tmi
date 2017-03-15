@@ -586,13 +586,6 @@ class Not(UNode):
     return not b
 
 @node
-class Equals(UNode):
-  def forwards(a, b):
-    return a == b
-
-assert read(And(Equals(2, 2), Not(Equals(2, 3))))
-
-@node
 class DerefOrNew(Node):
   def forwards(rec, field):
     return rec[field]
@@ -657,12 +650,33 @@ class Add(UNode):
 assert 5 == read(Add(2, 3))
 assert 5 == read(Add('2', '3'))
 
-@node
-class Mul(UNode):
-  def forwards(a, b):
-    return a * b
+def opNode(op):
+  @node
+  class OpNode_(UNode):
+    def forwards(a, b):
+      return op(a, b)
+  OpNode_.__name__ = op.__name__.capitalize()
+  globals()[op.__name__.capitalize()] = OpNode_
+  #return OpNode_
+
+opNode(operator.le)
+opNode(operator.lt)
+opNode(operator.eq)
+opNode(operator.ne)
+opNode(operator.ge)
+opNode(operator.gt)
+
+assert read(Le(1, 2))
+assert read(Le(2, 2))
+assert not read(Le(2, 1))
+
+opNode(operator.mul)
 
 assert 6 == read(Mul(2, 3))
+
+opNode(operator.eq)
+
+assert read(And(Eq(2, 2), Not(Eq(2, 3))))
 
 def mapCompatible(f, args):
   return len(args) == len(inspect.getargspec(f).args)
@@ -736,13 +750,6 @@ assert D(a=1) == relfunS(voo, ['c'], ['a'])(D(c=3))
 def relfunM(rel, domain, range):
   return lambda x: column(relfunSM(rel, [domain], [range])({domain: x}), range)
 
-assert seteq([2, 20], relfunM(voo, 'a', 'b')(1))
-assert seteq([1, 10], relfunM(voo, 'b', 'a')(20))
-assert seteq([1, 10], relfunM(voo, 'c', 'a')(30))
-assert seteq([20], relfunM(voo, 'a', 'b')(10))
-assert seteq([30], relfunM(voo, 'a', 'c')(10))
-assert seteq([1], relfunM(voo, 'c', 'a')(3))
-
 def relfun(rel, domain, range):
   return lambda x: one(relfunM(rel, domain, range)(x))
 
@@ -774,6 +781,18 @@ class RelFunM(FUNode):
 class RelFun(FUNode):
   def forwards(rel, domain, range):
     return relfun(rel, domain, range)
+
+@node
+class SetEq(UNode):
+  def forwards(os1, os2):
+    return set(os1) == set(os2)
+
+assert SetEq([2, 20], relfunM(voo, 'a', 'b')(1))
+assert SetEq([1, 10], relfunM(voo, 'b', 'a')(20))
+assert SetEq([1, 10], relfunM(voo, 'c', 'a')(30))
+assert SetEq([20], relfunM(voo, 'a', 'b')(10))
+assert SetEq([30], relfunM(voo, 'a', 'c')(10))
+assert SetEq([1], relfunM(voo, 'c', 'a')(3))
 
 assert releq([D(a=1)], read(RelFunSM(voo, ['c'], ['a']))(D(c=3)))
 assert D(a=1) == read(RelFunS(voo, ['c'], ['a']))(D(c=3))
@@ -881,10 +900,13 @@ with Expect(AssertionError):
   commit()
 
 # TODO
-# Logout requires two clicks
+# Generate Feq etc
+# Convert more operators
+# Skip player if they're out
+# Detect endgame and end game
+# "You played" should then lead to "you won" if game is over.
 # Factor out header/footer
 # Feq(like_this=12)
-# Detect endgame and end game
 # Links work even after you reset db to erase games
 # --
 # hand and table should be multisets

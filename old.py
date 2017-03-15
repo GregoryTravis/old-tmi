@@ -25,6 +25,7 @@ games_with_unaccepted_invitations = RelFunM(invitation, 'accepted', 'game_id')(F
 invitees_of_game = RelFunM(invitation, 'game_id', 'player_id')
 inviters_of_game = RelFunM(invitation, 'game_id', 'inviter')
 players_of_game = RelFunM(roster, 'game_id', 'player_id')
+#players_with_cards = RelFunM(hand, 'game_id', 'player_id')
 game_next = RelFun(turn, 'game_id', 'next')
 games_of_player = RelFunM(roster, 'player_id', 'game_id')
 cards_of_g_p = RelFunSM(hand, ['game_id', 'player_id'], ['card_id'])
@@ -40,7 +41,7 @@ def currentPlayerId():
   return player_name_to_id(currentPlayerName())
 
 def IsLoggedIn():
-  return And(HasField(Cookies(), 'login'), Not(Equals(currentPlayerName(), '')))
+  return And(HasField(Cookies(), 'login'), Not(Eq(currentPlayerName(), '')))
 
 def logout():
   write(currentPlayerName(), '')
@@ -93,7 +94,7 @@ def DoneAddingPlayersToGame(game_id):
   return 'Done'
 
 def allInvitationsAccepted(game_id):
-  return Equals(0, Len(Where(invitation, Pand(Feq('accepted', False), Feq('game_id', game_id)))))
+  return Eq(0, Len(Where(invitation, Pand(Feq('accepted', False), Feq('game_id', game_id)))))
 
 def inviterOfGame(game_id):
   return SameGet(inviters_of_game(game_id))
@@ -168,7 +169,27 @@ def whoIsNext(game_id):
     'player_id')
 
 def playerIsNext(player_id, game_id):
-  return Equals(player_id, whoIsNext(game_id))
+  return Eq(player_id, whoIsNext(game_id))
+
+def goToGame(game_id, player_id):
+  return If(gameIsOver(game_id), gameOver(game_id, player_id), readyToPlay(game_id, player_id))
+
+def playersWithNonzeroScores(game_id):
+  # Generate this.
+  Fgt = lambda col, v: lambda rec: rec[col] > v
+  return Column(Where(roster, Pand(Feq('game_id', game_id), Fgt('score', 0))), 'player_id')
+
+def gameIsOver(game_id):
+  return Le(Len(playersWithNonzeroScores(game_id)), 1)
+
+def gameOver(game_id, player_id):
+  pwns = playersWithNonzeroScores(game_id)
+  # Need a cond()
+  return If(
+    SetEq(pwns, [player_id]), 'You have won!', If(
+    SetEq(pwns, []), 'Everybody lost!',
+    List('You lost! ', player_id_to_name(One(pwns)), ' won!')
+  ))
 
 def readyToPlay(game_id, player_id):
   return If(playerIsNext(player_id, game_id),
@@ -232,7 +253,7 @@ def playLifeStyleCard(game_id, player_id, card_id):
 
 def playCardDispatch(game_id, player_id, card_id):
   # Assumes only two kinds of cards.
-  return If(Equals(card_type(card_id), 'battle'),
+  return If(Eq(card_type(card_id), 'battle'),
             Lazy(lambda: playBattleCardPickWho(game_id, player_id, card_id)),
             Lazy(lambda: playLifeStyleCard(game_id, player_id, card_id)))
 
@@ -284,7 +305,7 @@ def inProgressGamesList(player_id):
   games_ready_to_go = games_of_player(player_id)
   return List('Games in progress: ',
     ListJoin(
-      Map(lambda game_id: link(game_id, readyToPlay, game_id, player_id), games_ready_to_go), ' '))
+      Map(lambda game_id: link(game_id, goToGame, game_id, player_id), games_ready_to_go), ' '))
 
 def PlayerMenu():
   return List(Header(),
