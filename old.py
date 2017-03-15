@@ -44,6 +44,8 @@ def IsLoggedIn():
 
 def logout():
   write(currentPlayerName(), '')
+  # Don't like this.
+  commit()
   return main()
 
 def Footer():
