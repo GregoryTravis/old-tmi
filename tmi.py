@@ -642,14 +642,6 @@ class Rel(UNode):
 
 assert [D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)] == read(Rel(D(a=1, b=2), D(a=1, b=20), D(a=10, b=20)))
 
-@node
-class Add(UNode):
-  def forwards(a, b):
-    return int(a) + int(b)
-
-assert 5 == read(Add(2, 3))
-assert 5 == read(Add('2', '3'))
-
 def opNode(op):
   @node
   class OpNode_(UNode):
@@ -668,6 +660,7 @@ comparison_operators = [
   operator.gt,
 ]
 other_operators = [
+  operator.add,
   operator.mul,
 ]
 all_operators = comparison_operators + other_operators
@@ -678,6 +671,7 @@ assert read(Le(1, 2))
 assert read(Le(2, 2))
 assert not read(Le(2, 1))
 
+assert 5 == read(Add(2, 3))
 assert 6 == read(Mul(2, 3))
 
 opNode(operator.eq)
