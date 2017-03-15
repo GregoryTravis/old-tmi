@@ -6,9 +6,6 @@ from tags import *
 
 CARDS_IN_HAND = 5
 
-# This is to allow testing to work.
-random.seed(0)
-
 db = File('old.dat')
 player = Deref(db, 'player')
 card = Deref(db, 'card')
@@ -19,6 +16,7 @@ player_game = Deref(db, 'player_game')
 invitation = Deref(db, 'invitation')
 turn = Deref(db, 'turn')
 table = Deref(db, 'table')
+drawn_card = Deref(db, 'drawn_card')
 
 player_name_to_id = RelFun(player, 'name', 'player_id')
 player_id_to_name = RelFun(player, 'player_id', 'name')
@@ -98,10 +96,14 @@ def allInvitationsAccepted(game_id):
 def inviterOfGame(game_id):
   return SameGet(inviters_of_game(game_id))
 
+def randomCard():
+  ncards = read(Len(card))
+  return random.randrange(0, ncards)
+
 def generateCardsFor(game_id, player_id):
   # Don't like this read() but this is the rng problem.
   ncards = read(Len(card))
-  # This assumes the card ids are 0..N
+  # This assumes the card ids are 0..ncards-1
   return Map(lambda card_id: Rec(game_id=game_id, player_id=player_id, card_id=card_id),
              Ntimes(lambda: random.randrange(0, ncards), CARDS_IN_HAND))
 
@@ -121,6 +123,12 @@ def createRoster(game_id):
   commit()
   write(turn, Union(turn, Rel(Rec(game_id=game_id, next=0))))
 
+def startGame(game_id):
+  createRoster(game_id)
+  commit()
+  # Would prefer to be able to just write to a nonexistent slot
+  write(drawn_card, Union(drawn_card, Rel(Rec(game_id=game_id, drawn=False))))
+
 def acceptInvitation(_invitation):
   write(
     Deref(One(Where(invitation, Receq(Subrec(_invitation, ['game_id', 'player_id'])))),
@@ -128,7 +136,7 @@ def acceptInvitation(_invitation):
     True)
   commit() # TODO ugh
   if read(allInvitationsAccepted(_invitation['game_id'])):
-    createRoster(_invitation['game_id'])
+    startGame(_invitation['game_id'])
   return PlayerMenu()
 
 def playerName(player_id):
@@ -170,11 +178,15 @@ def updatePlayerScore(game_id, player_id, card_id):
   card_points = Deref(One(Where(card, Feq('card_id', card_id))), 'points')
   write(other_player_score, Add(other_player_score, card_points))
 
+def hasDrawnCard(game_id):
+  return Deref(One(Where(drawn_card, Feq('game_id', game_id))), 'drawn')
+
 def advanceTurn(game_id):
   num_players_in_roster = Len(players_of_game(game_id))
   next = Deref(One(Where(turn, Feq('game_id', game_id))), 'next')
   write(next, Mod(Add(next, 1), num_players_in_roster))
   commit()
+  write(hasDrawnCard(game_id), False)
 
 def removeCardFromHand(game_id, player_id, card_id):
   # This really terrifies me.
@@ -233,16 +245,34 @@ def notYourTurn(game_id, player_id):
     'Your lifestyle cards: ', lifestyleCards(game_id, player_id), br(),
     Footer())
 
-def yourTurn(game_id, player_id):
-  return List(Header(),
-    'It is your turn.', br(),
+def pickACard(game_id, player_id):
+  return List(
     'Your lifestyle cards: ', lifestyleCards(game_id, player_id), br(),
     'Pick a card to play:', br(),
     ListJoin(
       Map(
         lambda card_id: Link(card_name(card_id), playCardDispatch, game_id, player_id, card_id),
         Map(lambda rec: Deref(rec, 'card_id'), cards_of_g_p(Rec(game_id=game_id, player_id=player_id)))),
-      br()),
+      br()))
+
+def drawCard(game_id, player_id):
+  write(hand, Union(hand, Rel(Rec(game_id=game_id, player_id=player_id, card_id=randomCard()))))
+  commit()
+  write(hasDrawnCard(game_id), True)
+  # This commit() is required; otherwise, the ui does not show the change.
+  commit()
+  return yourTurn(game_id, player_id)
+
+def offerDrawCard(game_id, player_id):
+  return List(
+    'Time to draw a card. ', link('Draw Card', drawCard, game_id, player_id), br())
+
+def yourTurn(game_id, player_id):
+  return List(Header(),
+    'It is your turn.', br(),
+    If(hasDrawnCard(game_id),
+      pickACard(game_id, player_id),
+      offerDrawCard(game_id, player_id)),
     Footer())
 
 def inProgressGamesList(player_id):

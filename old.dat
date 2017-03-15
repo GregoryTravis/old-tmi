@@ -28,4 +28,5 @@
              {u'name': 'gmt', u'player_id': 0}],
  u'roster': [],
  u'table': [],
+ u'drawn_card': [],
  u'turn': []}

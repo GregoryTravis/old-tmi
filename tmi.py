@@ -174,6 +174,7 @@ def commit():
   readbacks = []
   while len(writes) > 0:
     (node, value) = writes.popleft()
+    assert not isunode(node)
     value = readIfNode(value)
     accum[node.serial].append(value)
     readbacks.append((node, value))
@@ -186,7 +187,7 @@ def commit():
 
   # Readback check.  Reading again from the node should give the value we just wrote.
   for (node, value) in readbacks:
-    assert value == read(node)
+    assert value == read(node), ('Failed readback', node, value, read(node))
 
   # TODO: disk write should actually be done here, not inside File node.
 
@@ -860,11 +861,33 @@ class Lazy(UNode):
 
 assert 2 == read(Lazy(lambda: Constant(2)))
 
+class Expect(object):
+  def __init__(self, expected_exception):
+    self.expected_exception = expected_exception
+
+  def __enter__(self):
+    pass
+
+  def __exit__(self, exc_type, exc_value, tb):
+    assert exc_type == self.expected_exception, 'Expected %s, got %s' % (self.expected_exception.__name__, exc_type)
+    return True
+
+with Expect(AssertionError):
+  write(Constant(1), Constant(2))
+  commit()
+
+with Expect(AssertionError):
+  write(RelFun(voo, 'c', 'a')(3), Constant(2))
+  commit()
+
 # TODO
+# Logout requires two clicks
+# Factor out header/footer
+# Feq(like_this=12)
 # Detect endgame and end game
-# Draw a card at start of turn
 # Links work even after you reset db to erase games
 # --
+# hand and table should be multisets
 # Gameplay
 # m->1 relfunSM with positional args
 # relfun that takes a rec and returns the complement of fields

@@ -4,6 +4,7 @@ import io
 import json
 import lib
 import os
+import random
 import shutil
 import sys
 import traceback
@@ -102,9 +103,11 @@ def record(inputs, output):
     f.write(str(db))
 
 def webmain(module):
+  random.seed(0)
   inputs = get_inputs()
   result = run_things(module, inputs)
   assert result != None
+  result = readIfNode(result)
   commit()
   output = format_result(result)
   record(inputs, output)
@@ -118,8 +121,11 @@ def webtestmain(module, recording):
   while os.path.exists('%s/%s.input' % (recording, counter)):
     inputs = io.readdat('%s/%s.input' % (recording, counter))
 
+    random.seed(0)
+
     result = run_things(module, inputs)
     assert result != None
+    result = readIfNode(result)
     commit()
     output = format_result(result)
     record(inputs, output)
@@ -156,7 +162,7 @@ def format_result(result):
     return (
       'Content-type: text/html\n' +
       generateCookieHeader() + '\n\n' +
-      lib.flatten(readIfNode(result)).encode('utf-8'))
+      lib.flatten(result).encode('utf-8'))
 
 def redirect(f, *args):
   return {'redirect': call(f, *args)}
