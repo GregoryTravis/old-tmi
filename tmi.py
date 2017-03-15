@@ -914,8 +914,6 @@ with Expect(AssertionError):
   commit()
 
 # TODO
-# Generate Feq etc
-# Convert more operators
 # Skip player if they're out
 # Detect endgame and end game
 # "You played" should then lead to "you won" if game is over.
