@@ -1,3 +1,12 @@
+foo a = b
+foo b =
+  slop a = b
+  slop a =
+    a + a
+  blu a =
+    a + b
+  b + a
+
 foo a b =
   bar b c =
     c + b

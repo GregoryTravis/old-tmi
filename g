@@ -1,6 +1,7 @@
 set -e
 
-#ncompile input.tmi
+ncompile input.tmi
+exit
 
 python tmi.py
 #./compile-and-run

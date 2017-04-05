@@ -16,5 +16,3 @@ parser = TMIParser()
 trace = False
 ast = parser.parse(text, 'start', filename=filename, trace=trace)
 compile(ast)
-
-- If you remove 'qq' input then it doesn't work because we're not allowing ; after last body exp

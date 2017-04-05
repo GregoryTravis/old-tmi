@@ -44,9 +44,10 @@ for (line, next) in zip(lines, lines[1:] + ['']):
   elif nextInd == lineInd:
     line = line + ';'
   else:
+    line = line + ';'
     sys.stdout.flush()
     while nextInd < indentations[-1]:
-      line = line + ' };'
+      line = line + ' }'
       indentations.pop()
   print line
 
