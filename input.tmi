@@ -1,0 +1,28 @@
+foo a b =
+  bar b c =
+    c + b
+  a + b
+
+foo a b =
+  a + b
+  hff
+bar c d = d + c
+foo b c a =
+  12
+  foo a b = r
+  13
+
+foo a =
+  b + a
+  c + q
+  blah a b =
+    voo c d =
+      c + d
+    b + a
+    foo a b c =
+      ii
+      barv d e =
+        kk 
+      qq
+    c + d
+  a + b

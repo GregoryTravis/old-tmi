@@ -1,0 +1,18 @@
+@@grammar::TMI
+
+start = {top_level_function} $;
+
+top_level_function = @:function ';';
+function = funname: identifier args: {identifier} '=' body: body;
+
+body = multiline_body | single_line_body;
+single_line_body = expression;
+expression_or_function = function | expression;
+multiline_body = '{' @:(';'.{ expression_or_function }+) '}';
+
+expression = left: identifier op: operator right: identifier | @:identifier;
+
+operator = '+';
+
+number = /\d+/;
+identifier = /\w+/;

@@ -1,0 +1,7 @@
+src=$1
+preprocessed=$src.pre
+compiled=$src.py
+make
+python preprocessor.py $src > $preprocessed
+echo '--' ; cat $preprocessed ; echo '--'
+python ncompile.py $preprocessed # > $compiled
