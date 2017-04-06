@@ -1,8 +1,11 @@
 @@grammar::TMI
+@@left_recursion :: True
 
 start = {function} $;
 
-function = funname: identifier args: {identifier} '=' body: body;
+function = funname: identifier args: {parameter_pattern} '=' body: body;
+
+parameter_pattern = @:atom_expression;
 
 body = multiline_body | single_line_body;
 single_line_body = expression ';';
@@ -10,9 +13,15 @@ expression_statement = expression ';';
 statement = expression_statement | function;
 multiline_body = '{' @:{ statement }+ '}';
 
-expression = left: identifier op: operator right: identifier | @:identifier;
+expression = add_expression;
 
-operator = '+';
+add_expression = left: mul_expression op: ('+' | '-') right: mul_expression | @:mul_expression;
+mul_expression = left: app_expression op: ('*' | '/') right: app_expression | @:app_expression;
+app_expression = application: (term_expression {term_expression}+) | @:term_expression;
+term_expression = @:atom_expression | '(' @:expression ')';
+atom_expression = number | identifier;
+
+operator = /[+-\/*<>=]+/;
 
 number = /\d+/;
-identifier = /\w+/;
+identifier = /[a-zA-Z]+/;

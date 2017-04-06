@@ -1,6 +1,6 @@
 set -e
 
-ncompile input.tmi
+ncompile input.tmi 2>&1
 exit
 
 python tmi.py
