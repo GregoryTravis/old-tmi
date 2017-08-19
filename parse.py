@@ -5,9 +5,9 @@ import re
 input_file = "input.tmi"
 
 token_patterns = [
-  ['(^\s+)(.*$)', 'whitespace'],
-  ['("(\"|[^\"])*")(.*$)', 'string'],
-  ["(^[^\s]+)(.*$)", 'identifier'],
+  { 'type': 'whitespace', 're': '(^\s+)(.*$)' },
+  { 'type': 'string', 're': '("(\"|[^\"])*")(.*$)' },
+  { 'type': 'identifier', 're': "(^[^\s]+)(.*$)" },
 ]
 
 def tokenize_line(line_number, line):
@@ -15,9 +15,9 @@ def tokenize_line(line_number, line):
   column_number = 0
   while len(line) > 0:
     for token_pattern in token_patterns:
-      m = re.match(token_pattern[0], line)
+      m = re.match(token_pattern['re'], line)
       if m:
-        tokens.append([token_pattern[1], m.group(1), line_number, column_number])
+        tokens.append([token_pattern['type'], m.group(1), line_number, column_number])
         line = m.group(2)
         column_number += len(m.group(1))
         break
