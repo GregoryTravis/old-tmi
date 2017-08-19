@@ -17,7 +17,11 @@ def tokenize_line(line_number, line):
     for token_pattern in token_patterns:
       m = re.match(token_pattern['re'], line)
       if m:
-        tokens.append([token_pattern['type'], m.group(1), line_number, column_number])
+        tokens.append({
+          'type': token_pattern['type'],
+          'src': m.group(1),
+          'line_number': line_number,
+          'column_number': column_number })
         line = m.group(2)
         column_number += len(m.group(1))
         break
@@ -28,7 +32,7 @@ def tokenize_line(line_number, line):
 def tokenize(src):
   lines = src.split('\n')
   tokens_with_ws = [token for line_number, line in enumerate(lines) for token in tokenize_line(line_number, line)]
-  if tokens_with_ws[0][0] == 'whitespace':
+  if tokens_with_ws[0]['type'] == 'whitespace':
     tokens_with_ws = tokens_with_ws[1:]
   tokens = [tokens_with_ws[i] for i in xrange(0, len(tokens_with_ws)+1, 2)]
   return tokens
