@@ -1,4 +1,4 @@
-foo a = a
+foo a = a "as d\"f"
 foo a = a b
 foo a = a b + c
 foo a = a + b c

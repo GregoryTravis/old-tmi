@@ -6,8 +6,8 @@ input_file = "input.tmi"
 
 token_patterns = [
   ['(^\s+)(.*$)', 'whitespace'],
+  ['("(\"|[^\"])*")(.*$)', 'string'],
   ["(^[^\s]+)(.*$)", 'identifier'],
-  #['("(\"|[^\"])*")(.*$)', 'string'],
 ]
 
 def tokenize_line(line_number, line):
@@ -27,7 +27,11 @@ def tokenize_line(line_number, line):
 
 def tokenize(src):
   lines = src.split('\n')
-  return [token for line_number, line in enumerate(lines) for token in tokenize_line(line_number, line)]
+  tokens_with_ws = [token for line_number, line in enumerate(lines) for token in tokenize_line(line_number, line)]
+  if tokens_with_ws[0][0] == 'whitespace':
+    tokens_with_ws = tokens_with_ws[1:]
+  tokens = [tokens_with_ws[i] for i in xrange(0, len(tokens_with_ws)+1, 2)]
+  return tokens
 
 with open(input_file, 'r') as f:
   print tokenize(f.read())
