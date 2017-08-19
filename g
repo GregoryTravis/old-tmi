@@ -1,5 +1,8 @@
 set -e
 
+parse.py
+exit
+
 ncompile input.tmi 2>&1
 exit
 
