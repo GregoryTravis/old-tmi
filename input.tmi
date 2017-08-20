@@ -1,11 +1,5 @@
-foo a = a "as d\"f"
-foo a = a b
-foo a = a b + c
-foo a = a + b c
-foo a = a b + c d
-foo a = a b + c * d e
-foo a = a b / c - d e
-foo a =
-  a b / c - d e
-fact 0 = 1
-fact n = n * fact (n - 1)
+foo a = let q = r
+            j = p
+         in goo f a
+             1 2 3
+bar b = 23

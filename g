@@ -1,5 +1,6 @@
 set -e
 
+#python -m pdb parse.py
 parse.py
 exit
 
