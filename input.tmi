@@ -1,4 +1,5 @@
 foo a = let q = r
+            v = 10
             j = let rah a = leh 1
                     roo b = coo 12
                  in weh a b c

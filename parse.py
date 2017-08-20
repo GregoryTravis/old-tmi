@@ -27,6 +27,9 @@ def semicolon(line_number):
 space = { 'src': ' ', 'first_in_line': False }
 newline = { 'src': '\n', 'first_in_line': False }
 
+def srcs(tokens):
+  return [token['src'] for token in tokens]
+
 def tokenize_line(line_number, line):
   tokens = []
   column_number = 0
@@ -68,6 +71,27 @@ def semi_for_lets(tokens):
       after_last_line = after[len(after)-1]['line_number']
       new_after = concat(after, [semicolon(after_last_line)])
     return concat(before, [in_token], semi_for_lets(new_after))
+  else:
+    return tokens
+
+def semi_for_let_decls(tokens):
+  m = find_token(tokens, lambda token: token['src'] == 'let')
+  #print m
+  if m:
+    (before, let_token, after) = m
+    assert len(after) > 0, 'dangling "let"'
+    decl_start_column = after[0]['column_number']
+    m2 = find_token(after, lambda token: token['first_in_line'] and token['column_number'] <= decl_start_column)
+    #print m2
+    if m2:
+      (decl, first, rest) = m2
+      #print srcs(decl), first, decl_start_column
+      if first['column_number'] == decl_start_column:
+        decl_last_line = decl[len(decl)-1]['line_number']
+        new_after =  concat(decl, [semicolon(decl_last_line)], [first], rest)
+      else:
+        new_after = after
+    return concat(before, [let_token], new_after)
   else:
     return tokens
 
@@ -116,6 +140,7 @@ with open(input_file, 'r') as f:
   tokens = tokenize(f.read())
 
 tokens = semi_for_lets(tokens)
+tokens = semi_for_let_decls(tokens)
 print tokens_to_src(tokens)
 
 #-- still lexing wrong, maybe \n isn't being parsed as ws?
