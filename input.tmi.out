@@ -1,0 +1,14 @@
+foo a = let q = r ;
+            v = 10
+            j = let rah a = leh 1
+                    roo b = coo 12
+                 in weh a b c ;
+         in goo f a
+             1 2 3 ;
+bar b = 23
+foo a = let q = r
+            j = let rah a = leh 1
+                    roo b = coo 12
+             in weh a b c ;
+      in goo f a
+          1 2 3 ;
