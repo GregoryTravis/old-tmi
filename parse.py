@@ -63,9 +63,11 @@ def semi_for_lets(tokens):
     if m2:
       (let_body, first, rest) = m2
       body_last_line = let_body[len(let_body)-1]['line_number']
-      return concat(before, [in_token], let_body, [semicolon(body_last_line)], [first], rest)
+      new_after = concat(let_body, [semicolon(body_last_line)], [first], rest)
     else:
-      return concat(before, [in_token], after)
+      after_last_line = after[len(after)-1]['line_number']
+      new_after = concat(after, [semicolon(after_last_line)])
+    return concat(before, [in_token], semi_for_lets(new_after))
   else:
     return tokens
 
