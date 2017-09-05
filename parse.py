@@ -27,6 +27,16 @@ def nest(tokens, pairs):
 #assert (nest(['a', 'aa', '(', 'b', 'bb', '(', 'd', ')', 'let', 'e', 'in', 'f', 'ff', ')', 'c', 'cc'], [('(', ')'), ('let', 'in')]) ==
   #['a', 'aa', ['(', 'b', 'bb', ['(', 'd', ')'], ['let', 'e', 'in'], 'f', 'ff', ')'], 'c', 'cc'])
 
+def unnest(tokens):
+  if tokens == []:
+    return []
+  elif type(tokens[0]) == list:
+    return unnest(tokens[0] + tokens[1:])
+  else:
+    return [tokens[0]] + unnest(tokens[1:])
+
+assert unnest([0, [1, [2], {'a': 12}, 3], 4]) == [0, 1, 2, {'a': 12}, 3, 4]
+
 token_patterns = [
   { 'type': 'whitespace', 're': '(^\s+)(.*$)' },
   { 'type': 'string', 're': '("(\"|[^\"])*")(.*$)' },
@@ -61,11 +71,32 @@ def tokenize(src):
   tokens = [token for token in tokens_with_ws if token['type'] != 'whitespace']
   return tokens
 
-src = """
-foo a b = let r = 5
-              s = 6 + (let b = 5 in b)
-           in r + s
-"""
+def tokens_to_src(tokens):
+  #return concat_tokens(join_pred(tokens, lambda at, bt: space if at['line_number'] == bt['line_number'] else newline))
+  src = ''
+  current_line = 0
+  current_column = 0
+  for token in tokens:
+    if current_line == token['line_number'] and current_column != 0:
+      src += ' '
+      current_column += 1
+    while current_line < token['line_number']:
+      src += '\n'
+      current_line += 1
+      current_column = 0
+    if 'column_number' in token:
+      while current_column < token['column_number']:
+        src += ' '
+        current_column += 1
+    src += token['src']
+    current_column += len(token['src'])
+  return src
+
+def apply_each_level(arr, f):
+  return [apply_each_level(x, f) if type(x) == list else x for x in f(arr)]
+
+assert (apply_each_level([1, [2, 3], 4], lambda arr: [0] + arr + [9]) ==
+  [0, 1, [0, 2, 3, 9], 4, 9])
 
 nesters = [
   ('(', ')'),
@@ -73,10 +104,17 @@ nesters = [
   ('let', 'in')
 ]
 
-tokens = tokenize(src)
-sp(tokens)
-tokens = nest(tokens, nesters)
+def preprocess_file(filename):
+  with open(filename, 'r') as f:
+    preprocess_src(f.read())
 
-sp(tokens)
+def preprocess_src(src):
+  print src
+  tokens = tokenize(src)
+  #sp(tokens)
+  tokens = nest(tokens, nesters)
+  #sp(tokens)
+  tokens = unnest(tokens)
+  print tokens_to_src(tokens)
 
-# Deal with string literal tokens
+preprocess_file('input.tmi')
