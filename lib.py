@@ -1,3 +1,5 @@
+import pprint
+
 def flatten(o):
   if type(o) == str or type(o) == unicode:
     return o
@@ -19,3 +21,7 @@ assert [1] == listjoin([1], 0)
 assert [] == listjoin([], 0)
 
 assert 'abc' == flatten(['a', ('b',), [['c']]])
+
+def sp(*os):
+  for o in os:
+    pprint.pprint(o, width=150)
