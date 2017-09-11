@@ -5,6 +5,9 @@ from lib import *
 import re
 import sys
 
+def mktok(src):
+  return { 'src': src, 'line_number': None, 'column_number': None }
+
 def nest(tokens, pairs):
   lefts = [pair[0] for pair in pairs]
   rights = [pair[1] for pair in pairs]
@@ -92,6 +95,31 @@ def tokens_to_src(tokens):
     current_column += len(token['src'])
   return src
 
+# Nests; preserves order.
+def group_by_func(os, f):
+  if os == []:
+    return []
+  last_value = f(os[0])
+  grouped = [[os[0]]]
+  os = os[1:]
+  for o in os:
+    value = f(o)
+    if value != last_value:
+      grouped.append([])
+      last_value = value
+    grouped[-1].append(o)
+  return grouped
+
+assert group_by_func([0, 0, 1, 1, 0, 2, 1, 1, 2, 2, 2], lambda x: x) == [[0, 0], [1, 1], [0], [2], [1, 1], [2, 2, 2]]
+
+def _tokens_to_src(tokens):
+  # In place
+  for i, token in enumerate(tokens):
+    if token['line_number'] == None and i > 0:
+      token['line_number'] = tokens[i-1]['line_number']
+  #sp(group_by_func(tokens, lambda token: token['line_number'])
+  return "\n".join([' '.join([token['src'] for token in linegroup]) for linegroup in group_by_func(tokens, lambda token: token['line_number'])])
+
 def apply_each_level(arr, f):
   return [apply_each_level(x, f) if type(x) == list else x for x in f(arr)]
 
@@ -108,13 +136,85 @@ def preprocess_file(filename):
   with open(filename, 'r') as f:
     preprocess_src(f.read())
 
+def srceq(s):
+  return lambda token: type(token) == dict and token['src'] == s
+
+def peq(s):
+  return lambda token: token == s
+
+assert srceq('in')({ 'src': 'in' })
+assert not srceq('in')({ 'src': 'inn' })
+
+def find_token_or(a, p):
+  for i, x in enumerate(a):
+    if p(x):
+      return i
+  return None
+
+def find_token(a, p):
+  r = find_token_or(a, p)
+  if r == None:
+    assert False, ("Can't find", a, p)
+  return r
+
+assert find_token('a b'.split(' '), peq('a')) == 0
+assert find_token('a b'.split(' '), peq('b')) == 1
+assert find_token('a a'.split(' '), peq('a')) == 0
+assert find_token('a b a c d'.split(' '), peq('a')) == 0
+assert find_token('a b c b d'.split(' '), peq('b')) == 1
+assert find_token_or('a b c b d'.split(' '), peq('q')) == None
+
+def find_token_rtol_or(a, p):
+  for i, x in enumerate(a[::-1]):
+    if p(x):
+      return len(a)-1-i
+  return None
+
+def find_token_rtol(a, p):
+  r = find_token_rtol_or(a, p)
+  if r == None:
+    assert False, ("Can't find", a, p)
+  return r
+
+assert find_token_rtol('a a'.split(' '), peq('a')) == 1
+assert find_token_rtol('a b a c d'.split(' '), peq('a')) == 2
+assert find_token_rtol('a b c b d'.split(' '), peq('b')) == 3
+assert find_token_rtol_or('a b c b d'.split(' '), peq('q')) == None
+
+def tokline(tokens):
+  return ' '.join([token['src'] for token in unnest(tokens)])
+
+def dedenter(column_number, line_number):
+  return lambda token: token['line_number'] > line_number and token['column_number'] < column_number
+
+def find_let_in(token):
+  return type(token) == list and token[0]['src'] == 'let' and token[-1]['src'] == 'in'
+
+def wrap_in_body(a):
+  #in_i = find_token_rtol(a, srceq('in'))
+  let_in_i = find_token_rtol_or(a, find_let_in)
+  if let_in_i == None:
+    return a
+  rest = a[let_in_i + 1:]
+  body_start = rest[0]
+  dedent = find_token_or(rest, dedenter(body_start['column_number'], body_start['line_number']))
+  if dedent == None:
+    # End
+    return wrap_in_body(a[0:let_in_i]) + a[let_in_i] + [[mktok('(')] + rest + [mktok(')')]]
+  else:
+    # Dedent
+    return wrap_in_body(a[0:let_in_i]) + a[let_in_i] + [[mktok('(')] + rest[0:dedent] + [mktok(')')]] + rest[dedent:]
+
 def preprocess_src(src):
   print src
+  print '=============='
   tokens = tokenize(src)
   #sp(tokens)
   tokens = nest(tokens, nesters)
+  tokens = wrap_in_body(tokens)
   #sp(tokens)
   tokens = unnest(tokens)
+  #sp(tokens)
   print tokens_to_src(tokens)
 
 preprocess_file('input.tmi')

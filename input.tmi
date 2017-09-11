@@ -1,3 +1,7 @@
 foo a b = let r = 5
-              s = 6 + (let b = 5 in b)
+              s = 6
+           in r + s
+bar b = 12
+foo a b = let r = 5
+              s = 6
            in r + s

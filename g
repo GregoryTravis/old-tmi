@@ -1,5 +1,8 @@
 set -e
 
+#python zoom.py
+#exit
+
 #python -m pdb parse.py
 parse.py
 exit
