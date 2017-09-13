@@ -1,7 +1,2 @@
-foo a b = let r = 5
-              s = 6
-           in r + s
-bar b = 12
-foo a b = let r = 5
-              s = 6
+foo a b = let s = b where b = 27
            in r + s

@@ -25,3 +25,5 @@ assert 'abc' == flatten(['a', ('b',), [['c']]])
 def sp(*os):
   for o in os:
     pprint.pprint(o, width=150)
+  if len(os) > 0:
+    return os[0]

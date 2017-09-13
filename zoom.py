@@ -179,6 +179,7 @@ assert zoom(zmake([0, 1, 2, 3]), 1, 3) == zmakelvr([0], [1, 2], [3])
 assert zoom(zmake([0, 1, 2, 3]), 0, 1) == zmakelvr([], [0], [1, 2, 3])
 assert zoom(zmake([0, 1, 2, 3]), 4, 4) == zmakelvr([0, 1, 2, 3], [], [])
 
+# This doesn't work with more than 1 level of nesting
 def zwrite(z, newval):
   (left, val, right) = zlvr(z)
   return zmakelvr(left, newval, right)
@@ -199,6 +200,13 @@ def zisend(z):
 
 assert zisend(zright(zmake([0, 1, 2])))
 
+def zisedge(z):
+  return zisstart(z) or zisend(z)
+
+assert zisedge(zleft(zmake([0, 1, 2])))
+assert zisedge(zright(zmake([0, 1, 2])))
+assert not zisedge(zoom(zmake([0, 1, 2]), 1, 2))
+
 def zwiden(z, n):
   (x, s, e) = z
   return zcheck(zoom(x, s-n, e+n))
@@ -215,6 +223,28 @@ def zfindspot(z, p):
 
 assert (zoom(zmake([-1, 1, 3, 4, 4, 7, 8]), 4, 4) ==
   zfindspot(zmake([-1, 1, 3, 4, 4, 7, 8]), lambda spot: not zisstart(spot) and not zisend(spot) and zval(zleft1(spot)) == zval(zright1(spot))))
+
+def zitems(z):
+  return [zoom(z, x, x+1) for x in range(zlen(z))]
+
+assert [zoom(zmake([1, 2]), 0, 1), zoom(zmake([1, 2]), 1, 2)] == zitems(zmake([1, 2]))
+
+def zfind1(z, p):
+  return first(zitems(z), p)
+
+assert zoom(zmake([0, 1]), 1, 2) == zfind1(zmake([0, 1]), lambda p: zval1(p) == 1)
+
+def zeq1(x):
+  return lambda z: zval1(z) == x
+
+assert zeq1(1)(zoom(zmake([0, 1]), 1, 2))
+assert not zeq1(1)(zoom(zmake([0, 1]), 0, 1))
+
+def zspotbefore(z):
+  (x, s, e) = z
+  return zoom(x, s, s)
+
+assert zoom(zmake([0, 1, 2]), 1, 1) == zspotbefore(zoom(zmake([0, 1, 2]), 1, 2))
 
 # where stuff
 # find spot

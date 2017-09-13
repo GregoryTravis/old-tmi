@@ -4,6 +4,7 @@ import itertools
 from lib import *
 import re
 import sys
+from zoom import *
 
 def mktok(src):
   return { 'src': src, 'line_number': None, 'column_number': None }
@@ -68,6 +69,9 @@ def tokenize_line(line_number, line):
       assert False, ('Bad token', line)
   return tokens
 
+def is_token(o):
+  return type(o) == dict and 'src' in o.keys()
+
 def tokenize(src):
   lines = [line + '\n' for line in src.split('\n')]
   tokens_with_ws = [token for line_number, line in enumerate(lines) for token in tokenize_line(line_number, line)]
@@ -87,10 +91,12 @@ def tokens_to_src(tokens):
       src += '\n'
       current_line += 1
       current_column = 0
-    if 'column_number' in token:
+    if 'column_number' in token and token['column_number'] != None:
       while current_column < token['column_number']:
         src += ' '
         current_column += 1
+    else:
+      src += ' '
     src += token['src']
     current_column += len(token['src'])
   return src
@@ -128,8 +134,8 @@ assert (apply_each_level([1, [2, 3], 4], lambda arr: [0] + arr + [9]) ==
 
 nesters = [
   ('(', ')'),
-  ('case', 'of'),
-  ('let', 'in')
+  #('case', 'of'),
+  #('let', 'in')
 ]
 
 def preprocess_file(filename):
@@ -205,16 +211,33 @@ def wrap_in_body(a):
     # Dedent
     return wrap_in_body(a[0:let_in_i]) + a[let_in_i] + [[mktok('(')] + rest[0:dedent] + [mktok(')')]] + rest[dedent:]
 
+def srceq(s):
+  return lambda token: is_token(zval1(token)) and zval1(token)['src'] == s
+
+def find_dedent(tokens, column_number, line_number):
+  return zfind1(tokens, lambda z: zval1(z)['column_number'] < column_number and zval1(z)['line_number'] > line_number)
+
+def add_endwhere(tokens):
+  z = zmake(tokens)
+  wh = zfind1(z, srceq('where'))
+  #print 'wh', zval(wh)
+  ded = find_dedent(zright(wh), zval1(wh)['column_number'], zval1(wh)['line_number'])
+  #print 'ded', zval(ded)
+  return zbottom(zwrite(zflatten(ded), [mktok('endwhere')]))
+
 def preprocess_src(src):
   print src
   print '=============='
   tokens = tokenize(src)
   #sp(tokens)
   tokens = nest(tokens, nesters)
-  tokens = wrap_in_body(tokens)
+  tokens = add_endwhere(tokens)
+  #tokens = wrap_in_body(tokens)
   #sp(tokens)
   tokens = unnest(tokens)
   #sp(tokens)
   print tokens_to_src(tokens)
 
 preprocess_file('input.tmi')
+# !! Don't like the zflatten in add_endwhere, write should work on taller stacks
+# !! Want to be able to re-use 'wh' after the write.  But try finding a second where before the first one and getting two places to write endwhere
