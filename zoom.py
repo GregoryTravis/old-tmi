@@ -9,6 +9,20 @@ def pairmap(f, os):
 assert [3, 5, 7, 9] == pairmap(lambda a, b: a + b, [1, 2, 3, 4, 5])
 assert [True, False, False, False, True, False, False, False, True, False, True] == pairmap(lambda a, b: a == b, [0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1])
 
+def first(os, p):
+  if len(os) == 0:
+    return None
+  elif p(os[0]):
+    return os[0]
+  else:
+    return first(os[1:], p)
+
+assert None == first([1, 3, 7, 9], lambda x: (x%2)==0)
+assert None == first([], lambda x: (x%2)==0)
+assert 1 == first([1, 2, 3], lambda x: True)
+assert 8 == first([1, 3, 7, 8, 9, 10], lambda x: (x%2)==0)
+assert 10 == first([1, 3, 7, 8, 9, 10], lambda x: x == 10)
+
 def allsame(os):
   return all(pairmap(lambda a, b: a == b, os))
 
@@ -41,8 +55,13 @@ assert not zis(1)
 assert not zis((1, 2))
 
 def zlen(z):
-  (x, s, e) = z
-  return e - s
+  if zis(z):
+    (x, s, e) = z
+    return e - s
+  elif type(z) == list:
+    return len(z)
+  else:
+    assert False, z
 
 assert 3 == zlen(zmake([1, 2, 3]))
 assert 1 == zlen(([1, 2, 3], 0, 1))
@@ -59,7 +78,7 @@ assert zok(([1, 2, 3], 1, 2))
 assert not zok(([1, 2, 3], 2, 1))
 
 def zcheck(z):
-  assert zok(z)
+  assert zok(z), z
   return z
 
 def zoom(z, s, e):
@@ -133,6 +152,18 @@ def zright(z):
 assert [] == zval(zright(zmake([1, 2, 3])))
 assert [4, 5, 6] == zval(zright(zoom(zmake([0, 1, 2, 3, 4, 5, 6]), 2, 4)))
 
+def zleft1(z):
+  (x, s, e) = z
+  return zcheck((x, s-1, s))
+
+assert [1] == zval(zleft1(zoom(zmake([1, 2, 3]), 1, 2)))
+
+def zright1(z):
+  (x, s, e) = z
+  return zcheck((x, e, e+1))
+
+assert [3] == zval(zright1(zoom(zmake([1, 2, 3]), 1, 2)))
+
 assert all([zval(zpop(z)) == zval(zleft(z)) + zval(z) + zval(zright(z))
   for z in [ zoom(zmake([0, 1, 2, 3]), 1, 2), zoom(zmake([0, 1, 2, 3]), 2, 4) ]])
 
@@ -155,6 +186,42 @@ def zwrite(z, newval):
 assert [0, 1, 20, 3] == zbottom(zwrite(zoom(zmake([0, 1, 2, 3]), 2, 3), [20]))
 assert [100, 1, 2, 3] == zbottom(zwrite(zoom(zmake([0, 1, 2, 3]), 0, 1), [100]))
 assert [0, 10, 15, 20, 3] == zbottom(zwrite(zoom(zmake([0, 1, 2, 3]), 1, 3), [10, 15, 20]))
+
+def zisstart(z):
+  (x, s, e) = z
+  return s == 0 and e == 0
+
+assert zisstart(zleft(zmake([0, 1, 2])))
+
+def zisend(z):
+  (x, s, e) = z
+  return s == zlen(x) and e == s
+
+assert zisend(zright(zmake([0, 1, 2])))
+
+def zwiden(z, n):
+  (x, s, e) = z
+  return zcheck(zoom(x, s-n, e+n))
+
+assert zoom(zmake([0, 1, 2, 3, 4]), 1, 4) == zwiden(zoom(zmake([0, 1, 2, 3, 4]), 2, 3), 1)
+
+def zspots(z):
+  return [zoom(z, x, x) for x in range(zlen(z) + 1)]
+
+assert [zoom(zmake([1, 2]), 0, 0), zoom(zmake([1, 2]), 1, 1), zoom(zmake([1, 2]), 2, 2)] == zspots(zmake([1, 2]))
+
+def zfindspot(z, p):
+  return first(zspots(z), p)
+
+assert (zoom(zmake([-1, 1, 3, 4, 4, 7, 8]), 4, 4) ==
+  zfindspot(zmake([-1, 1, 3, 4, 4, 7, 8]), lambda spot: not zisstart(spot) and not zisend(spot) and zval(zleft1(spot)) == zval(zright1(spot))))
+
+# where stuff
+# find spot
+# is end
+# get pair around
+# is dedent
+# find spot multi
 
 #def zwrites(zs, newvals):
 #  assert allsame(map(zbottom, zs))
