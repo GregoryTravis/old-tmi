@@ -234,6 +234,11 @@ def zfind1(z, p):
 
 assert zoom(zmake([0, 1]), 1, 2) == zfind1(zmake([0, 1]), lambda p: zval1(p) == 1)
 
+def zfindall1(z, p):
+  return filter(p, zitems(z))
+
+assert [zoom(zmake([0, 1, 1]), 1, 2), zoom(zmake([0, 1, 1]), 2, 3)] == zfindall1(zmake([0, 1, 1]), lambda p: zval1(p) == 1)
+
 def zeq1(x):
   return lambda z: zval1(z) == x
 

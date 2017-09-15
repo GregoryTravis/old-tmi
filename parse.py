@@ -221,6 +221,7 @@ def add_endwhere(tokens):
   z = zmake(tokens)
   wh = zfind1(z, srceq('where'))
   #print 'wh', zval(wh)
+  print map(zval, zfindall1(z, srceq('where')))
   ded = find_dedent(zright(wh), zval1(wh)['column_number'], zval1(wh)['line_number'])
   #print 'ded', zval(ded)
   return zbottom(zwrite(zflatten(ded), [mktok('endwhere')]))
@@ -240,4 +241,6 @@ def preprocess_src(src):
 
 preprocess_file('input.tmi')
 # !! Don't like the zflatten in add_endwhere, write should work on taller stacks
-# !! Want to be able to re-use 'wh' after the write.  But try finding a second where before the first one and getting two places to write endwhere
+# !! Should just get all such spots.  Now printing out all endwhere spots, but don't have writes yet.
+# !! Then do nesting and thus try (b where b = 70), the non-dedent spot -- haven't implemented that yet
+# !! Ooo wouldn't have to worry about getting the order of endwhere/endin wrong when merging overlapping writes, just use end for all!
