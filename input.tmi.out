@@ -1,4 +1,5 @@
-foo a b = let { s = b where { b = 27 } ;
+foo a b = let { s = b where { b = 27 ;
+                          bb = 28 } ;
               q = let {
                     a = 10 ;
                     b = 20 }
