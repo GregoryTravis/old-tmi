@@ -10,6 +10,7 @@ foo a b = let s = b where b = 27
            in r + s where s = r + r
 foo a b = let s = x where x = 27
               q = 40
+              qq = p where p = (q + j where j = 90) ; jj = 100
               qq = p where p = q + j where j = 90 ; jj = 100
               qq = p where p = q + j where j = 90 ; jj = 100
                            jjj = 101

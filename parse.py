@@ -297,6 +297,14 @@ def hya(src):
     #print current, indent_stack
     if False:
       assert False
+    elif current['src'] == '(':
+      indent_stack.append(('(', tokens[inx+1]['column_number'], tokens[inx+1]['line_number']))
+    elif current['src'] == ')':
+      while indent_stack[-1][0] in ['where', 'of']:
+        output.append(mktok('}'))
+        indent_stack.pop()
+      assert indent_stack[-1][0] == '(', indent_stack
+      indent_stack.pop()
     elif current['src'] == 'in':
       assert len(indent_stack) > 0, ('initial in', current, indent_stack)
       assert indent_stack[-1][0] == 'let', ('mismatched in', current, indent_stack)
