@@ -1,4 +1,11 @@
 foo a b = let s = b where b = 27
+              q = let
+                    a = 10
+                    b = 20
+                  in a + b ; rah = 12
+              v = ha ; q = po
            in r + s
 foo a b = let s = x where x = 27
+              q = 40
+              q = 40
            in r + s

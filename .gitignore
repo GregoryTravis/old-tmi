@@ -4,3 +4,4 @@ grammar.py
 *.tmi.py
 _input.tmi
 input.tmi.py
+*.pyc

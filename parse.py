@@ -239,8 +239,45 @@ def preprocess_src(src):
   #sp(tokens)
   print tokens_to_src(tokens)
 
-preprocess_file('input.tmi')
+#preprocess_file('input.tmi')
+
 # !! Don't like the zflatten in add_endwhere, write should work on taller stacks
 # !! Should just get all such spots.  Now printing out all endwhere spots, but don't have writes yet.
 # !! Then do nesting and thus try (b where b = 70), the non-dedent spot -- haven't implemented that yet
 # !! Ooo wouldn't have to worry about getting the order of endwhere/endin wrong when merging overlapping writes, just use end for all!
+
+def hya(src):
+  print src
+  print '=============='
+  tokens = tokenize(src)
+  indent_stack = []
+  output = []
+  inx = 0
+
+  indent_stack.append(('let', 0, 0))
+
+  while inx < len(tokens):
+    current = tokens[inx]
+    if False:
+      assert False
+    elif current['src'] == 'in':
+      assert len(indent_stack) > 0, 'initial in'
+      assert indent_stack[-1][0] == 'let', 'mismatched in'
+      indent_stack.pop()
+      output.append(mktok('}'))
+      output.append(current)
+    elif current['src'] == 'let':
+      assert inx + 1 < len(tokens), 'Dangling let'
+      indent_stack.append(('let', tokens[inx+1]['column_number'], tokens[inx+1]['line_number']))
+      output.append(current)
+      output.append(mktok('{'))
+    else:
+      if len(indent_stack) > 0 and indent_stack[-1][1] == current['column_number'] and indent_stack[-1][2] < current['line_number']:
+        output.append(mktok(';'))
+      output.append(current)
+    inx += 1
+
+  print tokens_to_src(output)
+
+with open('input.tmi', 'r') as f:
+  hya(f.read())
