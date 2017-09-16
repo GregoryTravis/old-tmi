@@ -1,9 +1,10 @@
 foo a b = let s = b where b = 27
-                          bb = 28
+                          bb = 28 + (a + 29)
               q = let
                     a = 10
                     b = 20
                     r = case a + b of Foo a => a ; Bar a => b
+                    r = (case a + b of Foo a => a ; Bar a => b)
                     c = let a = 10 in a + a
                   in a + b ; rah = 12
               v = ha ; q = po
