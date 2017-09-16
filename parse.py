@@ -262,18 +262,21 @@ def hya(src):
 
     # dedent
     while True:
+      #print '-', inx, current, indent_stack
       if len(indent_stack) > 0 and indent_stack[-1][1] > current['column_number'] and indent_stack[-1][2] < current['line_number']:
         #print 'dedent', current, indent_stack[-1]
         if indent_stack[-1][0] == 'let':
           assert current['src'] == 'in', ('Expected in', current, indent_stack)
-          output.append(mktok('}'))
-          indent_stack.pop()
+          break
+          #output.append(mktok('}'))
+          #indent_stack.pop()
         elif indent_stack[-1][0] == 'where':
           output.append(mktok('}'))
           indent_stack.pop()
         elif indent_stack[-1][0] == 'case':
           assert current['src'] == 'of'
-          indent_stack.pop()
+          #indent_stack.pop()
+          break
         elif indent_stack[-1][0] == 'of':
           output.append(mktok('}'))
           indent_stack.pop()
@@ -291,10 +294,11 @@ def hya(src):
       else:
         assert False, ('Bad dedent?', indent_stack)
 
+    #print current, indent_stack
     if False:
       assert False
-    elif False and current['src'] == 'in':
-      assert len(indent_stack) > 0, ('initial in', current)
+    elif current['src'] == 'in':
+      assert len(indent_stack) > 0, ('initial in', current, indent_stack)
       assert indent_stack[-1][0] == 'let', ('mismatched in', current, indent_stack)
       indent_stack.pop()
       output.append(mktok('}'))
@@ -361,5 +365,7 @@ def hya(src):
 with open('input.tmi', 'r') as f:
   hya(f.read())
 
-# - case
-# - inine in is probably not handled; should just assert it's not a dedent, or maybe just pop
+# + case
+# - inline let-in breaks non-inline let-in: we're popping the let at the dedent and then again when we are processing the 'in'.  We
+#   have to pop at the dedent -- we pop until we no longer have a dedent.  When we reach an in, if it's a dedent in, then the let is popped,
+#   but if it's an inline in, then it's not popped.
