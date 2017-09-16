@@ -9,4 +9,10 @@ foo a b = let { s = b where { b = 27 ;
 foo a b = let { s = x where { x = 27 } ;
               q = 40 ;
               qq = 41 }
-           in r + s
+           in r + s ;
+bar p q = case p + q of {
+  Foo a b => b - a ;
+  Bar a b => b * a } ;
+haha t y = rr where {
+  a = 10 ;
+  b = 20 }

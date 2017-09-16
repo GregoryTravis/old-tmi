@@ -271,6 +271,14 @@ def hya(src):
         elif indent_stack[-1][0] == 'where':
           output.append(mktok('}'))
           indent_stack.pop()
+        elif indent_stack[-1][0] == 'case':
+          assert current['src'] == 'of'
+          indent_stack.pop()
+        elif indent_stack[-1][0] == 'of':
+          output.append(mktok('}'))
+          indent_stack.pop()
+          assert indent_stack[-1][0] == 'case'
+          indent_stack.pop()
         else:
           assert False, '???'
       else:
@@ -278,7 +286,7 @@ def hya(src):
 
     # eqdent
     if len(indent_stack) > 0 and indent_stack[-1][1] == current['column_number'] and indent_stack[-1][2] < current['line_number']:
-      if indent_stack[-1][0] == 'let' or indent_stack[-1][0] == 'where':
+      if indent_stack[-1][0] == 'let' or indent_stack[-1][0] == 'where' or indent_stack[-1][0] == 'of':
         output.append(mktok(';'))
       else:
         assert False, ('Bad dedent?', indent_stack)
@@ -301,6 +309,15 @@ def hya(src):
       indent_stack.append(('where', tokens[inx+1]['column_number'], tokens[inx+1]['line_number']))
       output.append(current)
       output.append(mktok('{'))
+    elif current['src'] == 'case':
+      assert inx + 1 < len(tokens), 'Dangling case'
+      indent_stack.append(('case', tokens[inx+1]['column_number'], tokens[inx+1]['line_number']))
+      output.append(current)
+    elif current['src'] == 'of':
+      assert inx + 1 < len(tokens), 'Dangling of'
+      indent_stack.append(('of', tokens[inx+1]['column_number'], tokens[inx+1]['line_number']))
+      output.append(current)
+      output.append(mktok('{'))
     else:
 #      # eqdent
 #      if len(indent_stack) > 0 and indent_stack[-1][1] == current['column_number'] and indent_stack[-1][2] < current['line_number']:
@@ -320,7 +337,29 @@ def hya(src):
       output.append(current)
     inx += 1
 
+  # Implicit final dedent
+  while len(indent_stack) > 1:
+    if indent_stack[-1][0] == 'let':
+      assert False, 'dangling let'
+    elif indent_stack[-1][0] == 'where':
+      output.append(mktok('}'))
+      indent_stack.pop()
+    elif indent_stack[-1][0] == 'case':
+      assert False, 'dangling case'
+    elif indent_stack[-1][0] == 'of':
+      output.append(mktok('}'))
+      indent_stack.pop()
+      assert indent_stack[-1][0] == 'case'
+      indent_stack.pop()
+    else:
+      assert False, '???'
+
+  assert len(indent_stack) == 1, indent_stack
+
   print tokens_to_src(output)
 
 with open('input.tmi', 'r') as f:
   hya(f.read())
+
+# - case
+# - inine in is probably not handled; should just assert it's not a dedent, or maybe just pop
