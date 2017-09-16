@@ -3,7 +3,8 @@ set -e
 #python zoom.py ; exit
 
 #python -m pdb parse.py
-parse.py
+#parse.py
+./pt
 exit
 
 ncompile input.tmi 2>&1

@@ -247,8 +247,8 @@ def preprocess_src(src):
 # !! Ooo wouldn't have to worry about getting the order of endwhere/endin wrong when merging overlapping writes, just use end for all!
 
 def hya(src):
-  print src
-  print '=============='
+  #print src
+  #print '=============='
   tokens = tokenize(src)
   indent_stack = []
   output = []
@@ -258,11 +258,36 @@ def hya(src):
 
   while inx < len(tokens):
     current = tokens[inx]
+    #print 'aaa', current, indent_stack
+
+    # dedent
+    while True:
+      if len(indent_stack) > 0 and indent_stack[-1][1] > current['column_number'] and indent_stack[-1][2] < current['line_number']:
+        #print 'dedent', current, indent_stack[-1]
+        if indent_stack[-1][0] == 'let':
+          assert current['src'] == 'in', ('Expected in', current, indent_stack)
+          output.append(mktok('}'))
+          indent_stack.pop()
+        elif indent_stack[-1][0] == 'where':
+          output.append(mktok('}'))
+          indent_stack.pop()
+        else:
+          assert False, '???'
+      else:
+        break
+
+    # eqdent
+    if len(indent_stack) > 0 and indent_stack[-1][1] == current['column_number'] and indent_stack[-1][2] < current['line_number']:
+      if indent_stack[-1][0] == 'let' or indent_stack[-1][0] == 'where':
+        output.append(mktok(';'))
+      else:
+        assert False, ('Bad dedent?', indent_stack)
+
     if False:
       assert False
-    elif current['src'] == 'in':
-      assert len(indent_stack) > 0, 'initial in'
-      assert indent_stack[-1][0] == 'let', 'mismatched in'
+    elif False and current['src'] == 'in':
+      assert len(indent_stack) > 0, ('initial in', current)
+      assert indent_stack[-1][0] == 'let', ('mismatched in', current, indent_stack)
       indent_stack.pop()
       output.append(mktok('}'))
       output.append(current)
@@ -271,9 +296,27 @@ def hya(src):
       indent_stack.append(('let', tokens[inx+1]['column_number'], tokens[inx+1]['line_number']))
       output.append(current)
       output.append(mktok('{'))
+    elif current['src'] == 'where':
+      assert inx + 1 < len(tokens), 'Dangling where'
+      indent_stack.append(('where', tokens[inx+1]['column_number'], tokens[inx+1]['line_number']))
+      output.append(current)
+      output.append(mktok('{'))
     else:
-      if len(indent_stack) > 0 and indent_stack[-1][1] == current['column_number'] and indent_stack[-1][2] < current['line_number']:
-        output.append(mktok(';'))
+#      # eqdent
+#      if len(indent_stack) > 0 and indent_stack[-1][1] == current['column_number'] and indent_stack[-1][2] < current['line_number']:
+#        if indent_stack[-1][0] == 'let' or indent_stack[-1][0] == 'where':
+#          output.append(mktok(';'))
+#        else:
+#          assert False, ('Bad dedent?', indent_stack)
+#      # dedent
+#      elif len(indent_stack) > 0 and indent_stack[-1][1] >= current['column_number'] and indent_stack[-1][2] < current['line_number']:
+#        if indent_stack[-1][0] == 'let':
+#          assert False, ('Should have caught in', current, indent_stack)
+#        elif indent_stack[-1][0] == 'where':
+#          output.append(mktok('}'))
+#          indent_stack.pop()
+#        else:
+#          assert False, '???'
       output.append(current)
     inx += 1
 

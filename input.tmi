@@ -7,5 +7,5 @@ foo a b = let s = b where b = 27
            in r + s
 foo a b = let s = x where x = 27
               q = 40
-              q = 40
+              qq = 41
            in r + s
