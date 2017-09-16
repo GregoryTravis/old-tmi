@@ -7,7 +7,7 @@ foo a b = let s = b where b = 27
                     c = let a = 10 in a + a
                   in a + b ; rah = 12
               v = ha ; q = po
-           in r + s
+           in r + s where s = r + r
 foo a b = let s = x where x = 27
               q = 40
               qq = p where p = q + j where j = 90 ; jj = 100
