@@ -2,7 +2,8 @@ foo a b = let { s = b where { b = 27 ;
                           bb = 28 } ;
               q = let {
                     a = 10 ;
-                    b = 20 }
+                    b = 20 ;
+                    c = let { a = 10 } in a + a }
                   in a + b ; rah = 12 ;
               v = ha ; q = po }
            in r + s ;
