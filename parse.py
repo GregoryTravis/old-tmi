@@ -387,7 +387,10 @@ with open('input.tmi', 'r') as f:
 # - inline let-in breaks non-inline let-in: we're popping the let at the dedent and then again when we are processing the 'in'.  We
 #   have to pop at the dedent -- we pop until we no longer have a dedent.  When we reach an in, if it's a dedent in, then the let is popped,
 #   but if it's an inline in, then it's not popped.
-# - parentheses
-# - parens to end a where
-# - parens to end an of
-# - parens to disambiguate nested inline wheres
+# + parentheses
+# + parens to end a where
+# + parens to end an of
+# + parens to disambiguate nested inline wheres
+# - throw in more parens for fun
+# - dedented paren
+# - Simpler method: stack is only indentations; when dedent, emit dedent and pop (loop that) -- might be able to parse linearly then
