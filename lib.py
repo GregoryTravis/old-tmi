@@ -27,3 +27,23 @@ def sp(*os):
     pprint.pprint(o, width=150)
   if len(os) > 0:
     return os[0]
+
+# Convert to string, but with bounded depth.
+def bstr(o):
+  return pprint.pformat(o, depth=8, width=130000)
+
+trace_indentation = 0
+def trace(f):
+  def wrapped(*args, **kwargs):
+    global trace_indentation
+    prefix = '| ' * trace_indentation
+    assert len(kwargs) == 0
+    print prefix + '+- ' + f.__name__ + '(' + ', '.join(map(str, args)) + ')'
+    trace_indentation += 1
+    ret = f(*args, **kwargs)
+    trace_indentation -= 1
+    print prefix + '-> ' + bstr(ret)
+    return ret
+  wrapped.__name__ = f.__name__
+  return wrapped
+

@@ -47,24 +47,6 @@ def ss_install_renderer(renderer):
   global ss_renderers
   ss_renderers.append(renderer)
 
-# Convert to string, but with bounded depth.
-def bstr(o):
-  return pprint.pformat(o, depth=2, width=130000)
-
-trace_indentation = 0
-def trace(f):
-  def wrapped(*args, **kwargs):
-    global trace_indentation
-    prefix = '| ' * trace_indentation
-    assert len(kwargs) == 0
-    print prefix + '+- ' + f.__name__ + '(' + ', '.join(map(str, args)) + ')'
-    trace_indentation += 1
-    ret = f(*args, **kwargs)
-    trace_indentation -= 1
-    print prefix + '-> ' + bstr(ret)
-    return ret
-  return wrapped
-
 def s(*args):
   for o in args:
     print ss(o)
