@@ -1,4 +1,4 @@
-#python hoob.py ; exit
+python hoob.py | tee j; exit
 
 set -e
 
