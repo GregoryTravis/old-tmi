@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
+from grako.ast import AST
+from grako.contexts import Closure
+from grammar import TMIParser
 import itertools
 from lib import *
+from pprint import pformat, pprint
 import re
 import sys
 from zoom import *
@@ -378,10 +382,29 @@ def hya(src):
 
   assert len(indent_stack) == 1, indent_stack
 
-  print tokens_to_src(output)
+  return tokens_to_src(output)
 
-with open('input.tmi', 'r') as f:
-  hya(f.read())
+def yah(ast):
+  if type(ast) in [Closure, list]:
+    return [yah(ast) for ast in ast]
+  elif type(ast) == AST:
+    return dict({'type': ast.parseinfo.rule}.items() + {k: yah(v) for k, v in ast.iteritems() if k != 'parseinfo'}.items())
+  else:
+    return ast
+
+src = 'input.tmi'
+pre = src + '.pre'
+with open(src, 'r') as f:
+  with open(pre, 'w') as pf:
+    pf.write(hya(f.read()))
+
+with open(pre) as f:
+  text = f.read()
+print text
+parser = TMIParser()
+trace = True
+ast = parser.parse(text, 'start', filename=pre, trace=trace)
+pprint(yah(ast), width=60)
 
 # + case
 # - inline let-in breaks non-inline let-in: we're popping the let at the dedent and then again when we are processing the 'in'.  We

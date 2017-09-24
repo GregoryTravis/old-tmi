@@ -1,13 +1,16 @@
+#python hoob.py ; exit
+
 set -e
 
 #python zoom.py ; exit
 
 #python -m pdb parse.py
-#parse.py
-./pt
+make
+python parse.py 2>&1
+#./pt
 exit
 
-ncompile input.tmi 2>&1
+acompile input.tmi 2>&1
 exit
 
 python tmi.py

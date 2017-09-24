@@ -1,27 +1,21 @@
 @@grammar::TMI
 @@left_recursion :: True
 
-start = {function} $;
+start = decls $;
 
-function = funname: identifier args: {parameter_pattern} '=' body: body;
+decls = definition ';' decls | definition;
 
-parameter_pattern = @:atom_expression;
+definition = defpat: {identifier}+ '=' body: exp;
 
-body = multiline_body | single_line_body;
-single_line_body = expression ';';
-expression_statement = expression ';';
-statement = expression_statement | function;
-multiline_body = '{' @:{ statement }+ '}';
+exp = let | binopapp | app | identifier | integer;
 
-expression = add_expression;
+let = 'let' '{' decls: decls '}' 'in' body: exp;
 
-add_expression = left: mul_expression op: ('+' | '-') right: mul_expression | @:mul_expression;
-mul_expression = left: app_expression op: ('*' | '/') right: app_expression | @:app_expression;
-app_expression = application: (term_expression {term_expression}+) | @:term_expression;
-term_expression = @:atom_expression | '(' @:expression ')';
-atom_expression = number | identifier;
+binopapp = left: identifier op: operator right: exp;
 
-operator = /[+-\/*<>=]+/;
+app = identifier {identifier}+;
 
-number = /\d+/;
 identifier = /[a-zA-Z]+/;
+_operator = /[+\-_!@$%^&*?]+/;
+integer = /[0-9]+/;
+operator = /[+]+/;
