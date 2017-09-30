@@ -160,6 +160,13 @@ def ya_all(os):
 #print ya_all(tokens)
 
 """
+gram = [
+  [ 'a', [['b', 'c', 'd', 'e', 'f', 'g']] ]
+]
+tokens = ['b', 'c', 'd', 'e', 'f', 'g']
+"""
+
+"""
 start = decls $;
 
 decls = definition ';' decls | definition;
@@ -199,6 +206,13 @@ tokens = [ 'identifier', 'identifier', 'equals', 'identifier', 'identifier' ]
 #tokens = [ 'identifier', 'identifier', 'equals', 'identifier', 'identifier', 'rcb' ]
 #tokens = [ 'identifier', 'identifier', 'equals', 'identifier', 'identifier' ]
 
+gram = [
+  ['t', [['x', 'y', 'e']]],
+  ['x', [['a', 'b']]],
+  ['y', [['c', 'd']]],
+]
+tokens = ['a', 'b', 'c', 'd', 'e']
+
 ogram = gram
 #print sh_grammar(ogram)
 gram = preprocess(gram)
@@ -211,14 +225,3 @@ build_maps(gram)
 
 print ya_all(tokens)
 
-"""
-gram = [
-  [ 'a', [['b', 'c', 'd', 'e', 'f', 'g']] ]
-]
-print sh_grammar(gram)
-gram = preprocess(gram)
-print sh_grammar(gram)
-build_maps(gram)
-tokens = ['b', 'c', 'd', 'e', 'f', 'g']
-print ya_all(tokens)
-"""
