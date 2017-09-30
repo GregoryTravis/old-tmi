@@ -1,12 +1,14 @@
-python hoob.py | tee j; exit
+#python hoob.py | tee j; exit
 
 set -e
 
 #python zoom.py ; exit
 
 #python -m pdb parse.py
-make
+#make
+rm -f input.tmi.pre
 python parse.py 2>&1
+cat input.tmi.pre
 #./pt
 exit
 

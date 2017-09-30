@@ -2,7 +2,7 @@
 
 from grako.ast import AST
 from grako.contexts import Closure
-from grammar import TMIParser
+#from grammar import TMIParser
 import itertools
 from lib import *
 from pprint import pformat, pprint
@@ -398,13 +398,14 @@ with open(src, 'r') as f:
   with open(pre, 'w') as pf:
     pf.write(hya(f.read()))
 
-with open(pre) as f:
-  text = f.read()
-print text
-parser = TMIParser()
-trace = True
-ast = parser.parse(text, 'start', filename=pre, trace=trace)
-pprint(yah(ast), width=60)
+if False:
+  with open(pre) as f:
+    text = f.read()
+  print text
+  parser = TMIParser()
+  trace = True
+  ast = parser.parse(text, 'start', filename=pre, trace=trace)
+  pprint(yah(ast), width=60)
 
 # + case
 # - inline let-in breaks non-inline let-in: we're popping the let at the dedent and then again when we are processing the 'in'.  We
