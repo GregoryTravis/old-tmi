@@ -1,24 +1,6 @@
-foo a b = let s = b where b = 27
-                          bb = 28 + (a + 29)
-              q = let
-                    a = 10
-                    b = 20
-                    r = case a + b of Foo a => a ; Bar a => b
-                    r = (case a + b of Foo a => a ; Bar a => b)
-                    c = let a = 10 in a + a
-                  in a + b ; rah = 12
-              v = ha ; q = po
-           in r + s where s = r + r
-foo a b = let s = x where x = 27
-              q = 40
-              qq = p where p = (q + j where j = 90) ; jj = 100
-              qq = p where p = q + j where j = 90 ; jj = 100
-              qq = p where p = q + j where j = 90 ; jj = 100
-                           jjj = 101
+foo a b = let s = c + let a = d
+                          p = 20
+                       in a + b
+              t = a + b
+                   where c = 12
            in r + s
-bar p q = case p + q of
-  Foo a b => b - a
-  Bar a b => b * a
-haha t y = rr where
-  a = 10
-  b = 20

@@ -8,7 +8,7 @@ set -e
 #make
 rm -f input.tmi.pre
 python parse.py 2>&1
-cat input.tmi.pre
+#cat input.tmi.pre
 #./pt
 exit
 

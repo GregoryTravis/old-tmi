@@ -49,9 +49,15 @@ token_patterns = [
   { 'type': 'whitespace', 're': '(^\s+)(.*$)' },
   { 'type': 'string', 're': '("(\"|[^\"])*")(.*$)' },
   { 'type': 'identifier', 're': "(^[a-zA-Z0-9_]+)(.*$)" },
-  { 'type': 'operator', 're': '(^[=+-_!@$%^&*?]+)(.*$)' },
-  { 'type': 'parenthesis', 're': '(^[\(\)]+)*(.*$)' },
+  { 'type': 'operator', 're': '(^[=<>+\-_!@$%^&*?]+)(.*$)' },
+  { 'type': 'parenthesis', 're': '(^[\(\)])(.*$)' },
+  { 'type': 'lcb', 're': '(^[\{])(.*$)' },
+  { 'type': 'rcb', 're': '(^[\}])(.*$)' },
+  { 'type': 'semicolon', 're': '(^;)(.*$)' },
 ]
+
+def toktype(type):
+  return lambda token: is_token(token) and token['type'] == type
 
 def tokenize_line(line_number, line):
   tokens = []
@@ -392,11 +398,45 @@ def yah(ast):
   else:
     return ast
 
+def nest_cbs(tokens):
+  st = [[]]
+  for token in tokens:
+    if token['type'] == 'lcb':
+      st.append([])
+      st[-1].append(token)
+    elif token['type'] == 'rcb':
+      assert st[-1][0]['type'] == 'lcb'
+      st[-1].append(token)
+      block = st.pop()
+      st[-1].append(block)
+    else:
+      st[-1].append(token)
+  assert len(st) == 1
+  return st[0]
+
+def split_blocks(tokens):
+  st = [[]]
+  if tokens[0]['type'] == 'lcb' and tokens[-1]['type'] == 'rcb':
+    return [split_blocks(decl) for decl in listsplit(tokens[1:-1], toktype('semicolon'))]
+  else:
+    return [e if is_token(e) else split_blocks(e) for e in tokens]
+
+def parse(presrc):
+  tokens = tokenize(presrc)
+  tokens = nest_cbs(tokens)
+  tokens = split_blocks(tokens)
+  sp(tokens)
+
 src = 'input.tmi'
 pre = src + '.pre'
 with open(src, 'r') as f:
   with open(pre, 'w') as pf:
     pf.write(hya(f.read()))
+
+with open(pre, 'r') as f:
+  presrc = f.read()
+  presrc = "let { " + presrc + " } in main"
+parse(presrc)
 
 if False:
   with open(pre) as f:
