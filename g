@@ -1,3 +1,5 @@
+python monious.py ; exit
+
 #python hoob.py | tee j; exit
 
 set -e
