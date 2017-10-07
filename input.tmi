@@ -1,6 +1,3 @@
-foo a b = let s = c + let a = d
-                          p = 20
-                       in a + b
-              t = a + b
-                   where c = 12
-           in r + s
+let abc a = b b
+    haha a = a a
+ in haha

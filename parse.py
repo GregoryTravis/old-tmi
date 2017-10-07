@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
-from grako.ast import AST
-from grako.contexts import Closure
-#from grammar import TMIParser
 import itertools
 from lib import *
 from pprint import pformat, pprint
+from throob import parse as throob_parse, srcish, is_token
 import re
 import sys
 from zoom import *
@@ -48,12 +46,15 @@ assert unnest([0, [1, [2], {'a': 12}, 3], 4]) == [0, 1, 2, {'a': 12}, 3, 4]
 token_patterns = [
   { 'type': 'whitespace', 're': '(^\s+)(.*$)' },
   { 'type': 'string', 're': '("(\"|[^\"])*")(.*$)' },
+  { 'type': 'let_keyword', 're': '(^let)(.*$)' },
+  { 'type': 'in_keyword', 're': '(^in)(.*$)' },
   { 'type': 'identifier', 're': "(^[a-zA-Z0-9_]+)(.*$)" },
+  { 'type': 'semicolon', 're': '(^;)(.*$)' },
+  { 'type': 'equals', 're': "(^=)(.*$)" },
   { 'type': 'operator', 're': '(^[=<>+\-_!@$%^&*?]+)(.*$)' },
   { 'type': 'parenthesis', 're': '(^[\(\)])(.*$)' },
   { 'type': 'lcb', 're': '(^[\{])(.*$)' },
   { 'type': 'rcb', 're': '(^[\}])(.*$)' },
-  { 'type': 'semicolon', 're': '(^;)(.*$)' },
 ]
 
 def toktype(type):
@@ -78,9 +79,6 @@ def tokenize_line(line_number, line):
     else:
       assert False, ('Bad token', line)
   return tokens
-
-def is_token(o):
-  return type(o) == dict and 'src' in o.keys()
 
 def tokenize(src):
   lines = [line + '\n' for line in src.split('\n')]
@@ -390,14 +388,6 @@ def hya(src):
 
   return tokens_to_src(output)
 
-def yah(ast):
-  if type(ast) in [Closure, list]:
-    return [yah(ast) for ast in ast]
-  elif type(ast) == AST:
-    return dict({'type': ast.parseinfo.rule}.items() + {k: yah(v) for k, v in ast.iteritems() if k != 'parseinfo'}.items())
-  else:
-    return ast
-
 def nest_cbs(tokens):
   st = [[]]
   for token in tokens:
@@ -423,9 +413,10 @@ def split_blocks(tokens):
 
 def parse(presrc):
   tokens = tokenize(presrc)
-  tokens = nest_cbs(tokens)
-  tokens = split_blocks(tokens)
+  #tokens = nest_cbs(tokens)
+  #tokens = split_blocks(tokens)
   sp(tokens)
+  sp(srcish(throob_parse('top', tokens)))
 
 src = 'input.tmi'
 pre = src + '.pre'
@@ -435,17 +426,8 @@ with open(src, 'r') as f:
 
 with open(pre, 'r') as f:
   presrc = f.read()
-  presrc = "let { " + presrc + " } in main"
+  #presrc = "let { " + presrc + " } in main"
 parse(presrc)
-
-if False:
-  with open(pre) as f:
-    text = f.read()
-  print text
-  parser = TMIParser()
-  trace = True
-  ast = parser.parse(text, 'start', filename=pre, trace=trace)
-  pprint(yah(ast), width=60)
 
 # + case
 # - inline let-in breaks non-inline let-in: we're popping the let at the dedent and then again when we are processing the 'in'.  We

@@ -11,22 +11,24 @@ gram = {
   'predicate': [ [ 'verb', 'noun' ], [ 'verb', 'adjective', 'noun' ], [ 'verb', 'adjective', 'adjective', 'noun' ] ],
 }
 
+# Does not generate empty partitions
 def all_partitions(os, n):
   if n == 1:
     return [[os]]
   else:
-    return [[os[0:x]] + tail for x in xrange(0, len(os)+1) for tail in all_partitions(os[x:], n-1)]
+    return [[os[0:x]] + tail for x in xrange(1, len(os)+1-1) for tail in all_partitions(os[x:], n-1)]
+    #return [[os[0:x]] + tail for x in xrange(0, len(os)+1) for tail in all_partitions(os[x:], n-1)]
 tokens = 'a b c adjective noun'.split(' ')
 assert all(map(lambda p: p == tokens, map(flat1, all_partitions(tokens, 3))))
 tokens = None
 
-@trace
+@ctrace(lambda args: [args[0], srcish(args[1])])
 def subparse(nts, oses):
   assert len(nts) == len(oses)
   subparses = [parse(nt, os) for nt, os in zip(nts, oses)]
   return subparses if not any([p == None for p in subparses]) else None
 
-@trace
+@ctrace(lambda args: [args[0], srcish(args[1])])
 def parse(nt, os):
   if nt in gram:
     for rhs in gram[nt]:
@@ -36,10 +38,50 @@ def parse(nt, os):
           return [nt, sub]
     return None
   else:
-    return os[0] if len(os) == 1 and nt == os[0] else None
+    #print 'BASE', nt, os, os[0]['type'], len(os), (len(os) == 1 and nt == os[0]['type']), len(os) == 1, nt == os[0]['type']
+    return os[0] if (len(os) == 1 and nt == os[0]['type']) else None
+
+def is_token(o):
+  return type(o) == dict and 'src' in o.keys()
+
+def srcish(tree):
+  if type(tree) == dict:
+    assert is_token(tree)
+    return tree['src']
+  elif type(tree) == str:
+    return tree
+  else:
+    assert type(tree) == list, tree
+    return map(srcish, tree)
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
 nt = 'sentence'
 #map(sp, all_partitions(tokens, 3))
-sp(tokens)
-sp(parse(nt, tokens))
+#sp(tokens)
+#sp(parse(nt, tokens))
+
+"""
+start = decls $;
+decls = definition ';' decls | definition;
+definition = defpat: {identifier}+ '=' body: exp;
+exp = let | binopapp | app | identifier | integer;
+let = 'let' '{' decls: decls '}' 'in' body: exp;
+binopapp = left: identifier op: operator right: exp;
+app = identifier {identifier}+;
+
+identifier = /[a-zA-Z]+/;
+_operator = /[+\-_!@$%^&*?]+/;
+integer = /[0-9]+/;
+operator = /[+]+/;
+"""
+
+gram = {
+  'top': [['let']],
+  'app': [['identifier', 'identifier'], ['app', 'identifier']],
+  'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'identifier']],
+  'defpat': [['app']],
+  'definition': [['defpat', 'equals', 'exp']],
+  'decls': [['definition', 'semicolon', 'decls'], ['definition']],
+  'exp': [['let'], ['app']],
+}
+#nt = 'top'

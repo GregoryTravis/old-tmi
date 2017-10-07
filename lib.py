@@ -33,19 +33,25 @@ def bstr(o):
   return pprint.pformat(o, depth=8, width=130000)
 
 trace_indentation = 0
+def ctrace(preproc):
+  def decorator(f):
+    def wrapped(*args, **kwargs):
+      argsrep = ', '.join(map(str, (args if preproc == None else preproc(args))))
+      global trace_indentation
+      prefix = '| ' * trace_indentation
+      assert len(kwargs) == 0
+      print prefix + '+- ' + f.__name__ + '(' + argsrep + ')'
+      trace_indentation += 1
+      ret = f(*args, **kwargs)
+      trace_indentation -= 1
+      print prefix + '-> ' + bstr(ret)
+      return ret
+    wrapped.__name__ = f.__name__
+    return wrapped
+  return decorator
+
 def trace(f):
-  def wrapped(*args, **kwargs):
-    global trace_indentation
-    prefix = '| ' * trace_indentation
-    assert len(kwargs) == 0
-    print prefix + '+- ' + f.__name__ + '(' + ', '.join(map(str, args)) + ')'
-    trace_indentation += 1
-    ret = f(*args, **kwargs)
-    trace_indentation -= 1
-    print prefix + '-> ' + bstr(ret)
-    return ret
-  wrapped.__name__ = f.__name__
-  return wrapped
+  return ctrace(None)(f)
 
 def listsplit(os, p):
   if len(os) == 0:
