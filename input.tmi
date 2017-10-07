@@ -1,3 +1,5 @@
 let abc a = b b
     haha a = a a
+    haha a = a a
+    haha a = a a
  in haha

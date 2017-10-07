@@ -1,3 +1,4 @@
+import atexit
 import pprint
 
 def flatten(o):
@@ -33,6 +34,7 @@ def bstr(o):
   return pprint.pformat(o, depth=8, width=130000)
 
 trace_indentation = 0
+# Custom printer only looks at args, not kwargs
 def ctrace(preproc):
   def decorator(f):
     def wrapped(*args, **kwargs):
@@ -71,3 +73,71 @@ assert [[1, 1]] == listsplit([1, 1], lambda x: x == 0)
 assert [[], [1]] == listsplit([0, 1], lambda x: x == 0)
 assert [[1], [1]] == listsplit([1, 0, 1], lambda x: x == 0)
 assert [[1, 2], [3, 4, 5], [6, 7]] == listsplit([1, 2, 0, 3, 4, 5, 0, 6, 7], lambda x: x == 0)
+
+# Make hashable.
+def frz(o):
+  if type(o) == list:
+    return tuple(map(frz, o))
+  elif type(o) == dict:
+    return frozenset(map(frz, o.items()))
+  elif type(o) == tuple:
+    return tuple(map(frz, o))
+  elif type(o) in [int, float, str, unicode, bool]:
+    return o
+  else:
+    assert False, (o, type(o))
+
+def forkfunc(a, b):
+  def wrapped(*args, **kwargs):
+    #print 'FORK A'
+    aval = a(*args, **kwargs)
+    #print 'FORK B'
+    bval = b(*args, **kwargs)
+    assert aval == bval, (a.__name__, b.__name__, args, kwargs, aval, bval)
+    return aval
+  return wrapped
+
+assert 4 == forkfunc(lambda a, b: a + b, lambda a, b: b + a)(1, 3)
+
+# Custom keyfunc only looks at args, not kwargs
+def cmemoize(keyfunc):
+  def decorator(f):
+    cache = {}
+    stats = { 'hits': 0, 'misses': 0 }
+
+    def wrapped(*args, **kwargs):
+      key = frz((args if keyfunc == None else keyfunc(args), kwargs))
+      #print 'CM', args, f.__name__, key
+      #print 'cachelen before', len(cache)
+      if key not in cache:
+        stats['misses'] += 1
+        cache[key] = f(*args, **kwargs)
+        #print 'STORE', args, f.__name__, key, kwargs
+      else:
+        stats['hits'] += 1
+        #print 'HIT', args, f.__name__, key, kwargs
+      #print 'cachelen after', len(cache)
+      #print 'RESULT', args, f.__name__, cache[key]
+      return cache[key]
+    wrapped.__name__ = f.__name__
+
+    def report():
+      print 'memoization', wrapped.__name__, stats
+    atexit.register(report)
+
+    return wrapped
+  return decorator
+
+def memoize(f):
+  return cmemoize(None)(f)
+
+def bmemoize(keyfunc):
+  def decorator(f):
+    @memoize
+    def wrapped_a(*args, **kwargs):
+      return f(*args, **kwargs)
+    @cmemoize(keyfunc)
+    def wrapped_b(*args, **kwargs):
+      return f(*args, **kwargs)
+    return forkfunc(wrapped_a, wrapped_b)
+  return decorator

@@ -22,13 +22,28 @@ tokens = 'a b c adjective noun'.split(' ')
 assert all(map(lambda p: p == tokens, map(flat1, all_partitions(tokens, 3))))
 tokens = None
 
-@ctrace(lambda args: [args[0], srcish(args[1])])
+def seqid(tokens):
+  return [tokens[0]['line_number'], tokens[0]['column_number'], len(tokens)]
+
+# Return nt, line, column of first token, num tokens
+def tokpos(args):
+  return ['tokpos', args[0], seqid(args[1])]
+
+# Like tokpos, but second arg is a list of sequences
+def tokposes(args):
+  return ['tokpos', args[0], map(seqid, args[1])]
+
+@cmemoize(tokposes)
+#@ctrace(lambda args: [args[0], srcish(args[1])])
 def subparse(nts, oses):
   assert len(nts) == len(oses)
   subparses = [parse(nt, os) for nt, os in zip(nts, oses)]
   return subparses if not any([p == None for p in subparses]) else None
 
-@ctrace(lambda args: [args[0], srcish(args[1])])
+#@ctrace(lambda args: [args[0], srcish(args[1])])
+#@trace
+@cmemoize(tokpos)
+#@memoize
 def parse(nt, os):
   if nt in gram:
     for rhs in gram[nt]:

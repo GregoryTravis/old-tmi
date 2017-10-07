@@ -415,7 +415,7 @@ def parse(presrc):
   tokens = tokenize(presrc)
   #tokens = nest_cbs(tokens)
   #tokens = split_blocks(tokens)
-  sp(tokens)
+  #sp(tokens)
   sp(srcish(throob_parse('top', tokens)))
 
 src = 'input.tmi'
@@ -429,6 +429,7 @@ with open(pre, 'r') as f:
   #presrc = "let { " + presrc + " } in main"
 parse(presrc)
 
+# !! So cmemoize of subparse isn't faster, but it's working
 # + case
 # - inline let-in breaks non-inline let-in: we're popping the let at the dedent and then again when we are processing the 'in'.  We
 #   have to pop at the dedent -- we pop until we no longer have a dedent.  When we reach an in, if it's a dedent in, then the let is popped,

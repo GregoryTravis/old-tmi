@@ -483,19 +483,6 @@ card = Deref(db, 'card')
 game = Deref(db, 'game')
 hand = Deref(db, 'hand')
 
-# Make hashable.
-def frz(o):
-  if type(o) == list:
-    return tuple(map(frz, o))
-  elif type(o) == dict:
-    return frozenset(map(frz, o.items()))
-  elif type(o) == tuple:
-    return tuple(map(frz, o))
-  elif type(o) in [int, float, str, unicode, bool]:
-    return o
-  else:
-    assert False, (o, type(o))
-
 # Two relations are equal, treating the lists as sets.
 def releq(rela, relb):
   return set(frz(rela)) == set(frz(relb))

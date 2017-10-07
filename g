@@ -9,7 +9,7 @@ set -e
 #python -m pdb parse.py
 #make
 rm -f input.tmi.pre
-python parse.py 2>&1
+time python parse.py 2>&1
 #cat input.tmi.pre
 #./pt
 exit
