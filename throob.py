@@ -93,7 +93,7 @@ operator = /[+]+/;
 gram = {
   'top': [['let']],
   'app': [['identifier', 'identifier'], ['app', 'identifier']],
-  'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'identifier']],
+  'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'exp']],
   'defpat': [['identifier'], ['app']],
   'definition': [['defpat', 'equals', 'exp']],
   'decls': [['definition', 'semicolon', 'decls'], ['definition']],
