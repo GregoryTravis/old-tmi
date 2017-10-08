@@ -413,6 +413,7 @@ def split_blocks(tokens):
 
 def parse(presrc):
   tokens = tokenize(presrc)
+  print 'tokens', len(tokens)
   #tokens = nest_cbs(tokens)
   #tokens = split_blocks(tokens)
   #sp(tokens)
