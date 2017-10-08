@@ -1,4 +1,5 @@
 import atexit
+import collections
 import pprint
 
 def flatten(o):
@@ -141,3 +142,11 @@ def bmemoize(keyfunc):
       return f(*args, **kwargs)
     return forkfunc(wrapped_a, wrapped_b)
   return decorator
+
+def group_by(os, f):
+  res = collections.defaultdict(list)
+  for o in os:
+    res[f(o)].append(o)
+  return dict(res)
+
+assert {0: [[0, 1], [0, 2]], 1: [[1, 1], [1, 5]], 2: [[2, 8]]} == group_by([[0, 1], [0, 2], [1, 1], [1, 5], [2, 8]], lambda x: x[0])

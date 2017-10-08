@@ -27,7 +27,7 @@ def seqid(tokens):
 
 # Return nt, line, column of first token, num tokens
 def tokpos(args):
-  return args[0] + '-' + str(args[1][0]['line_number']) + '-' + str(args[1][0]['column_number']) + '-' + str(len(args[1]))
+  return args[1] + '-' + str(args[2][0]['line_number']) + '-' + str(args[2][0]['column_number']) + '-' + str(len(args[2]))
 
 # Like tokpos, but second arg is a list of sequences
 def tokposes(args):
@@ -35,20 +35,20 @@ def tokposes(args):
 
 #@cmemoize(tokposes)
 #@ctrace(lambda args: [args[0], srcish(args[1])])
-def subparse(nts, oses):
+def subparse(gram, nts, oses):
   assert len(nts) == len(oses)
-  subparses = [parse(nt, os) for nt, os in zip(nts, oses)]
+  subparses = [parse(gram, nt, os) for nt, os in zip(nts, oses)]
   return subparses if not any([p == None for p in subparses]) else None
 
 #@ctrace(lambda args: [args[0], srcish(args[1])])
 #@trace
 @cmemoize(tokpos)
 #@memoize
-def parse(nt, os):
+def parse(gram, nt, os):
   if nt in gram:
     for rhs in gram[nt]:
       for partition in all_partitions(os, len(rhs)):
-        sub = subparse(rhs, partition) 
+        sub = subparse(gram, rhs, partition) 
         if sub != None:
           return [nt, sub]
     return None
@@ -68,6 +68,36 @@ def srcish(tree):
   else:
     assert type(tree) == list, tree
     return map(srcish, tree)
+
+gensym_serial = 0
+def gensym(prefix):
+  global gensym_serial
+  sym = prefix + '_' + str(gensym_serial)
+  gensym_serial += 1
+  return sym
+
+def binarize_production(prod):
+  nt, rhs = prod
+  if len(rhs) > 2:
+    s = gensym('_binarize')
+    return [[nt, [rhs[0], s]]] + binarize_production([s, rhs[1:]])
+  else:
+    return [prod]
+
+def binarize(gram):
+  productions = [[nt, rhs] for nt, rhses in gram.iteritems() for rhs in rhses]
+  #sp(productions)
+  productions = flat1(map(binarize_production, productions))
+  #sp(productions)
+  gram = group_by(productions, lambda x: x[0])
+  #sp(gram)
+  gram = {nt: [rhs[1] for rhs in rhses] for nt, rhses in gram.iteritems()}
+  #sp(gram)
+  return gram
+
+def parse_top(gram, nt, tokens):
+  gram = binarize(gram)
+  return parse(gram, nt, tokens)
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
 nt = 'sentence'

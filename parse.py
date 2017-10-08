@@ -3,7 +3,7 @@
 import itertools
 from lib import *
 from pprint import pformat, pprint
-from throob import parse as throob_parse, srcish, is_token
+from throob import parse_top, srcish, is_token, gram
 import re
 import sys
 from zoom import *
@@ -110,7 +110,7 @@ def tokens_to_src(tokens):
   return src
 
 # Nests; preserves order.
-def group_by_func(os, f):
+def group_by_po_func(os, f):
   if os == []:
     return []
   last_value = f(os[0])
@@ -124,15 +124,15 @@ def group_by_func(os, f):
     grouped[-1].append(o)
   return grouped
 
-assert group_by_func([0, 0, 1, 1, 0, 2, 1, 1, 2, 2, 2], lambda x: x) == [[0, 0], [1, 1], [0], [2], [1, 1], [2, 2, 2]]
+assert group_by_po_func([0, 0, 1, 1, 0, 2, 1, 1, 2, 2, 2], lambda x: x) == [[0, 0], [1, 1], [0], [2], [1, 1], [2, 2, 2]]
 
 def _tokens_to_src(tokens):
   # In place
   for i, token in enumerate(tokens):
     if token['line_number'] == None and i > 0:
       token['line_number'] = tokens[i-1]['line_number']
-  #sp(group_by_func(tokens, lambda token: token['line_number'])
-  return "\n".join([' '.join([token['src'] for token in linegroup]) for linegroup in group_by_func(tokens, lambda token: token['line_number'])])
+  #sp(group_by_po_func(tokens, lambda token: token['line_number'])
+  return "\n".join([' '.join([token['src'] for token in linegroup]) for linegroup in group_by_po_func(tokens, lambda token: token['line_number'])])
 
 def apply_each_level(arr, f):
   return [apply_each_level(x, f) if type(x) == list else x for x in f(arr)]
@@ -417,7 +417,7 @@ def parse(presrc):
   #tokens = nest_cbs(tokens)
   #tokens = split_blocks(tokens)
   #sp(tokens)
-  sp(srcish(throob_parse('top', tokens)))
+  sp(srcish(parse_top(gram, 'top', tokens)))
 
 src = 'input.tmi'
 pre = src + '.pre'
