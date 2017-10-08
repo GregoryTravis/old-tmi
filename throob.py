@@ -23,17 +23,17 @@ assert all(map(lambda p: p == tokens, map(flat1, all_partitions(tokens, 3))))
 tokens = None
 
 def seqid(tokens):
-  return [tokens[0]['line_number'], tokens[0]['column_number'], len(tokens)]
+  return str(tokens[0]['line_number']) + '-' + str(tokens[0]['column_number']) + '-' + str(len(tokens))
 
 # Return nt, line, column of first token, num tokens
 def tokpos(args):
-  return ['tokpos', args[0], seqid(args[1])]
+  return args[0] + '-' + str(args[1][0]['line_number']) + '-' + str(args[1][0]['column_number']) + '-' + str(len(args[1]))
 
 # Like tokpos, but second arg is a list of sequences
 def tokposes(args):
   return ['tokpos', args[0], map(seqid, args[1])]
 
-@cmemoize(tokposes)
+#@cmemoize(tokposes)
 #@ctrace(lambda args: [args[0], srcish(args[1])])
 def subparse(nts, oses):
   assert len(nts) == len(oses)
@@ -94,9 +94,9 @@ gram = {
   'top': [['let']],
   'app': [['identifier', 'identifier'], ['app', 'identifier']],
   'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'identifier']],
-  'defpat': [['app']],
+  'defpat': [['identifier'], ['app']],
   'definition': [['defpat', 'equals', 'exp']],
   'decls': [['definition', 'semicolon', 'decls'], ['definition']],
-  'exp': [['let'], ['app']],
+  'exp': [['let'], ['app'], ['identifier']],
 }
 #nt = 'top'
