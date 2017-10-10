@@ -107,7 +107,7 @@ def cmemoize(keyfunc):
     stats = { 'hits': 0, 'misses': 0 }
 
     def wrapped(*args, **kwargs):
-      key = frz((args if keyfunc == None else keyfunc(args), kwargs))
+      key = frz((args, kwargs)) if keyfunc == None else keyfunc(args)
       #print 'CM', args, f.__name__, key
       #print 'cachelen before', len(cache)
       if key not in cache:
