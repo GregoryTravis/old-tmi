@@ -16,18 +16,24 @@ def all_partitions(os, n):
   if n == 1:
     return [[os]]
   else:
-    return [[os[0:x]] + tail for x in xrange(1, len(os)+1-1) for tail in all_partitions(os[x:], n-1)]
+    t, s, e = os
+    return [[(t, s, x)] + tail for x in xrange(s + 1, e) for tail in all_partitions((t, x, e), n-1)]
+    #return [[os[0:x]] + tail for x in xrange(1, len(os)+1-1) for tail in all_partitions(os[x:], n-1)]
     #return [[os[0:x]] + tail for x in xrange(0, len(os)+1) for tail in all_partitions(os[x:], n-1)]
-tokens = 'a b c adjective noun'.split(' ')
-assert all(map(lambda p: p == tokens, map(flat1, all_partitions(tokens, 3))))
-tokens = None
+
+map(sp, all_partitions(([0, 1, 2, 3, 4, 5, 6, 7], 0, 8), 2))
+#tokens = 'a b c adjective noun'.split(' ')
+#assert all(map(lambda p: p == tokens, map(flat1, all_partitions(tokens, 3))))
+#tokens = None
 
 def seqid(tokens):
   return str(tokens[0]['line_number']) + '-' + str(tokens[0]['column_number']) + '-' + str(len(tokens))
 
 # Return nt, line, column of first token, num tokens
 def tokpos(args):
-  return args[1] + '-' + str(args[2][0]['line_number']) + '-' + str(args[2][0]['column_number']) + '-' + str(len(args[2]))
+  t, s, e = args[2]
+  return args[1]  + '-' + str(s) + '-' + str(e)
+  #return args[1] + '-' + str(args[2][0]['line_number']) + '-' + str(args[2][0]['column_number']) + '-' + str(len(args[2]))
 
 # Like tokpos, but second arg is a list of sequences
 def tokposes(args):
@@ -54,7 +60,9 @@ def parse(gram, nt, os):
     return None
   else:
     #print 'BASE', nt, os, os[0]['type'], len(os), (len(os) == 1 and nt == os[0]['type']), len(os) == 1, nt == os[0]['type']
-    return os[0] if (len(os) == 1 and nt == os[0]['type']) else None
+    t, s, e = os
+    return t[s] if (e - 1 == s and nt == t[s]['type']) else None
+    #return os[0] if (len(os) == 1 and nt == os[0]['type']) else None
 
 def is_token(o):
   return type(o) == dict and 'src' in o.keys()
@@ -97,7 +105,7 @@ def binarize(gram):
 
 def parse_top(gram, nt, tokens):
   gram = binarize(gram)
-  return parse(gram, nt, tokens)
+  return parse(gram, nt, (tokens, 0, len(tokens)))
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
 nt = 'sentence'
