@@ -111,6 +111,19 @@ def p2s(t):
     assert t[1][0] == 'defpat'
     assert t[3][0] == 'exp'
     return ['definition', t[1][1], p2s(t[3][1])]
+  elif t[0] == 'let':
+    assert len(t) == 7
+    assert t[3][0] == 'decls'
+    assert t[6][0] == 'exp'
+    return ['let', p2s(t[3]), p2s(t[6])]
+  elif t[0] == 'where':
+    assert len(t) == 6
+    assert t[1][0] == 'exp'
+    assert t[4][0] == 'decls'
+    return ['where', p2s(t[1][1]), p2s(t[4])]
+  elif t[0] == 'exp':
+    assert len(t) == 2
+    return p2s(t[1])
   else:
     return t
 
@@ -144,9 +157,10 @@ gram = {
   'top': [['decls']],
   'app': [['identifier', 'identifier'], ['app', 'identifier']],
   'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'exp']],
+  'where': [['exp', 'where_keyword', 'lcb', 'decls', 'rcb']],
   'defpat': [['identifier'], ['app']],
   'definition': [['defpat', 'equals', 'exp']],
   'decls': [['definition', 'semicolon', 'decls'], ['definition']],
-  'exp': [['let'], ['app'], ['identifier']],
+  'exp': [['let'], ['where'], ['app'], ['identifier']],
 }
 #nt = 'top'

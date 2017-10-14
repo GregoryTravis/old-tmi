@@ -48,6 +48,7 @@ token_patterns = [
   { 'type': 'string', 're': '("(\"|[^\"])*")(.*$)' },
   { 'type': 'let_keyword', 're': '(^let)(.*$)' },
   { 'type': 'in_keyword', 're': '(^in)(.*$)' },
+  { 'type': 'where_keyword', 're': '(^where)(.*$)' },
   { 'type': 'identifier', 're': "(^[a-zA-Z0-9_]+)(.*$)" },
   { 'type': 'semicolon', 're': '(^;)(.*$)' },
   { 'type': 'equals', 're': "(^=)(.*$)" },

@@ -1,3 +1,6 @@
-foo a = b
-foo a = b
-foo a = b
+foo a = let abc a = b b
+            a = a
+         in haha
+          where b c = d e
+foo a = let abc a = b b
+         in haha
