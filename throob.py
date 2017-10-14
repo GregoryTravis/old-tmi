@@ -11,39 +11,10 @@ gram = {
   'predicate': [ [ 'verb', 'noun' ], [ 'verb', 'adjective', 'noun' ], [ 'verb', 'adjective', 'adjective', 'noun' ] ],
 }
 
-# Does not generate empty partitions
-def all_partitions(os, n):
-  if n == 1:
-    return [[os]]
-  else:
-    t, s, e = os
-    return [[(t, s, x)] + tail for x in xrange(s + 1, e) for tail in all_partitions((t, x, e), n-1)]
-    #return [[os[0:x]] + tail for x in xrange(1, len(os)+1-1) for tail in all_partitions(os[x:], n-1)]
-    #return [[os[0:x]] + tail for x in xrange(0, len(os)+1) for tail in all_partitions(os[x:], n-1)]
-
-map(sp, all_partitions(([0, 1, 2, 3, 4, 5, 6, 7], 0, 8), 2))
-#tokens = 'a b c adjective noun'.split(' ')
-#assert all(map(lambda p: p == tokens, map(flat1, all_partitions(tokens, 3))))
-#tokens = None
-
-def seqid(tokens):
-  return str(tokens[0]['line_number']) + '-' + str(tokens[0]['column_number']) + '-' + str(len(tokens))
-
 # Return nt, line, column of first token, num tokens
 def tokpos(args):
   return args[1]  + '-' + str(args[3]) + '-' + str(args[4])
   #return args[1] + '-' + str(args[2][0]['line_number']) + '-' + str(args[2][0]['column_number']) + '-' + str(len(args[2]))
-
-# Like tokpos, but second arg is a list of sequences
-def tokposes(args):
-  return ['tokpos', args[0], map(seqid, args[1])]
-
-#@cmemoize(tokposes)
-#@ctrace(lambda args: [args[0], srcish(args[1])])
-def subparse(gram, nts, oses):
-  assert len(nts) == len(oses)
-  subparses = [parse(gram, nt, os) for nt, os in zip(nts, oses)]
-  return subparses if not any([p == None for p in subparses]) else None
 
 #@ctrace(lambda args: [args[1], srcish(args[2][args[3]:args[4]])])
 #@trace
