@@ -417,6 +417,7 @@ def parse(presrc):
   #tokens = nest_cbs(tokens)
   #tokens = split_blocks(tokens)
   #sp(tokens)
+  sp(parse_top(gram, 'top', tokens))
   sp(srcish(parse_top(gram, 'top', tokens)))
 
 src = 'input.tmi'

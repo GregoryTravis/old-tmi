@@ -31,8 +31,7 @@ def seqid(tokens):
 
 # Return nt, line, column of first token, num tokens
 def tokpos(args):
-  t, s, e = args[2]
-  return args[1]  + '-' + str(s) + '-' + str(e)
+  return args[1]  + '-' + str(args[3]) + '-' + str(args[4])
   #return args[1] + '-' + str(args[2][0]['line_number']) + '-' + str(args[2][0]['column_number']) + '-' + str(len(args[2]))
 
 # Like tokpos, but second arg is a list of sequences
@@ -46,22 +45,33 @@ def subparse(gram, nts, oses):
   subparses = [parse(gram, nt, os) for nt, os in zip(nts, oses)]
   return subparses if not any([p == None for p in subparses]) else None
 
-#@ctrace(lambda args: [args[0], srcish(args[1])])
+#@ctrace(lambda args: [args[1], srcish(args[2][args[3]:args[4]])])
 #@trace
 @cmemoize(tokpos)
 #@memoize
-def parse(gram, nt, os):
+def parse(gram, nt, os, s, e):
   if nt in gram:
     for rhs in gram[nt]:
-      for partition in all_partitions(os, len(rhs)):
-        sub = subparse(gram, rhs, partition) 
-        if sub != None:
-          return [nt, sub]
+      #print 'try', nt, '-->', rhs
+      if len(rhs) == 1:
+        p = parse(gram, rhs[0], os, s, e)
+        if p != None:
+          return [nt, p]
+      elif len(rhs) == 2:
+        for x in xrange(s + 1, e):
+          assert x != s and x != e
+          lp = parse(gram, rhs[0], os, s, x)
+          if lp != None:
+            rp = parse(gram, rhs[1], os, x, e)
+            if rp != None:
+              return [nt, [lp, rp]]
+      else:
+        assert False
     return None
   else:
     #print 'BASE', nt, os, os[0]['type'], len(os), (len(os) == 1 and nt == os[0]['type']), len(os) == 1, nt == os[0]['type']
-    t, s, e = os
-    return t[s] if (e - 1 == s and nt == t[s]['type']) else None
+    #t, s, e = os
+    return os[s] if (e - 1 == s and nt == os[s]['type']) else None
     #return os[0] if (len(os) == 1 and nt == os[0]['type']) else None
 
 def is_token(o):
@@ -105,7 +115,7 @@ def binarize(gram):
 
 def parse_top(gram, nt, tokens):
   gram = binarize(gram)
-  return parse(gram, nt, (tokens, 0, len(tokens)))
+  return parse(gram, nt, tokens, 0, len(tokens))
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
 nt = 'sentence'
