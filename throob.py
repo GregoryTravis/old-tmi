@@ -88,7 +88,7 @@ def split_by_0_indent(tokens):
 
 def parse_top(gram, nt, tokens):
   gram = binarize(gram)
-  #print split_by_0_indent(tokens)
+  #tlds = [parse(gram, nt, tokens, 0, len(tokens)) for tokens in split_by_0_indent(tokens)]
   return parse(gram, nt, tokens, 0, len(tokens))
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
