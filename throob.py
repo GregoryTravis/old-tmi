@@ -97,12 +97,27 @@ def unbinarize(t):
     return t
 
 def p2s(t):
-  assert type(t) == list
+  if type(t) != list:
+    return t
+  elif t[0] == 'top':
+    assert len(t) == 2
+    return p2s(t[1])
+  elif t[0] == 'decls' and len(t) == 4:
+    return [p2s(t[1])] + p2s(t[3])
+  elif t[0] == 'decls' and len(t) == 2:
+    return [p2s(t[1])]
+  elif t[0] == 'definition':
+    assert len(t) == 4
+    assert t[1][0] == 'defpat'
+    assert t[3][0] == 'exp'
+    return ['definition', t[1][1], p2s(t[3][1])]
+  else:
+    return t
 
 def parse_top(gram, nt, tokens):
   gram = binarize(gram)
   #tlds = [parse(gram, nt, tokens, 0, len(tokens)) for tokens in split_by_0_indent(tokens)]
-  return unbinarize(parse(gram, nt, tokens, 0, len(tokens)))
+  return p2s(unbinarize(parse(gram, nt, tokens, 0, len(tokens))))
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
 nt = 'sentence'
