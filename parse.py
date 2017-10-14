@@ -419,6 +419,7 @@ def parse(presrc):
   #tokens = split_blocks(tokens)
   #sp(tokens)
   parsed = parse_top(gram, 'top', tokens)
+  assert parsed != None, 'Parse failed'
   #print parsed != None
   sp(srcish(parsed))
 
