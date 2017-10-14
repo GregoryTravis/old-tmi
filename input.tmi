@@ -1,2 +1,5 @@
-foo a = b
-foo a = b
+foo a = let abc a = b b
+            a = a
+         in haha
+foo a = let abc a = b b
+         in haha

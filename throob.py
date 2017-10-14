@@ -89,12 +89,15 @@ def split_by_0_indent(tokens):
 def unbinarize(t):
   #return t
   if type(t) == list and type(t[-1]) == list and type(t[-1][0]) == str and t[-1][0].startswith('_binarize'):
-    #assert len(t[-1][0]) == 3, t[-1]
+    assert len(t[-1]) == 3, t[-1]
     return unbinarize(t[:-1] + t[-1][1:])
   elif type(t) == list:
     return map(unbinarize, t)
   else:
     return t
+
+def p2s(t):
+  assert type(t) == list
 
 def parse_top(gram, nt, tokens):
   gram = binarize(gram)
