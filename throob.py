@@ -1,3 +1,4 @@
+from collections import defaultdict
 from lib import *
 import itertools
 
@@ -11,23 +12,21 @@ gram = {
   'predicate': [ [ 'verb', 'noun' ], [ 'verb', 'adjective', 'noun' ], [ 'verb', 'adjective', 'adjective', 'noun' ] ],
 }
 
-# Return nt, line, column of first token, num tokens
-def tokpos(args):
-  return args[1]  + '-' + str(args[3]) + '-' + str(args[4])
-  #return args[1] + '-' + str(args[2][0]['line_number']) + '-' + str(args[2][0]['column_number']) + '-' + str(len(args[2]))
+fmemo = defaultdict(lambda: defaultdict(dict))
 
 #@ctrace(lambda args: [args[1], srcish(args[2][args[3]:args[4]])])
 #@trace
-@cmemoize(tokpos)
-#@memoize
 def parse(gram, nt, os, s, e):
+  if e in fmemo[nt][s]:
+    return fmemo[nt][s][e]
   if nt in gram:
     for rhs in gram[nt]:
       #print 'try', nt, '-->', rhs
       if len(rhs) == 1:
         p = parse(gram, rhs[0], os, s, e)
         if p != None:
-          return [nt, p]
+          fmemo[nt][s][e] = [nt, p]
+          return fmemo[nt][s][e]
       elif len(rhs) == 2:
         for x in xrange(s + 1, e):
           assert x != s and x != e
@@ -35,15 +34,15 @@ def parse(gram, nt, os, s, e):
           if lp != None:
             rp = parse(gram, rhs[1], os, x, e)
             if rp != None:
-              return [nt, [lp, rp]]
+              fmemo[nt][s][e] = [nt, [lp, rp]]
+              return fmemo[nt][s][e]
       else:
         assert False
+    fmemo[nt][s][e] = None
     return None
   else:
-    #print 'BASE', nt, os, os[0]['type'], len(os), (len(os) == 1 and nt == os[0]['type']), len(os) == 1, nt == os[0]['type']
-    #t, s, e = os
-    return os[s] if (e - 1 == s and nt == os[s]['type']) else None
-    #return os[0] if (len(os) == 1 and nt == os[0]['type']) else None
+    fmemo[nt][s][e] = os[s] if (e - 1 == s and nt == os[s]['type']) else None
+    return fmemo[nt][s][e] 
 
 def is_token(o):
   return type(o) == dict and 'src' in o.keys()
