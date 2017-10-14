@@ -1,14 +1,2 @@
-foo a = let abc a = b b
-            b a = a c
-            b a = a c
-            b a = a c
-            b a = a c
-            a = a
-         in haha
-foo a = let abc a = b b
-            b a = a c
-            b a = a c
-            b a = a c
-            b a = a c
-            a = a
-         in haha
+foo a = b
+foo a = b

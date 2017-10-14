@@ -34,7 +34,7 @@ def parse(gram, nt, os, s, e):
           if lp != None:
             rp = parse(gram, rhs[1], os, x, e)
             if rp != None:
-              fmemo[nt][s][e] = [nt, [lp, rp]]
+              fmemo[nt][s][e] = [nt, lp, rp]
               return fmemo[nt][s][e]
       else:
         assert False
@@ -86,10 +86,20 @@ def binarize(gram):
 def split_by_0_indent(tokens):
   return listsplitinc(tokens, lambda t: t['column_number'] == 0)
 
+def unbinarize(t):
+  #return t
+  if type(t) == list and type(t[-1]) == list and type(t[-1][0]) == str and t[-1][0].startswith('_binarize'):
+    #assert len(t[-1][0]) == 3, t[-1]
+    return unbinarize(t[:-1] + t[-1][1:])
+  elif type(t) == list:
+    return map(unbinarize, t)
+  else:
+    return t
+
 def parse_top(gram, nt, tokens):
   gram = binarize(gram)
   #tlds = [parse(gram, nt, tokens, 0, len(tokens)) for tokens in split_by_0_indent(tokens)]
-  return parse(gram, nt, tokens, 0, len(tokens))
+  return unbinarize(parse(gram, nt, tokens, 0, len(tokens)))
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
 nt = 'sentence'
