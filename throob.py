@@ -83,8 +83,12 @@ def binarize(gram):
   #sp(gram)
   return gram
 
+def split_by_0_indent(tokens):
+  return listsplitinc(tokens, lambda t: t['column_number'] == 0)
+
 def parse_top(gram, nt, tokens):
   gram = binarize(gram)
+  #print split_by_0_indent(tokens)
   return parse(gram, nt, tokens, 0, len(tokens))
 
 tokens = 'noun that verb noun verb adjective noun'.split(' ')
@@ -109,7 +113,7 @@ operator = /[+]+/;
 """
 
 gram = {
-  'top': [['let']],
+  'top': [['decls']],
   'app': [['identifier', 'identifier'], ['app', 'identifier']],
   'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'exp']],
   'defpat': [['identifier'], ['app']],

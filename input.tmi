@@ -1,28 +1,14 @@
-let abc a = b b
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    haha a = a a
-    a = a
- in haha
+foo a = let abc a = b b
+            b a = a c
+            b a = a c
+            b a = a c
+            b a = a c
+            a = a
+         in haha
+foo a = let abc a = b b
+            b a = a c
+            b a = a c
+            b a = a c
+            b a = a c
+            a = a
+         in haha

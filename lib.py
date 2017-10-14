@@ -75,6 +75,25 @@ assert [[], [1]] == listsplit([0, 1], lambda x: x == 0)
 assert [[1], [1]] == listsplit([1, 0, 1], lambda x: x == 0)
 assert [[1, 2], [3, 4, 5], [6, 7]] == listsplit([1, 2, 0, 3, 4, 5, 0, 6, 7], lambda x: x == 0)
 
+def listsplitinc(os, p):
+  if len(os) == 0:
+    return []
+  oses = [[]]
+  for o in os:
+    if p(o):
+      oses.append([o])
+    else:
+      oses[-1].append(o)
+  return oses
+
+assert [] == listsplitinc([], lambda x: x == 0)
+assert [[1]] == listsplitinc([1], lambda x: x == 0)
+assert [[1], [0]] == listsplitinc([1, 0], lambda x: x == 0)
+assert [[1, 1]] == listsplitinc([1, 1], lambda x: x == 0)
+assert [[], [0, 1]] == listsplitinc([0, 1], lambda x: x == 0)
+assert [[1], [0, 1]] == listsplitinc([1, 0, 1], lambda x: x == 0)
+assert [[1, 2], [0, 3, 4, 5], [0, 6, 7]] == listsplitinc([1, 2, 0, 3, 4, 5, 0, 6, 7], lambda x: x == 0)
+
 # Make hashable.
 def frz(o):
   if type(o) == list:
