@@ -160,7 +160,7 @@ operator = /[+]+/;
 
 gram = {
   'top': [['decls']],
-  'app': [['identifier', 'identifier'], ['app', 'identifier']],
+  'app': [['exp', 'exp'], ['app', 'exp']],
   'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'exp']],
   'where': [['exp', 'where_keyword', 'lcb', 'decls', 'rcb']],
   'defpat': [['identifier'], ['app']],

@@ -1,5 +1,5 @@
 foo a = let abc a = b b
-            a = a
+            a = har (let c = d in d )
          in (haha
               where b c = (d e))
 foo a = let abc a = b b where h = y
