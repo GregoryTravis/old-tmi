@@ -53,7 +53,8 @@ token_patterns = [
   { 'type': 'semicolon', 're': '(^;)(.*$)' },
   { 'type': 'equals', 're': "(^=)(.*$)" },
   { 'type': 'operator', 're': '(^[=<>+\-_!@$%^&*?]+)(.*$)' },
-  { 'type': 'parenthesis', 're': '(^[\(\)])(.*$)' },
+  { 'type': 'lparen', 're': '(^[\(])(.*$)' },
+  { 'type': 'rparen', 're': '(^[\)])(.*$)' },
   { 'type': 'lcb', 're': '(^[\{])(.*$)' },
   { 'type': 'rcb', 're': '(^[\}])(.*$)' },
 ]
@@ -422,6 +423,7 @@ def parse(presrc):
   assert parsed != None, 'Parse failed'
   #print parsed != None
   sp(srcish(parsed))
+  #sp(parsed)
 
 src = 'input.tmi'
 pre = src + '.pre'

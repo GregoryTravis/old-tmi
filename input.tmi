@@ -1,6 +1,6 @@
 foo a = let abc a = b b
             a = a
-         in haha
-          where b c = d e
+         in (haha
+              where b c = (d e))
 foo a = let abc a = b b where h = y
          in haha

@@ -97,6 +97,7 @@ def unbinarize(t):
     return t
 
 def p2s(t):
+  #return t
   if type(t) != list:
     return t
   elif t[0] == 'top':
@@ -110,7 +111,7 @@ def p2s(t):
     assert len(t) == 4
     assert t[1][0] == 'defpat'
     assert t[3][0] == 'exp'
-    return ['definition', t[1][1], p2s(t[3][1])]
+    return ['definition', t[1][1], p2s(t[3])]
   elif t[0] == 'let':
     assert len(t) == 7
     assert t[3][0] == 'decls'
@@ -122,8 +123,12 @@ def p2s(t):
     assert t[4][0] == 'decls'
     return ['where', p2s(t[1][1]), p2s(t[4])]
   elif t[0] == 'exp':
-    assert len(t) == 2
-    return p2s(t[1])
+    if len(t) == 2:
+      return p2s(t[1])
+    elif t[1]['type'] == 'lparen':
+      return p2s(t[2])
+    else:
+      assert False, t
   else:
     return t
 
@@ -161,6 +166,6 @@ gram = {
   'defpat': [['identifier'], ['app']],
   'definition': [['defpat', 'equals', 'exp']],
   'decls': [['definition', 'semicolon', 'decls'], ['definition']],
-  'exp': [['let'], ['where'], ['app'], ['identifier']],
+  'exp': [['lparen', 'exp', 'rparen'], ['let'], ['where'], ['app'], ['identifier']],
 }
 #nt = 'top'
