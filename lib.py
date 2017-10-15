@@ -169,3 +169,60 @@ def group_by(os, f):
   return dict(res)
 
 assert {0: [[0, 1], [0, 2]], 1: [[1, 1], [1, 5]], 2: [[2, 8]]} == group_by([[0, 1], [0, 2], [1, 1], [1, 5], [2, 8]], lambda x: x[0])
+
+def until(f, os):
+  if len(os) == 0:
+    return None
+  else:
+    v = f(os[0])
+    if v != None:
+      return v
+    else:
+      return until(f, os[1:])
+
+_ = 'kjfnsdkjhsdfkjhadfkjghkdfhgkdfjhgdfjhg'
+
+def match_try(pair, o):
+  pat, binder = pair
+  # Wow, stacky!
+  bindings = []
+  pats = [pat]
+  os = [o]
+  while not (pats == [] and os == []):
+    #print 'HO0', pats
+    #print 'HO1', os
+    #print 'HO2', bindings
+    if (pats == []) != (os == []):
+      return None
+    ap = pats[-1]
+    op = os[-1]
+    if ap == _:
+      bindings.append(op)
+      pats.pop()
+      os.pop()
+    else:
+      if type(ap) != type(op):
+        return None
+      elif type(ap) == str:
+        if ap != op:
+          return None
+        pats.pop()
+        os.pop()
+      elif type(ap) == list:
+        if len(ap) != len(op):
+          return None
+        else:
+          pats.pop()
+          os.pop()
+          pats = pats + ap
+          os = os + op
+      else:
+        assert False
+  return bindings
+
+def match(pairs, o):
+  return until(lambda pair: match_try(pair, o), pairs)
+
+assert [14, 13, 12] == match([
+  [['a', _, 'b', ['c', _, _, 'd']],  lambda a, b, c: [c, b, a]],
+], ['a', 12, 'b', ['c', 13, 14, 'd']])
