@@ -172,7 +172,8 @@ assert {0: [[0, 1], [0, 2]], 1: [[1, 1], [1, 5]], 2: [[2, 8]]} == group_by([[0, 
 
 def until(f, os):
   if len(os) == 0:
-    return None
+    assert False
+    #return None
   else:
     v = f(os[0])
     if v != None:
@@ -181,6 +182,12 @@ def until(f, os):
       return until(f, os[1:])
 
 _ = 'kjfnsdkjhsdfkjhadfkjghkdfhgkdfjhgdfjhg'
+__ = 'afuhfashrfkauhsdkfasdkjfhaksdjfhasdf'
+
+#def match_try(pair, o):
+  #bindings = []
+  #return bindings if match_try_1
+  #pat, binder = pair
 
 def match_try(pair, o):
   pat, binder = pair
@@ -196,8 +203,12 @@ def match_try(pair, o):
       return None
     ap = pats[-1]
     op = os[-1]
+    #print 'AP', ap, op
     if ap == _:
       bindings.append(op)
+      pats.pop()
+      os.pop()
+    elif ap == __:
       pats.pop()
       os.pop()
     else:
@@ -218,11 +229,14 @@ def match_try(pair, o):
           os = os + op
       else:
         assert False
-  return bindings
+  return binder(*reversed(bindings))
 
 def match(pairs, o):
   return until(lambda pair: match_try(pair, o), pairs)
 
 assert [14, 13, 12] == match([
   [['a', _, 'b', ['c', _, _, 'd']],  lambda a, b, c: [c, b, a]],
+], ['a', 12, 'b', ['c', 13, 14, 'd']])
+assert [14, 12] == match([
+  [['a', _, 'b', ['c', __, _, 'd']],  lambda a, c: [c, a]],
 ], ['a', 12, 'b', ['c', 13, 14, 'd']])

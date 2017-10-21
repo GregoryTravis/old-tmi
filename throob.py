@@ -1,5 +1,6 @@
 from collections import defaultdict
 from lib import *
+from lib import _, __
 import itertools
 
 def flat1(os):
@@ -41,7 +42,7 @@ def parse(gram, nt, os, s, e):
     fmemo[nt][s][e] = None
     return None
   else:
-    fmemo[nt][s][e] = os[s] if (e - 1 == s and nt == os[s]['type']) else None
+    fmemo[nt][s][e] = [nt, os[s]] if (e - 1 == s and nt == os[s]['type']) else None
     return fmemo[nt][s][e] 
 
 def is_token(o):
@@ -96,8 +97,31 @@ def unbinarize(t):
   else:
     return t
 
+p2s_rules = [
+  [['top', _], lambda x: p2s(x)],
+  [['definition', ['defpat', _], _, ['exp', _]], lambda pat, _, body: ['definition', p2s(pat), p2s(body)]],
+  [['decls', _, ['semicolon', _], _], lambda df, _, dc: [p2s(df)] + p2s(dc)],
+  [['decls', _], lambda df: [p2s(df)]],
+  [['app', _, _], lambda a, b: ['app', p2s(a), p2s(b)]],
+  [['exp', ['identifier', _]], lambda x: [['exp', ['identifier', x]]]],
+  [['exp', ['where', _, ['where_keyword', __], ['lcb', __], _, ['rcb', __]]], lambda e, d: ['where', p2s(e), p2s(d)]],
+  [['let', ['let_keyword', __], ['lcb', __], _, ['rcb', __], ['in_keyword', __], _], lambda ds, e: ['let', p2s(ds), p2s(e)]],
+  [['identifier', _], lambda x: ['identifier', x]],
+  [_, lambda x: ['???', x]],
+]
+
+#@trace
 def p2s(t):
-  #return t
+  return match(p2s_rules, t)
+  tt = match(p2s_rules, t)
+  if tt != None:
+    return p2s(tt)
+  else:
+    if type(t) == list:
+      return map(p2s, t)
+    else:
+      return t
+  return t
   if type(t) != list:
     return t
   elif t[0] == 'top':
