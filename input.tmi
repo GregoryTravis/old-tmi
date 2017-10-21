@@ -1,3 +1,7 @@
+foo a b = case b a of
+  a b => d e
+  j k => k j
+  j k => k j
 foo a = let abc a = b b
          in a where
                 b = c

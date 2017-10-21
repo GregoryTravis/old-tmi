@@ -105,7 +105,12 @@ p2s_rules = [
   [['app', _, _], lambda a, b: ['app', p2s(a), p2s(b)]],
   [['exp', ['identifier', _]], lambda x: [['exp', ['identifier', x]]]],
   [['exp', ['where', _, ['where_keyword', __], ['lcb', __], _, ['rcb', __]]], lambda e, d: ['where', p2s(e), p2s(d)]],
+  [['exp', _], lambda x: ['exp', p2s(x)]],
   [['let', ['let_keyword', __], ['lcb', __], _, ['rcb', __], ['in_keyword', __], _], lambda ds, e: ['let', p2s(ds), p2s(e)]],
+  [['case', ['case_keyword', __], _, ['of_keyword', __], ['lcb', __], _, ['rcb', __]], lambda e, d: ['case', p2s(e), p2s(d)]],
+  [['case_clauses', _, ['semicolon', __], _], lambda df, dc: p2s(df) + [p2s(dc)]],
+  [['case_clauses', _], lambda df: [p2s(df)]],
+  [['case_clause', ['defpat', _], __, ['exp', _]], lambda pat, body: ['case_clause', p2s(pat), p2s(body)]],
   [['identifier', _], lambda x: ['identifier', x]],
   [_, lambda x: ['???', x]],
 ]
@@ -190,6 +195,9 @@ gram = {
   'defpat': [['identifier'], ['app']],
   'definition': [['defpat', 'equals', 'exp']],
   'decls': [['definition', 'semicolon', 'decls'], ['definition']],
-  'exp': [['lparen', 'exp', 'rparen'], ['let'], ['where'], ['app'], ['identifier']],
+  'exp': [['lparen', 'exp', 'rparen'], ['let'], ['where'], ['case'], ['app'], ['identifier']],
+  'case': [['case_keyword', 'exp', 'of_keyword', 'lcb', 'case_clauses', 'rcb']],
+  'case_clauses': [['case_clauses', 'semicolon', 'case_clause'], ['case_clause']],
+  'case_clause': [['defpat', 'rdbl_arrow', 'exp']],
 }
 #nt = 'top'
