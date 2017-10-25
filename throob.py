@@ -97,15 +97,21 @@ def unbinarize(t):
   else:
     return t
 
+p2s_app_exp_rules = [
+  [['app', ['exp', _], ['exp', ['app', _, _]]], lambda x, y, z: [x] + match(p2s_app_exp_rules, ['app', y, z])],
+  [['app', ['exp', _], ['exp', _]], lambda x, y: [x, y]],
+]
+
 p2s_rules = [
   [['top', _], lambda x: p2s(x)],
   [['definition', ['defpat', _], _, ['exp', _]], lambda pat, _, body: ['definition', p2s(pat), p2s(body)]],
   [['decls', _, ['semicolon', _], _], lambda df, _, dc: [p2s(df)] + p2s(dc)],
   [['decls', _], lambda df: [p2s(df)]],
-  [['app', _, _], lambda a, b: ['app', p2s(a), p2s(b)]],
+  [['app', _, _], lambda x, y: ['app'] + match(p2s_app_exp_rules, ['app', x, y])],
   [['exp', ['identifier', _]], lambda x: [['exp', ['identifier', x]]]],
   [['exp', ['where', _, ['where_keyword', __], ['lcb', __], _, ['rcb', __]]], lambda e, d: ['where', p2s(e), p2s(d)]],
   [['exp', _], lambda x: ['exp', p2s(x)]],
+  [['exp', _], lambda x: p2s(x)],
   [['let', ['let_keyword', __], ['lcb', __], _, ['rcb', __], ['in_keyword', __], _], lambda ds, e: ['let', p2s(ds), p2s(e)]],
   [['case', ['case_keyword', __], _, ['of_keyword', __], ['lcb', __], _, ['rcb', __]], lambda e, d: ['case', p2s(e), p2s(d)]],
   [['case_clauses', _, ['semicolon', __], _], lambda df, dc: p2s(df) + [p2s(dc)]],

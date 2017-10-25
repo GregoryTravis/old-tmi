@@ -190,6 +190,7 @@ __ = 'afuhfashrfkauhsdkfasdkjfhaksdjfhasdf'
   #pat, binder = pair
 
 def match_try(pair, o):
+  #print 'HEY', pair, len(pair)
   pat, binder = pair
   # Wow, stacky!
   bindings = []
