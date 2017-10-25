@@ -104,7 +104,7 @@ p2s_app_exp_rules = [
 
 p2s_rules = [
   [['top', _], lambda x: p2s(x)],
-  [['definition', ['defpat', _], _, ['exp', _]], lambda pat, _, body: ['definition', p2s(pat), p2s(body)]],
+  [['definition', ['exp', _], _, ['exp', _]], lambda pat, _, body: ['definition', p2s(pat), p2s(body)]],
   [['decls', _, ['semicolon', _], _], lambda df, _, dc: [p2s(df)] + p2s(dc)],
   [['decls', _], lambda df: [p2s(df)]],
   [['app', _, _], lambda x, y: ['app'] + match(p2s_app_exp_rules, ['app', x, y])],
@@ -117,7 +117,7 @@ p2s_rules = [
   [['case', ['case_keyword', __], _, ['of_keyword', __], ['lcb', __], _, ['rcb', __]], lambda e, d: ['case', p2s(e), p2s(d)]],
   [['case_clauses', _, ['semicolon', __], _], lambda df, dc: p2s(df) + [p2s(dc)]],
   [['case_clauses', _], lambda df: [p2s(df)]],
-  [['case_clause', ['defpat', _], __, ['exp', _]], lambda pat, body: ['case_clause', p2s(pat), p2s(body)]],
+  [['case_clause', ['exp', _], __, ['exp', _]], lambda pat, body: ['case_clause', p2s(pat), p2s(body)]],
   [['identifier', _], lambda x: ['identifier', x]],
   [_, lambda x: ['???', x]],
 ]
@@ -200,13 +200,13 @@ gram = {
   'app': [['exp', 'exp'], ['app', 'exp']],
   'let': [['let_keyword', 'lcb', 'decls', 'rcb', 'in_keyword', 'exp']],
   'where': [['exp', 'where_keyword', 'lcb', 'decls', 'rcb']],
-  'defpat': [['identifier'], ['app']],
-  'definition': [['defpat', 'equals', 'exp']],
+  #'defpat': [['identifier'], ['app']],
+  'definition': [['exp', 'equals', 'exp']],
   'decls': [['definition', 'semicolon', 'decls'], ['definition']],
   'binopexp': [['exp', 'operator', 'exp']],
   'exp': [['lparen', 'exp', 'rparen'], ['binopexp'], ['let'], ['where'], ['case'], ['app'], ['identifier']],
   'case': [['case_keyword', 'exp', 'of_keyword', 'lcb', 'case_clauses', 'rcb']],
   'case_clauses': [['case_clauses', 'semicolon', 'case_clause'], ['case_clause']],
-  'case_clause': [['defpat', 'rdbl_arrow', 'exp']],
+  'case_clause': [['exp', 'rdbl_arrow', 'exp']],
 }
 #nt = 'top'
