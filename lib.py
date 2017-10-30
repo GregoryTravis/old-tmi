@@ -241,3 +241,20 @@ assert [14, 13, 12] == match([
 assert [14, 12] == match([
   [['a', _, 'b', ['c', __, _, 'd']],  lambda a, c: [c, a]],
 ], ['a', 12, 'b', ['c', 13, 14, 'd']])
+
+def trewrite_one(t, rule):
+  tt = match_try(rule, t)
+  t = t if tt == None else tt
+  if type(t) == list:
+    t = map(lambda x: trewrite_one(x, rule), t)
+  return t
+
+def trewrite(t, rules):
+  return t if len(rules) == 0 else trewrite(trewrite_one(t, rules[0]), rules[1:])
+
+assert [['c', 'c', 3], ['c', 'c', 3]] == trewrite('a',
+  [
+    ['a', lambda: ['b', 'b']],
+    ['b', lambda: ['c', 'c']],
+    [['c', _], lambda x: ['c', x, 3]],
+  ])

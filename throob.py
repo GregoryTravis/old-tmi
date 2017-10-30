@@ -108,7 +108,7 @@ p2s_rules = [
   [['decls', _, ['semicolon', _], _], lambda df, _, dc: [p2s(df)] + p2s(dc)],
   [['decls', _], lambda df: [p2s(df)]],
   [['app', _, _], lambda x, y: ['app'] + match(p2s_app_exp_rules, ['app', x, y])],
-  [['binopexp', _, _, _], lambda x, op, y: ['binopexp', p2s(x), op, p2s(y)]],
+  #[['binopexp', _, _, _], lambda x, op, y: ['binopexp', p2s(x), op, p2s(y)]],
   [['exp', ['identifier', _]], lambda x: ['exp', ['identifier', x]]],
   [['exp', ['where', _, ['where_keyword', __], ['lcb', __], _, ['rcb', __]]], lambda e, d: ['where', p2s(e), p2s(d)]],
   [['exp', _], lambda x: ['exp', p2s(x)]],
@@ -119,6 +119,7 @@ p2s_rules = [
   [['case_clauses', _], lambda df: [p2s(df)]],
   [['case_clause', ['exp', _], __, ['exp', _]], lambda pat, body: ['case_clause', p2s(pat), p2s(body)]],
   [['identifier', _], lambda x: ['identifier', x]],
+  [['operator', _], lambda x: ['operator', x]],
   [_, lambda x: ['???', x]],
 ]
 
@@ -203,8 +204,9 @@ gram = {
   #'defpat': [['identifier'], ['app']],
   'definition': [['exp', 'equals', 'exp']],
   'decls': [['definition', 'semicolon', 'decls'], ['definition']],
-  'binopexp': [['exp', 'operator', 'exp']],
-  'exp': [['lparen', 'exp', 'rparen'], ['binopexp'], ['let'], ['where'], ['case'], ['app'], ['identifier']],
+  #'binopexp': [['exp', 'operator', 'exp']],
+  'parenexp': [['lparen', 'exp', 'rparen']],
+  'exp': [['parenexp'], ['binopexp'], ['let'], ['where'], ['case'], ['app'], ['identifier'], ['operator']],
   'case': [['case_keyword', 'exp', 'of_keyword', 'lcb', 'case_clauses', 'rcb']],
   'case_clauses': [['case_clauses', 'semicolon', 'case_clause'], ['case_clause']],
   'case_clause': [['exp', 'rdbl_arrow', 'exp']],

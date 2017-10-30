@@ -1,10 +1,10 @@
-foo a b = case b a of
+foo a b = case b + c a of
   a b => d e + f g
-  j k => k j
+  j k => k j + j k k
   j k => k j
 foo a = let abc a = b b
          in a where
-                b = c
+                b = c + iiii
                 j = let y = u
                         p = q
                      in y p
