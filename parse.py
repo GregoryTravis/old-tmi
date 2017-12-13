@@ -425,8 +425,8 @@ def parse(presrc):
   parsed = parse_top(gram, 'top', tokens)
   assert parsed != None, 'Parse failed'
   #print parsed != None
-  sp(srcish(parsed))
   #sp(parsed)
+  sp(srcish(parsed))
 
 src = 'input.tmi'
 pre = src + '.pre'

@@ -107,7 +107,7 @@ p2s_rules = [
   [['definition', ['exp', _], _, ['exp', _]], lambda pat, _, body: ['definition', p2s(pat), p2s(body)]],
   [['decls', _, ['semicolon', _], _], lambda df, _, dc: [p2s(df)] + p2s(dc)],
   [['decls', _], lambda df: [p2s(df)]],
-  [['app', _, _], lambda x, y: ['app'] + match(p2s_app_exp_rules, ['app', x, y])],
+  [['app', _, _], lambda x, y: ['app', precedence(match(p2s_app_exp_rules, ['app', x, y]))]],
   #[['binopexp', _, _, _], lambda x, op, y: ['binopexp', p2s(x), op, p2s(y)]],
   [['exp', ['identifier', _]], lambda x: ['exp', ['identifier', x]]],
   [['exp', ['where', _, ['where_keyword', __], ['lcb', __], _, ['rcb', __]]], lambda e, d: ['where', p2s(e), p2s(d)]],
@@ -122,6 +122,24 @@ p2s_rules = [
   [['operator', _], lambda x: ['operator', x]],
   [_, lambda x: ['???', x]],
 ]
+
+add_appop_between_maybe = [
+  [ [['operator', _], _], lambda a, b: [['operator', a], b] ],
+  [ [_, ['operator', _]], lambda a, b: [a, ['operator', b]] ],
+  [ [_, _], lambda a, b: [a, ['operator', '$$'], b] ],
+]
+
+def make_application_explicit(os):
+  if len(os) < 2:
+    return os
+  else:
+    os = match(add_appop_between_maybe, os[0:2]) + os[2:]
+    return [os[0]] + make_application_explicit(os[1:])
+
+def precedence(os):
+  #return os
+  os = make_application_explicit(os)
+  return os
 
 #@trace
 def p2s(t):
