@@ -388,6 +388,9 @@
       ""
       (concat s (make-string-string (1- n) s))))
 
+(define (string-map f s)
+  (list->string (map f (string->list s))))
+
 (define (string-one-line s)
   (string-map
    (lambda (c) (if (eq? c #\newline) #\space c))
@@ -515,9 +518,9 @@
 ;; or #f.
 (define (find-first-maybe f lyst)
   (if (null? lyst)
-      fail
+      #f
       (let ((r (f (car lyst))))
-        (if (fail? r)
+        (if (eq? r #f)
             (find-first-maybe f (cdr lyst))
             r))))
 
@@ -736,7 +739,7 @@
   (let ((prelen (string-length prefix))
         (slen (string-length string)))
     (and (>= slen prelen)
-         (string= prefix (substring string 0 prelen)))))
+         (equal? prefix (substring string 0 prelen)))))
 
 (define (->symbol o)
   (cond
@@ -749,16 +752,15 @@
       e
       (f (car lyst) (foldr f e (cdr lyst)))))
 
-(define (tagged-symbol-generator-generator)
+(define (tagged-symbol-generator-generator tag)
   (let ((serial 0))
-    (lambda (tag)
+    (lambda ()
       (let ((s serial))
         (set! serial (1+ serial))
         (->symbol (concat (->string tag) (number->string s)))))))
 
 (define (symbol-generator-generator)
-  (let ((tsg (tagged-symbol-generator-generator)))
-    (lambda () (tsg "a"))))
+  (tagged-symbol-generator-generator "a"))
 
 (define (lambda? e)
   (and (proper-list? e)
@@ -1073,3 +1075,11 @@
     (if (all? bools)
         value
         (err 'check value))))
+
+(define (flatten1 l) (apply append l))
+
+; Inclusive
+(define (gen-integer-sequence s e)
+  (if (>= s e)
+      `(,e)
+      (cons s (gen-integer-sequence (+ s 1) e))))

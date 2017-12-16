@@ -1,7 +1,7 @@
 (require compatibility/defmacro)
 (define-for-syntax mtch-show-expansion #f)
 
-(define-for-syntax (shew . args) (map pretty-print args))
+(define-for-syntax (shew . args) (map display args) (display "\n"))
 
 (define-for-syntax (mtch-literal? o)
   (or ;(is-quote? o)

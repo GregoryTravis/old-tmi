@@ -1,1 +1,1 @@
-echo nothing but a test here
+racket -r parse.ss
