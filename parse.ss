@@ -105,14 +105,15 @@
   (mtch e
     (a (b . c))
       (if (starts-with (symbol->string b) "parsebin-")
-          `(,a . ,(unbinarize c))
-          `(,a (,b . ,(unbinarize c))))
+          `(,(unbinarize a) . ,(unbinarize c))
+          `(,a (,(unbinarize b) . ,(unbinarize c))))
     (a . d)
-      `(,a . ,(unbinarize d))
+      `(,(unbinarize a) . ,(unbinarize d))
     aa aa))
-;(tracefun unbinarize)
+(tracefun unbinarize)
 
 (define (top-parse gram nt os)
+  (shew 'parse os)
   (let ((gram (binarize gram)))
     (shew gram)
     (mtch (parse gram nt os 0 (length os) (make-hash))
@@ -132,6 +133,9 @@
 (shew (top-parse gram 'exp '(identifier identifier)))
 (shew (top-parse gram 'exp '(identifier identifier identifier)))
 (shew (top-parse gram 'exp '(lparen identifier rparen)))
+(shew (top-parse gram 'exp '(lparen identifier rparen)))
+(shew (top-parse gram 'exp '(lparen lparen identifier rparen rparen)))
+(shew (top-parse gram 'decls '(identifier equals identifier identifier semicolon identifier equals identifier)))
 
 #|
 (define gram
