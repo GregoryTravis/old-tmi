@@ -988,6 +988,10 @@
         '()
         (cons (++ line "\n") (read-all-lines port)))))
 
+(define (read-file-as-string path)
+  (call-with-input-file path
+    (lambda (port) (list->string (sequence->list (in-input-port-chars port))))))
+
 (define (typeof o)
   (cond
    ((cton? o) 'cton)
