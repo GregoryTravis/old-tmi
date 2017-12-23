@@ -106,23 +106,57 @@
   try-two)
 |#
 
-(define (unbinarize e)
+(define (grammar-unbinarize e)
   (mtch e
     (a (b . c))
       (if (starts-with (symbol->string b) "parsebin-")
-          `(,(unbinarize a) . ,(unbinarize c))
-          `(,(unbinarize a) (,(unbinarize b) . ,(unbinarize c))))
+          `(,(grammar-unbinarize a) . ,(grammar-unbinarize c))
+          `(,(grammar-unbinarize a) (,(grammar-unbinarize b) . ,(grammar-unbinarize c))))
     (a . d)
-      `(,(unbinarize a) . ,(unbinarize d))
+      `(,(grammar-unbinarize a) . ,(grammar-unbinarize d))
     aa aa))
 ;(tracefun unbinarize)
+
+(define (case-clause-unbinarize-1 e)
+  (mtch e
+    ('case_clauses ('case_clause . rest)) (list rest)
+    ('case_clauses as semicolon ('case_clause . rest)) (append (case-clause-unbinarize-1 as) (list rest))
+    x x))
+(define (case-clause-unbinarize e) (apply-and-descend case-clause-unbinarize-1 e))
+
+  ;(definition . ((exp equals exp)))
+  ;(decls . ((definition semicolon decls) (definition)))
+(define (decls-unbinarize-1 e)
+  (mtch e
+    ('decls ('definition . d)) (list d)
+    ('decls ('definition . d) semicolon ('decls . rest)) (cons d (decls-unbinarize-1 `(decls . ,rest)))
+    x x))
+(define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
+
+(define (apply-and-descend f e)
+  (let ((e (apply-until-fixpoint f e)))
+    (if (pair? e)
+      (cons (apply-and-descend f (car e)) (apply-and-descend f (cdr e)))
+      e)))
+
+(define (p2s-1 e)
+  (mtch e
+    ('let ('let_keyword x) ('lcb x) decls ('rcb x) ('in_keyword x) exp)
+      `(let ,decls ,exp)
+    ('exp x) x
+    ('case case_keyword exp of_keyword lcb case_clauses rcb) `(case ,exp ,case_clauses)
+    x x))
+(define (p2s e) (apply-and-descend p2s-1 e))
+
+(define (postprocess e)
+  (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))
 
 (define (top-parse gram nt os)
   (shew 'parse os)
   (let ((gram (binarize gram)))
     ;(shew gram)
     (mtch (parse gram nt os 0 (length os) (make-hash))
-      (value) `(,(unbinarize value))
+      (value) `(,(postprocess value))
       #f #f)))
 
 #|
@@ -144,7 +178,11 @@
 (shew (top-parse gram 'decls '(identifier equals identifier identifier semicolon identifier equals identifier)))
 |#
 
-(shew (top-parse gram 'decls (tokenize-top (read-file-as-string "input.tmi"))))
+(shew (top-parse gram 'let (tokenize-top
+  (string-append
+    "let { "
+    (read-file-as-string "input.tmi")
+    "} in main args"))))
 
 #|
 (define gram

@@ -1087,3 +1087,10 @@
   (if (>= s e)
       `(,e)
       (cons s (gen-integer-sequence (+ s 1) e))))
+
+; Apply until no change
+(define (apply-until-fixpoint f o)
+  (let ((oo (f o)))
+    (if (equal? o oo)
+        oo
+        (apply-until-fixpoint f oo))))
