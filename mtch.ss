@@ -6,6 +6,7 @@
 (define-for-syntax (mtch-literal? o)
   (or ;(is-quote? o)
       (string? o)
+      (char? o)
       (number? o)
       (null? o)
       (eq? #t o)

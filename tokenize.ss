@@ -52,11 +52,33 @@ token_patterns = [
         #f #f)))
 ;(tracefun try-tokenize)
 
-(define (tokenize s)
+; This should work too, and be faster but less portable?
+; (string-split "\nab\nc\n\nde\n\n" "\n" #:trim? #f)
+
+(define (next-rowcol rowcol token)
+  (mtch rowcol (row col)
+    (if (eq? (string-length token) 0)
+        rowcol
+        (next-rowcol
+         (mtch (car (string->list token))
+           #\newline `(,(+ row 1) 0)
+           x `(,row ,(+ col 1)))
+         (list->string (cdr (string->list token)))))))
+
+(assert (equal? '(4 0) (next-rowcol '(3 2) "\n")))
+(assert (equal? '(4 1) (next-rowcol '(3 2) "\n ")))
+(assert (equal? '(4 1) (next-rowcol '(3 2) "\na")))
+(assert (equal? '(4 0) (next-rowcol '(3 2) "b\n")))
+(assert (equal? '(4 1) (next-rowcol '(3 2) "b\n ")))
+(assert (equal? '(4 1) (next-rowcol '(3 2) "b\na")))
+(assert (equal? '(5 2) (next-rowcol '(3 2) "b\na\ncd")))
+
+(define (tokenize s rowcol)
   (if (eq? (string-length s) 0)
     '()
     (mtch (find-first-maybe (lambda (pat-decl) (try-tokenize pat-decl s)) pat-decls)
-      ((token-type token-src rest)) `((,token-type ,token-src) . ,(tokenize rest)))))
+      ((token-type token-src rest))
+        `((,token-type ,token-src ,rowcol) . ,(tokenize rest (next-rowcol rowcol token-src))))))
 
 (define (remove-whitespace toks)
   (grep (lambda (token) (not (eq? (car token) 'whitespace))) toks))
@@ -65,6 +87,6 @@ token_patterns = [
     ;(a . d) `(,a . ,(remove-whitespace d))))
 
 (define (tokenize-top s)
-  (remove-whitespace (tokenize s)))
+  (remove-whitespace (tokenize s '(0 0))))
 
 ;(shew (tokenize-top (read-file-as-string "input.tmi")))

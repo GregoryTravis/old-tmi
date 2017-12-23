@@ -109,7 +109,7 @@
 (define (grammar-unbinarize e)
   (mtch e
     (a (b . c))
-      (if (starts-with (symbol->string b) "parsebin-")
+      (if (and (symbol? b) (starts-with (symbol->string b) "parsebin-"))
           `(,(grammar-unbinarize a) . ,(grammar-unbinarize c))
           `(,(grammar-unbinarize a) (,(grammar-unbinarize b) . ,(grammar-unbinarize c))))
     (a . d)
@@ -178,6 +178,11 @@
 (shew (top-parse gram 'decls '(identifier equals identifier identifier semicolon identifier equals identifier)))
 |#
 
+(shew (tokenize-top
+  (string-append
+    "let { "
+    (read-file-as-string "input.tmi")
+    "} in main args")))
 (shew (top-parse gram 'let (tokenize-top
   (string-append
     "let { "
