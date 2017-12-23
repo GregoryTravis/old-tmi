@@ -1,5 +1,6 @@
 (load "Lib.ss")
 (load "mtch.ss")
+(load "tokenize.ss")
 
 (define gram #hash(
   (top . ((decls)))
@@ -42,18 +43,20 @@
   (if (eq? s e)
     ; TODO implement epsilon?
     #f
-    (let ((val (hash-ref memo (list nt s e) '())))
-      (if (not (null? val))
-          val
-          (if (eq? val #f)
+    (let ((memo-val (hash-ref memo (list nt s e) '())))
+      (if (not (null? memo-val))
+          ; This includes the recursion-prevention #f value
+          memo-val
+          ;; These two lines probably not needed, redudant to previous if
+          (if (eq? memo-val #f)
             #f  
             ; memo placeholder for recursion prevention
             (begin
               (hash-set! memo (list nt s e) #f)
               (mtch
-                (if (and (eq? (+ s 1) e) (eq? (nth s os) nt))
+                (if (and (eq? (+ s 1) e) (eq? (car (nth s os)) nt))
                   ; TODO maybe check before the memo check?
-                  `(,nt)
+                  `(,(nth s os))
                   (find-first-maybe
                     (lambda (production) (try-prodution gram nt os s e memo production))
                     (hash-ref gram nt (lambda () '()))))
@@ -63,7 +66,9 @@
                     `(,value))
                 #f
                   (begin
-                    (hash-remove! memo (list nt s e))
+                    ;(hash-remove! memo (list nt s e))
+                    ;; Probably redundant?
+                    (hash-set! memo (list nt s e) #f)
                     #f))))))))
 
 (define (try-prodution gram nt os s e memo production)
@@ -106,16 +111,16 @@
     (a (b . c))
       (if (starts-with (symbol->string b) "parsebin-")
           `(,(unbinarize a) . ,(unbinarize c))
-          `(,a (,(unbinarize b) . ,(unbinarize c))))
+          `(,(unbinarize a) (,(unbinarize b) . ,(unbinarize c))))
     (a . d)
       `(,(unbinarize a) . ,(unbinarize d))
     aa aa))
-(tracefun unbinarize)
+;(tracefun unbinarize)
 
 (define (top-parse gram nt os)
   (shew 'parse os)
   (let ((gram (binarize gram)))
-    (shew gram)
+    ;(shew gram)
     (mtch (parse gram nt os 0 (length os) (make-hash))
       (value) `(,(unbinarize value))
       #f #f)))
@@ -123,10 +128,11 @@
 #|
 (tracefun-with
   (lambda (app runner)
-    (mtch app ('parse gram nt os s e memo) (plain-ol-tracer (list 'parse nt os s e) runner)))
+    (mtch app ('parse gram nt os s e memo) (plain-ol-tracer (list 'parse nt s e) runner)))
   parse)
 |#
 
+#|
 (shew (top-parse gram 'rcb '(rcb)))
 (shew (top-parse gram 'exp '(identifier)))
 (shew (top-parse gram 'app '(identifier identifier)))
@@ -136,6 +142,9 @@
 (shew (top-parse gram 'exp '(lparen identifier rparen)))
 (shew (top-parse gram 'exp '(lparen lparen identifier rparen rparen)))
 (shew (top-parse gram 'decls '(identifier equals identifier identifier semicolon identifier equals identifier)))
+|#
+
+(shew (top-parse gram 'decls (tokenize-top (read-file-as-string "input.tmi"))))
 
 #|
 (define gram

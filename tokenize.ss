@@ -22,9 +22,9 @@ token_patterns = [
 ]
 |#
 
-(shew (regexp-match #px"^(\\s+)(.*)$" " { "))
-(shew (regexp-match #px"^([\\{])(.*)$" "{ "))
-(shew (regexp-match #px"[\\s]" " "))
+;(shew (regexp-match #px"^(\\s+)(.*)$" " { "))
+;(shew (regexp-match #px"^([\\{])(.*)$" "{ "))
+;(shew (regexp-match #px"[\\s]" " "))
 
 (define pat-decls '(
   (whitespace #px"(^\\s+)(.*$)")
@@ -43,8 +43,6 @@ token_patterns = [
   (lcb #px"(^[\\{])(.*$)")
   (rcb #px"(^[\\}])(.*$)")
 ))
-
-(shew pat-decls)
 
 (define (try-tokenize pat-decl s)
   (mtch pat-decl
@@ -69,4 +67,4 @@ token_patterns = [
 (define (tokenize-top s)
   (remove-whitespace (tokenize s)))
 
-(shew (tokenize-top (read-file-as-string "input.tmi")))
+;(shew (tokenize-top (read-file-as-string "input.tmi")))

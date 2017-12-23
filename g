@@ -1,1 +1,1 @@
-racket -r tokenize.ss
+racket -r parse.ss

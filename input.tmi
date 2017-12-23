@@ -1,5 +1,4 @@
 foo auu b = case (b + c) a of {
   a b => dyy e + f g ;
-  j k => k j + j k k ;
   j k => k j
 }
