@@ -292,6 +292,8 @@
         `((let_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((let_keyword ,next) . ,group-stack)))
       (('where_keyword . x) next . rest)
         `((where_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((where_keyword ,next) . ,group-stack)))
+      (('of_keyword . x) next . rest)
+        `((of_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((of_keyword ,next) . ,group-stack)))
       ;(('in_keyword . x) . rest)
         ;(mtch group-stack
           ;(('let_keyword next) . gs-rest)

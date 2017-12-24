@@ -1,5 +1,5 @@
-f a = 
-  let a = b where c = d
-                  e = f
-      j = k
-   in a j
+f a =
+  case a + a of
+    b => let c = d in c c c
+    Foo f => d c
+g b = d
