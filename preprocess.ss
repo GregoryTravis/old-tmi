@@ -263,14 +263,14 @@
 (define (tokens->src-1 tokens current-line current-column)
   (mtch tokens
     ((a as) . rest)
-      (++ " " as (tokens->src-1 rest current-line (+ 1 current-column (string-length as))))
+      (++ " " as " " (tokens->src-1 rest current-line (+ 2 current-column (string-length as))))
     ((a as (line column)) . rest)
       (++ (apply ++ (ntimes (max 0 (- line current-line)) "\n"))
-          (apply ++ (ntimes (max 1 (- column (if (> line current-line) 0 current-column))) " "))
+          (apply ++ (ntimes (max 0 (- column (if (> line current-line) 0 current-column))) " "))
           as
           (tokens->src-1 rest line (+ column (string-length as))))
     '() ""))
-(define (tokens->src tokens) (tokens->src-1 tokens -1 0))
+(define (tokens->src tokens) (++ (tokens->src-1 tokens 0 0) "\n"))
 
 (define (should-insert-semicolon tokens group-stack)
   (mtch (list tokens group-stack)
@@ -290,7 +290,11 @@
 
 (define (preprocess tokens group-stack)
   (if (is-dedent-block-close? tokens group-stack)
-    (cons '(rcb "}") (preprocess tokens (cdr group-stack)))
+    (mtch tokens
+      (('in_keyword . x) . rest)
+        (cons '(rcb "}") (cons `(in_keyword . ,x) (preprocess rest (cdr group-stack))))
+      x
+        (cons '(rcb "}") (preprocess tokens (cdr group-stack))))
     (mtch tokens
       '()
         '()
@@ -300,10 +304,10 @@
         `((where_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((where_keyword ,next) . ,group-stack)))
       (('of_keyword . x) next . rest)
         `((of_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((of_keyword ,next) . ,group-stack)))
-      ;(('in_keyword . x) . rest)
-        ;(mtch group-stack
-          ;(('let_keyword next) . gs-rest)
-            ;`((rcb "}") (in_keyword . ,x) . ,(preprocess rest gs-rest)))
+      (('in_keyword . x) . rest)
+        (mtch group-stack
+          (('let_keyword next) . gs-rest)
+            `((rcb "}") (in_keyword . ,x) . ,(preprocess rest gs-rest)))
       (a . d)
         (append
           (if (should-insert-semicolon tokens group-stack) '((semicolon ";")) '())
