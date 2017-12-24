@@ -1,7 +1,3 @@
-foo auu = case a of {
-  a => d e f;
-  a => d e f;
-  a3 => d3
-} ;
-bar a = c ;
-bar a = c
+f a = let a = 1
+          b = 2
+       in a + b

@@ -1073,6 +1073,15 @@
   ;(display "+ ") (display (join-things " " stuff)) (display "\n")
   (apply system stuff))
 
+; Insert between each pair of things a, b the output of (glue-fun a b)
+(define (join-things-fun glue-fun things)
+  (mtch things
+    '() '()
+    (a) `(,a)
+    (a b . d) `(,a ,(glue-fun a b) . ,(join-things-fun glue-fun `(,b . ,d)))))
+
+(assert (equal? '(1 3 2 5 3 7 4) (join-things-fun + '(1 2 3 4))))
+
 (define (check . stuff)
   (let ((bools (rdc stuff))
         (value (rac stuff)))
