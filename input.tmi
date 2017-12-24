@@ -1,3 +1,5 @@
-f a = let a = 1
-          b = 2
-       in a + b
+f a = 
+  let a = b where c = d
+                  e = f
+      j = k
+   in a j

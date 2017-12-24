@@ -274,20 +274,32 @@
          (eq? ca cb))
     x #f))
 
+(define (is-dedent-block-close? tokens group-stack)
+  (mtch (list tokens group-stack)
+    (((a as (ra ca)) . tokens) ((group-type (b bs (rb cb))) . gss))
+    (and (member group-type '(let_keyword of_keyword where_keyword))
+         (> ra rb)
+         (< ca cb))
+    x #f))
+
 (define (preprocess tokens group-stack)
-  (mtch tokens
-    '()
+  (if (is-dedent-block-close? tokens group-stack)
+    (cons '(rcb "}") (preprocess tokens (cdr group-stack)))
+    (mtch tokens
       '()
-    (('let_keyword . x) next . rest)
-      `((let_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((let_keyword ,next) . ,group-stack)))
-    (('in_keyword . x) . rest)
-      (mtch group-stack
-        (('let_keyword next) . gs-rest)
-          `((rcb "}") (in_keyword . ,x) . ,(preprocess rest gs-rest)))
-    (a . d)
-      (append
-        (if (should-insert-semicolon tokens group-stack) '((semicolon ";")) '())
-        `(,a . ,(preprocess d group-stack)))))
+        '()
+      (('let_keyword . x) next . rest)
+        `((let_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((let_keyword ,next) . ,group-stack)))
+      (('where_keyword . x) next . rest)
+        `((where_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((where_keyword ,next) . ,group-stack)))
+      ;(('in_keyword . x) . rest)
+        ;(mtch group-stack
+          ;(('let_keyword next) . gs-rest)
+            ;`((rcb "}") (in_keyword . ,x) . ,(preprocess rest gs-rest)))
+      (a . d)
+        (append
+          (if (should-insert-semicolon tokens group-stack) '((semicolon ";")) '())
+          `(,a . ,(preprocess d group-stack))))))
 ;(tracefun preprocess)
 
 (define (preprocess-top tokens) (preprocess tokens '()))
