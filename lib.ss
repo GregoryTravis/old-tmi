@@ -1103,3 +1103,5 @@
     (if (equal? o oo)
         oo
         (apply-until-fixpoint f oo))))
+
+(define (ntimes n x) (if (eq? n 0) '() (cons x (ntimes (- n 1) x))))

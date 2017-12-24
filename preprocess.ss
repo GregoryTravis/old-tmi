@@ -260,11 +260,17 @@
 ;   return tokens_to_src(output)
     output))
 
-(define (tokens->src tokens)
-  (let ((different-lines (lambda (a b) (mtch (list a b) ((a as (ra ca)) (b bs (rb cb))) (> rb ra) x #f)))
-        (token->string (lambda (token) (mtch token (a as . d) as x x))))
-    (apply string-append
-      (map token->string (join-things-fun (lambda (a b) (if (different-lines a b) "\n" " ")) tokens)))))
+(define (tokens->src-1 tokens current-line current-column)
+  (mtch tokens
+    ((a as) . rest)
+      (++ " " as (tokens->src-1 rest current-line (+ 1 current-column (string-length as))))
+    ((a as (line column)) . rest)
+      (++ (apply ++ (ntimes (max 0 (- line current-line)) "\n"))
+          (apply ++ (ntimes (max 1 (- column (if (> line current-line) 0 current-column))) " "))
+          as
+          (tokens->src-1 rest line (+ column (string-length as))))
+    '() ""))
+(define (tokens->src tokens) (tokens->src-1 tokens -1 0))
 
 (define (should-insert-semicolon tokens group-stack)
   (mtch (list tokens group-stack)
