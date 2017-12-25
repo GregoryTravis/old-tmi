@@ -1,12 +1,13 @@
-(load "Lib.ss")
+(load "lib.ss")
 (load "mtch.ss")
+(load "preprocess.ss")
 (load "tokenize.ss")
 
 (define gram #hash(
   (top . ((decls)))
   (app . ((exp exp) (app exp)))
   (let . ((let_keyword lcb decls rcb in_keyword exp)))
-  ;(where . ((exp where_keyword lcb decls rcb)))
+  (where . ((exp where_keyword lcb decls rcb)))
   (definition . ((exp equals exp)))
   (decls . ((definition semicolon decls) (definition)))
   (parenexp . ((lparen exp rparen)))
@@ -152,7 +153,7 @@
   (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))
 
 (define (top-parse gram nt os)
-  (shew 'parse os)
+  ;(shew 'parse os)
   (let ((gram (binarize gram)))
     ;(shew gram)
     (mtch (parse gram nt os 0 (length os) (make-hash))
@@ -178,16 +179,18 @@
 (shew (top-parse gram 'decls '(identifier equals identifier identifier semicolon identifier equals identifier)))
 |#
 
-(shew (tokenize-top
-  (string-append
-    "let { "
-    (read-file-as-string "input.tmi")
-    "} in main args")))
-(shew (top-parse gram 'let (tokenize-top
-  (string-append
-    "let { "
-    (read-file-as-string "input.tmi")
-    "} in main args"))))
+(define (wrap-file tokens)
+  (mtch (last tokens)
+    (a as (row col))
+      `((let_keyword "let" (-1 -1))
+        ,@tokens
+        (in_keyword "in" (,(+ row 1) -1))
+        (identifier "main" (,(+ row 1) 2)))))
+
+(let
+  ((pre (preprocess-top (wrap-file (tokenize-top (read-file-as-string "input.tmi"))))))
+  (display (tokens->src pre))
+  (shew (top-parse gram 'let pre)))
 
 #|
 (define gram

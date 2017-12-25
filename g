@@ -1,1 +1,1 @@
-racket -r preprocess.ss
+racket -r parse.ss

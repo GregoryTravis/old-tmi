@@ -314,16 +314,6 @@
         (append
           (if (should-insert-semicolon tokens group-stack) '((semicolon ";")) '())
           `(,a . ,(preprocess d group-stack))))))
-(tracefun preprocess)
+;(tracefun preprocess)
 
-(define (wrap-file tokens)
-  (mtch (last tokens)
-    (a as (row col))
-      `((let_keyword "let" (-1 -1))
-        ,@tokens
-        (in_keyword "in" (,(+ row 1) -1))
-        (identifier "main" (,(+ row 1) 2)))))
-
-(define (preprocess-top tokens) (preprocess (wrap-file tokens) '()))
-
-(display (tokens->src (preprocess-top (tokenize-top (read-file-as-string "input.tmi")))))
+(define (preprocess-top tokens) (preprocess tokens '()))
