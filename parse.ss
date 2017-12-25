@@ -11,10 +11,11 @@
   (definition . ((exp equals exp)))
   (decls . ((definition semicolon decls) (definition)))
   (parenexp . ((lparen exp rparen)))
-  (exp . ((parenexp) (let) (where) (case) (app) (identifier) (operator)))
+  (exp . ((if) (parenexp) (let) (where) (case) (app) (identifier) (operator)))
   (case . ((case_keyword exp of_keyword lcb case_clauses rcb)))
   (case_clauses . ((case_clauses semicolon case_clause) (case_clause)))
   (case_clause . ((exp rdbl_arrow exp)))
+  (if . ((if_keyword exp then_keyword exp else_keyword exp)))
 ))
 
 (define binarize-production-symgen (tagged-symbol-generator-generator "parsebin-"))
@@ -146,6 +147,8 @@
       `(let ,decls ,exp)
     ('where exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
       `(where ,decls ,exp)
+    ('if ('if_keyword . x) b ('then_keyword . x) t ('else_keyword . x) e)
+      `(if ,b ,t ,e)
     ('exp x . y) x
     ('case case_keyword exp of_keyword lcb case_clauses rcb) `(case ,exp ,case_clauses)
     x x))

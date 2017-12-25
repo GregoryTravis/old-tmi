@@ -1,7 +1,7 @@
 f a =
   case a + a of
     b => let c = d in c c c
-    Foo f => d c
+    Foo f => if b then d c else c d
     hoo r => let f = t
                  p = q
               in q q
