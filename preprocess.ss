@@ -314,6 +314,6 @@
           `(,a . ,(preprocess d group-stack))))))
 ;(tracefun preprocess)
 
-(define (preprocess-top tokens) (preprocess tokens '()))
+(define (preprocess-top tokens) (preprocess tokens '((let_keyword (let_keyword "let" (0 0))))))
 
 (display (tokens->src (preprocess-top (tokenize-top (read-file-as-string "input.tmi")))))
