@@ -5,4 +5,5 @@ f a =
     hoo r => let f = t
                  p = q
               in q q
+g b = d where dd = e where ee = f
 g b = d

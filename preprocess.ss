@@ -290,10 +290,12 @@
 
 (define (preprocess tokens group-stack)
   (if (is-dedent-block-close? tokens group-stack)
-    (mtch tokens
-      (('in_keyword . x) . rest)
-        (cons '(rcb "}") (cons `(in_keyword . ,x) (preprocess rest (cdr group-stack))))
-      x
+    (mtch (list tokens group-stack)
+      ((('in_keyword . x) . rest) (('let_keyword . xx) . gs-rest))
+        (cons '(rcb "}") (cons `(in_keyword . ,x) (preprocess rest gs-rest)))
+      ((('in_keyword . x) . rest) group-stack)
+        (cons '(rcb "}") (preprocess tokens (cdr group-stack)))
+      (x group-stack)
         (cons '(rcb "}") (preprocess tokens (cdr group-stack))))
     (mtch tokens
       '()
@@ -312,8 +314,16 @@
         (append
           (if (should-insert-semicolon tokens group-stack) '((semicolon ";")) '())
           `(,a . ,(preprocess d group-stack))))))
-;(tracefun preprocess)
+(tracefun preprocess)
 
-(define (preprocess-top tokens) (preprocess tokens '((let_keyword (let_keyword "let" (0 0))))))
+(define (wrap-file tokens)
+  (mtch (last tokens)
+    (a as (row col))
+      `((let_keyword "let" (-1 -1))
+        ,@tokens
+        (in_keyword "in" (,(+ row 1) -1))
+        (identifier "main" (,(+ row 1) 2)))))
+
+(define (preprocess-top tokens) (preprocess (wrap-file tokens) '()))
 
 (display (tokens->src (preprocess-top (tokenize-top (read-file-as-string "input.tmi")))))
