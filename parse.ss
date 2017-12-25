@@ -142,12 +142,15 @@
 
 (define (p2s-1 e)
   (mtch e
-    ('let ('let_keyword x) ('lcb x) decls ('rcb x) ('in_keyword x) exp)
+    ('let ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
       `(let ,decls ,exp)
-    ('exp x) x
+    ('where exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
+      `(where ,decls ,exp)
+    ('exp x . y) x
     ('case case_keyword exp of_keyword lcb case_clauses rcb) `(case ,exp ,case_clauses)
     x x))
 (define (p2s e) (apply-and-descend p2s-1 e))
+;(tracefun p2s-1)
 
 (define (postprocess e)
   (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))
