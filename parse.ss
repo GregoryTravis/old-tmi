@@ -149,14 +149,26 @@
       `(where ,decls ,exp)
     ('if ('if_keyword . x) b ('then_keyword . x) t ('else_keyword . x) e)
       `(if ,b ,t ,e)
-    ('exp x . y) x
+    ('exp x) x
     ('case case_keyword exp of_keyword lcb case_clauses rcb) `(case ,exp ,case_clauses)
     x x))
 (define (p2s e) (apply-and-descend p2s-1 e))
 ;(tracefun p2s-1)
 
+; Look for app trees and pass them to unapp-1
+(define (unapp e)
+  (mtch e
+    ('app . x) `(app ,(unapp-1 e))
+    (a . d) `(,(unapp a) . ,(unapp d))
+    x x))
+(define (unapp-1 e)
+  (mtch e
+    ('app x ('app y . z)) `(,x . ,(unapp-1 `(app ,y . ,z)))
+    ('app x y) `(,x ,y)))
+;(tracefun unapp)(tracefun unapp-1)
+
 (define (postprocess e)
-  (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))
+  (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)

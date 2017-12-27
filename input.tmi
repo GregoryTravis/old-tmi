@@ -1,9 +1,3 @@
-f a =
-  case a + a of
-    b => let c = d in c c c
-    Foo f => if b then d c else c d
-    hoo r => let f = t
-                 p = q
-              in q q
-g b = d where dd = e where ee = f
-g b = d
+a b = c d e f g h i
+fact 0 = 1
+fact n = n * fact n - 1
