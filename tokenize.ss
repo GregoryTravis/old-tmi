@@ -40,7 +40,7 @@ token_patterns = [
   (identifier #px"(^[a-zA-Z0-9_]+)(.*$)")
   (semicolon #px"(^;)(.*$)")
   (equals #px"(^=)(.*$)")
-  (operator #px"(^[=<>+\\-_!@$%^&*?]+)(.*$)")
+  (operator #px"(^[=<>+/\\-_!@$%^&*?]+)(.*$)")
   (lparen #px"(^[\\(])(.*$)")
   (rparen #px"(^[\\)])(.*$)")
   (lcb #px"(^[\\{])(.*$)")

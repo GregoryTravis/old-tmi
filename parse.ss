@@ -1,5 +1,6 @@
 (load "lib.ss")
 (load "mtch.ss")
+(load "precedence.ss")
 (load "preprocess.ss")
 (load "tokenize.ss")
 
@@ -163,12 +164,20 @@
     x x))
 (define (unapp-1 e)
   (mtch e
-    ('app x ('app y . z)) `(,x . ,(unapp-1 `(app ,y . ,z)))
-    ('app x y) `(,x ,y)))
+    ('app x ('app y . z)) `(,(unapp x) . ,(unapp-1 `(app ,y . ,z)))
+    ('app x y) `(,(unapp x) ,(unapp y))))
 ;(tracefun unapp)(tracefun unapp-1)
 
+(define (unparenexp-1 e)
+  (mtch e
+    ('parenexp lparen app rparen) app
+    x x))
+(define (unparenexp e) (apply-and-descend unparenexp-1 e))
+;(define unparenexp id)
+
 (define (postprocess e)
-  (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))
+  ; Unparenexp must be after unapp
+  (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)
