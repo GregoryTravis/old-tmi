@@ -59,18 +59,27 @@
 ; is not hygienic
 (define (compile-pattern-and-body target1 pat1 body1)
   (mtch pat1
-    ((identifier name . _) . d)
+    (('identifier name . _) . d)
       (let ((vd (pm-symgen)))
         `(if (pair? ,(compile-exp target1))
            (let ((,(string->symbol name) (car ,target1))
                  (,vd (cdr ,target1)))
              ,(compile-pattern-and-body vd d body1))
            #f))
-    ; No-args case
-    (identifier name . _)
+    ; Should separate pair check from car check
+    (('integer name . _) . d)
+      (let ((va (pm-symgen))
+            (vd (pm-symgen)))
+        `(if (and (pair? ,(compile-exp target1)) (equal? (car ,target1) ,(string->number name)))
+           (let ((,vd (cdr ,target1)))
+             ,(compile-pattern-and-body vd d body1))
+           #f))
+    ; No-args cases
+    ('identifier name . _)
       `(if (eq? '() ,target1)
          (list ,(compile-exp body1))
          #f)
+
     '()
       `(if (eq? '() ,target1)
          (list ,(compile-exp body1))
@@ -89,14 +98,13 @@
       `(,(string->symbol op) ,(compile-exp a) ,(compile-exp b))
     x x
     ))
-(tracefun compile-exp)
+;(tracefun compile-exp)
 
 (define (compile sem)
   (shew sem)
   (let ((compiled (compile-let sem)))
     (shew compiled)
-    (shew ((eval compiled)))
-    compiled))
+    ((eval compiled))))
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from
