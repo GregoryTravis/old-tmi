@@ -85,7 +85,10 @@
       (string->number name)
     ('app es)
       (map compile-exp es)
-    x x))
+    ('binop a ('operator op . _) b)
+      `(,(string->symbol op) ,(compile-exp a) ,(compile-exp b))
+    x x
+    ))
 (tracefun compile-exp)
 
 (define (compile sem)
