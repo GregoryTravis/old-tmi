@@ -38,6 +38,7 @@ token_patterns = [
   (then_keyword #px"(^then)(.*$)")
   (else_keyword #px"(^else)(.*$)")
   (identifier #px"(^[a-zA-Z0-9_]+)(.*$)")
+  (comment #px"(^;;)(.*$)")
   (semicolon #px"(^;)(.*$)")
   (equals #px"(^=)(.*$)")
   (operator #px"(^[=<>+/\\-_!@$%^&*?]+)(.*$)")
@@ -46,6 +47,11 @@ token_patterns = [
   (lcb #px"(^[\\{])(.*$)")
   (rcb #px"(^[\\}])(.*$)")
 ))
+(define until-newline-regex #px"(^[^\n]*\n)(.*$)")
+;(shew (regexp-match until-newline-regex "asdf\nzxcv\n"))
+;(shew (regexp-match until-newline-regex "asdf\nzxcv\nasdfasfd"))
+;(shew (regexp-match until-newline-regex "asdf\nzxcv"))
+;(shew (regexp-match until-newline-regex "\nasdf\nzxcv"))
 
 (define (try-tokenize pat-decl s)
   (mtch pat-decl
@@ -76,10 +82,16 @@ token_patterns = [
 (assert (equal? '(4 1) (next-rowcol '(3 2) "b\na")))
 (assert (equal? '(5 2) (next-rowcol '(3 2) "b\na\ncd")))
 
+(define (remove-until-newline s)
+  (mtch (regexp-match until-newline-regex s)
+    (all comment rest) rest))
+
 (define (tokenize s rowcol)
   (if (eq? (string-length s) 0)
     '()
     (mtch (find-first-maybe (lambda (pat-decl) (try-tokenize pat-decl s)) pat-decls)
+      (('comment token-src rest))
+        (tokenize (remove-until-newline rest) (mtch rowcol (r c) `(,(+ r 1) 0)))
       ((token-type token-src rest))
         `((,token-type ,token-src ,rowcol) . ,(tokenize rest (next-rowcol rowcol token-src))))))
 
