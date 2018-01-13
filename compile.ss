@@ -81,6 +81,8 @@
   (mtch e
     ('identifier name . d)
       (string->symbol name)
+    ('integer name . d)
+      (string->number name)
     ('app es)
       (map compile-exp es)
     x x))

@@ -1,27 +1,6 @@
 (load "Lib.ss")
 (load "mtch.ss")
 
-#|
-token_patterns = [
-  { 'type': 'whitespace', 're': '(^\s+)(.*$)' },
-  { 'type': 'string', 're': '("(\"|[^\"])*")(.*$)' },
-  { 'type': 'let_keyword', 're': '(^let)(.*$)' },
-  { 'type': 'in_keyword', 're': '(^in)(.*$)' },
-  { 'type': 'case_keyword', 're': '(^case)(.*$)' },
-  { 'type': 'of_keyword', 're': '(^of)(.*$)' },
-  { 'type': 'rdbl_arrow', 're': '(^=>)(.*$)' },
-  { 'type': 'where_keyword', 're': '(^where)(.*$)' },
-  { 'type': 'identifier', 're': "(^[a-zA-Z0-9_]+)(.*$)" },
-  { 'type': 'semicolon', 're': '(^;)(.*$)' },
-  { 'type': 'equals', 're': "(^=)(.*$)" },
-  { 'type': 'operator', 're': '(^[=<>+\-_!@$%^&*?]+)(.*$)' },
-  { 'type': 'lparen', 're': '(^[\(])(.*$)' },
-  { 'type': 'rparen', 're': '(^[\)])(.*$)' },
-  { 'type': 'lcb', 're': '(^[\{])(.*$)' },
-  { 'type': 'rcb', 're': '(^[\}])(.*$)' },
-]
-|#
-
 ;(shew (regexp-match #px"^(\\s+)(.*)$" " { "))
 ;(shew (regexp-match #px"^([\\{])(.*)$" "{ "))
 ;(shew (regexp-match #px"[\\s]" " "))
@@ -37,6 +16,7 @@ token_patterns = [
   (if_keyword #px"(^if)(.*$)")
   (then_keyword #px"(^then)(.*$)")
   (else_keyword #px"(^else)(.*$)")
+  (integer #px"(^[0-9_]+)(.*$)")
   (identifier #px"(^[a-zA-Z0-9_]+)(.*$)")
   (comment #px"(^;;)(.*$)")
   (semicolon #px"(^;)(.*$)")

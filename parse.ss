@@ -12,7 +12,7 @@
   (definition . ((exp equals exp)))
   (decls . ((definition semicolon decls) (definition)))
   (parenexp . ((lparen exp rparen)))
-  (exp . ((if) (parenexp) (let) (where) (case) (app) (identifier) (operator)))
+  (exp . ((if) (parenexp) (let) (where) (case) (app) (identifier) (integer) (operator)))
   (case . ((case_keyword exp of_keyword lcb case_clauses rcb)))
   (case_clauses . ((case_clauses semicolon case_clause) (case_clause)))
   (case_clause . ((exp rdbl_arrow exp)))
