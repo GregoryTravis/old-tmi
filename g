@@ -1,1 +1,1 @@
-racket -r parse.ss
+racket -r compile.ss input.tmi

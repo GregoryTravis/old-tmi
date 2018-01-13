@@ -175,9 +175,31 @@
 (define (unparenexp e) (apply-and-descend unparenexp-1 e))
 ;(define unparenexp id)
 
+; At this point all expressions are (app (a b c)) where b is an operator, including $$.
+; Convert $$-chains to regular multi-arg app nodes, and the rest to binops.
+(define (separate-app-op sem)
+  (mtch sem
+    ('let bindings body)
+      `(let ,(map separate-app-op bindings) ,(separate-app-op body))
+    (a ('equals . d) b)
+      `(,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
+    ('app (a ('operator "$$" . d) b))
+      `(app ,(map separate-app-op (unfold-real-app sem)))
+    ('app (a ('operator . d) b))
+      `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
+    x x))
+
+(define (unfold-real-app sem)
+  (mtch sem
+    ('app (a ('operator "$$" . d) b))
+      (append (unfold-real-app a) `(,b))
+    x `(,x)))
+    ;('app (a op b))
+      ;`(,sem)))
+
 (define (postprocess e)
   ; Unparenexp must be after unapp
-  (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))))
+  (separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)
@@ -214,24 +236,8 @@
         (in_keyword "in" (,(+ row 1) -1))
         (identifier "main" (,(+ row 1) 2)))))
 
-(let
-  ((pre (preprocess-top (wrap-file (tokenize-top (read-file-as-string "input.tmi"))))))
-  (display (tokens->src pre))
-  (shew (top-parse gram 'let pre)))
-
-#|
-(define gram
-  '(sentence ((subject, predicate)))
-  'sentence': [ [ 'subject', 'predicate' ] ],
-  'subject': [ [ 'noun' ], [ 'adjective', 'noun' ], [ 'noun_phrase' ] ],
-  'noun_phrase': [ [ 'noun', 'that', 'verb', 'noun' ] ],
-  'predicate': [ [ 'verb', 'noun' ], [ 'verb', 'adjective', 'noun' ], [ 'verb', 'adjective', 'adjective', 'noun' ] ],
-}
-
-|#
-
-#|
-- Write binarize and parse_top
-- Tokenize
-- Preprocess
-|#
+(define (parse-file filename)
+  (let
+    ((pre (preprocess-top (wrap-file (tokenize-top (read-file-as-string filename))))))
+    (display (tokens->src pre))
+    (top-parse gram 'let pre)))

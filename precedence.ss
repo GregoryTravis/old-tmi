@@ -52,7 +52,7 @@
 (define (apply-precedence-levels app-list)
   (apply-precedence-levels-1 operator-precedence-levels app-list))
 ;(define apply-precedence-levels id)
-(tracefun apply-precedence-levels apply-precedence-levels-1 combine-these)
+;(tracefun apply-precedence-levels apply-precedence-levels-1 combine-these)
 
 (define (is-operator e)
   (mtch e
