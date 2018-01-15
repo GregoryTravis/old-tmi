@@ -17,6 +17,7 @@
   (then_keyword #px"(^then)(.*$)")
   (else_keyword #px"(^else)(.*$)")
   (integer #px"(^[0-9_]+)(.*$)")
+  (constructor #px"(^[A-Z][a-zA-Z0-9_]+)(.*$)")
   (identifier #px"(^[a-zA-Z0-9_]+)(.*$)")
   (comment #px"(^;;)(.*$)")
   (semicolon #px"(^;)(.*$)")

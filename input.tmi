@@ -1,5 +1,5 @@
 fact 0 = 1
 fact n = n * fact (n - 1)
-main = fact 10
-;;foo (Bar a) = a
-;;main = foo (Bar 12)
+;;main = fact 10
+foo (Bar a) = a
+main = fact (foo (Bar 10))

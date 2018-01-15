@@ -43,19 +43,10 @@
       body)
      . the-rest)
      (let ((vresult (pm-symgen)))
-       `(let ((,vresult ,(compile-app-pattern args pat body)))
+       `(let ((,vresult ,(compile-app-pattern args pat `(list ,(compile-exp body) 'hhh))))
           (if (eq? ,vresult #f)
               ,(compile-multilambda-1 args the-rest)
               (car ,vresult))))
-#|
-    ; No-args case
-    (((identifier . d) (equals . dd) body) . the-rest)
-      (compile-multilambda-1 args
-        `(((app ((identifier . ,d)))
-           (equals . ,dd)
-           ,body)
-          . ,the-rest))
-|#
    ; End of the list; nothing has matched, so crash
    '() `(failllalalala)))
 
@@ -74,7 +65,9 @@
          #f))
     '()
       `(if (eq? '() ,target1)
-         (list ,(compile-exp body1))
+         ;(list ,(compile-exp body1) 'fff)
+         ;,(compile-exp body1)
+         ,body1
          #f)))
 
 (define (compile-pattern target1 pat1 body1)
@@ -86,36 +79,12 @@
       `(if (equal? ,target1 ,(string->number value))
          ,body1
          #f)
+    ('constructor value . _)
+      `(if (equal? ,target1 (quote ,(string->symbol value)))
+         ,body1
+         #f)
     ('app es)
       (compile-app-pattern target1 es body1)))
-
-#|
-    (('identifier name . _) . d)
-      (let ((vd (pm-symgen)))
-        `(if (pair? ,(compile-exp target1))
-           (let ((,(string->symbol name) (car ,target1))
-                 (,vd (cdr ,target1)))
-             ,(compile-pattern-and-body vd d body1))
-           #f))
-    ; Should separate pair check from car check
-    (('integer name . _) . d)
-      (let ((va (pm-symgen))
-            (vd (pm-symgen)))
-        `(if (and (pair? ,(compile-exp target1)) (equal? (car ,target1) ,(string->number name)))
-           (let ((,vd (cdr ,target1)))
-             ,(compile-pattern-and-body vd d body1))
-           #f))
-    ; No-args cases
-    ('identifier name . _)
-      `(if (eq? '() ,target1)
-         (list ,(compile-exp body1))
-         #f)
-
-    '()
-      `(if (eq? '() ,target1)
-         (list ,(compile-exp body1))
-         #f)))
-|#
 ;(tracefun compile-pattern-and-body)
 
 (define (compile-exp e)
@@ -124,6 +93,8 @@
       (string->symbol name)
     ('integer name . d)
       (string->number name)
+    ('constructor name . d)
+      `(lambda args (cons (quote ,(string->symbol name)) args))
     ('app (e))
       (compile-exp e)
     ('app es)

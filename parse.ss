@@ -12,7 +12,7 @@
   (definition . ((exp equals exp)))
   (decls . ((definition semicolon decls) (definition)))
   (parenexp . ((lparen exp rparen)))
-  (base-exp . ((identifier) (integer) (operator) (parenexp)))
+  (base-exp . ((constructor) (identifier) (integer) (operator) (parenexp)))
   (base-exp-seq . ((base-exp) (base-exp-seq base-exp)))
   (exp . ((if) (let) (where) (case) (base-exp-seq)))
   (case . ((case_keyword exp of_keyword lcb case_clauses rcb)))
@@ -255,4 +255,5 @@
   (let
     ((pre (preprocess-top (wrap-file (tokenize-top (read-file-as-string filename))))))
     (display (tokens->src pre))
+    ;(shew pre)
     (top-parse gram 'let pre)))
