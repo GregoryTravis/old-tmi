@@ -16,9 +16,12 @@
       (mtch binding
         (('app (('identifier name . d) . d)) ('equals . _) body)
           name
-        ; No-args case
-        (('identifier name . d) ('equals . _) body)
-          name))
+        #|
+        ;; No-args case
+        ;(('identifier name . d) ('equals . _) body)
+          ;name))
+          |#
+          ))
     bindings))
 
 ; Takes ("name" def def def), returns scheme letrec (name val) form
@@ -40,10 +43,11 @@
       body)
      . the-rest)
      (let ((vresult (pm-symgen)))
-       `(let ((,vresult ,(compile-pattern-and-body args pat body)))
+       `(let ((,vresult ,(compile-app-pattern args pat body)))
           (if (eq? ,vresult #f)
               ,(compile-multilambda-1 args the-rest)
               (car ,vresult))))
+#|
     ; No-args case
     (((identifier . d) (equals . dd) body) . the-rest)
       (compile-multilambda-1 args
@@ -51,14 +55,41 @@
            (equals . ,dd)
            ,body)
           . ,the-rest))
-
+|#
    ; End of the list; nothing has matched, so crash
    '() `(failllalalala)))
 
 ; omg I hate myself, these 1s are there because my mtch macro
 ; is not hygienic
-(define (compile-pattern-and-body target1 pat1 body1)
+(define (compile-app-pattern target1 pat1 body1)
   (mtch pat1
+    (a . d)
+      (let ((va (pm-symgen))
+            (vd (pm-symgen)))
+      `(if (pair? ,target1)
+         (let ((,va (car ,target1))
+               (,vd (cdr ,target1)))
+           ,(compile-pattern va a
+              (compile-app-pattern vd d body1)))
+         #f))
+    '()
+      `(if (eq? '() ,target1)
+         (list ,(compile-exp body1))
+         #f)))
+
+(define (compile-pattern target1 pat1 body1)
+  (mtch pat1
+    ('identifier name . _)
+      `(let ((,(string->symbol name) ,target1))
+         ,body1)
+    ('integer value . _)
+      `(if (equal? ,target1 ,(string->number value))
+         ,body1
+         #f)
+    ('app es)
+      (compile-app-pattern target1 es body1)))
+
+#|
     (('identifier name . _) . d)
       (let ((vd (pm-symgen)))
         `(if (pair? ,(compile-exp target1))
@@ -84,6 +115,7 @@
       `(if (eq? '() ,target1)
          (list ,(compile-exp body1))
          #f)))
+|#
 ;(tracefun compile-pattern-and-body)
 
 (define (compile-exp e)
@@ -92,6 +124,8 @@
       (string->symbol name)
     ('integer name . d)
       (string->number name)
+    ('app (e))
+      (compile-exp e)
     ('app es)
       (map compile-exp es)
     ('binop a ('operator op . _) b)

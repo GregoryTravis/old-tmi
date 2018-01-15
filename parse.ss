@@ -6,13 +6,15 @@
 
 (define gram #hash(
   (top . ((decls)))
-  (app . ((exp exp) (app exp)))
+  ;(app . ((exp exp) (app exp)))
   (let . ((let_keyword lcb decls rcb in_keyword exp)))
   (where . ((exp where_keyword lcb decls rcb)))
   (definition . ((exp equals exp)))
   (decls . ((definition semicolon decls) (definition)))
   (parenexp . ((lparen exp rparen)))
-  (exp . ((if) (parenexp) (let) (where) (case) (app) (identifier) (integer) (operator)))
+  (base-exp . ((identifier) (integer) (operator) (parenexp)))
+  (base-exp-seq . ((base-exp) (base-exp-seq base-exp)))
+  (exp . ((if) (let) (where) (case) (base-exp-seq)))
   (case . ((case_keyword exp of_keyword lcb case_clauses rcb)))
   (case_clauses . ((case_clauses semicolon case_clause) (case_clause)))
   (case_clause . ((exp rdbl_arrow exp)))
@@ -136,6 +138,18 @@
     x x))
 (define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
 
+(define (flatten-base-exp-seq e)
+  (mtch e
+    ('base-exp-seq rdc ('base-exp e))
+      (append (flatten-base-exp-seq rdc) (list e))
+    ('base-exp-seq ('base-exp e))
+      (list e)))
+(define (base-exp-seq-unbinarize-1 e)
+  (mtch e
+    ('base-exp-seq . d) `(app ,(flatten-base-exp-seq e))
+    x x))
+(define (base-exp-seq-unbinarize e) (apply-and-descend base-exp-seq-unbinarize-1 e))
+
 (define (apply-and-descend f e)
   (let ((e (apply-until-fixpoint f e)))
     (if (pair? e)
@@ -199,7 +213,8 @@
 
 (define (postprocess e)
   ; Unparenexp must be after unapp
-  (separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
+  ;(separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
+  (separate-app-op (precedence (unparenexp (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)
