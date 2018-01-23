@@ -33,12 +33,19 @@
 (define pm-symgen (tagged-symbol-generator-generator 'pm))
 
 (define (compile-multilambda ml)
-  (let ((args (pm-symgen)))
-    `(lambda ,args ,(compile-multilambda-1 args ml))))
+  ;; TODO check for duplicate patterns here
+  (mtch ml
+    ((('app (('identifier . d)))
+      (equals . d)
+      body))
+     (compile-exp body)
+    _
+      (let ((args (pm-symgen)))
+        `(lambda ,args ,(compile-multilambda-1 args ml)))))
 
 (define (compile-multilambda-1 args ml)
   (mtch ml
-    (((app ((identifier . d) . pat))
+    ((('app (('identifier . d) . pat))
       (equals . d)
       body)
      . the-rest)
@@ -109,7 +116,7 @@
   (shew sem)
   (let ((compiled (compile-let sem)))
     (shew compiled)
-    ((eval compiled))))
+    (eval compiled)))
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from
