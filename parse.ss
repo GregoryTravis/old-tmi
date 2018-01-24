@@ -190,6 +190,7 @@
 ;(define unparenexp id)
 
 ; At this point all expressions are (app (a b c)) where b is an operator, including $$.
+; There may also be (app (a)).
 ; Convert $$-chains to regular multi-arg app nodes, and the rest to binops.
 (define (separate-app-op sem)
   (mtch sem
@@ -203,6 +204,8 @@
       `(app ,(map separate-app-op (unfold-real-app sem)))
     ('app (a ('operator . d) b))
       `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
+    ('app (a))
+      `(app (,(separate-app-op a)))
     x x))
 
 (define (unfold-real-app sem)
