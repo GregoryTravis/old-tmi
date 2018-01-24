@@ -1,5 +1,6 @@
 (load "Lib.ss")
 (load "mtch.ss")
+(load "native-preamble.ss")
 (load "parse.ss")
 
 ; Returns map from function name to list of alternate funs
@@ -102,21 +103,27 @@
       (string->number name)
     ('constructor name . d)
       `(lambda args (cons (quote ,(string->symbol name)) args))
+    ('app (('constructor ctor . d)))
+      `(quote ,(string->symbol ctor))
     ('app (e))
       (compile-exp e)
     ('app es)
       (map compile-exp es)
     ('binop a ('operator op . _) b)
       `(,(string->symbol op) ,(compile-exp a) ,(compile-exp b))
+    ('if b t e)
+      `(if ,(compile-exp b) ,(compile-exp t) ,(compile-exp e))
     x x
     ))
 ;(tracefun compile-exp)
 
 (define (compile sem)
-  (shew sem)
+  (shew 'sem sem)
   (let ((compiled (compile-let sem)))
     (shew compiled)
-    (eval compiled)))
+    (let ((all `(begin ,native-preamble ,compiled)))
+      ;(shew 'all all)
+      (eval all))))
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from

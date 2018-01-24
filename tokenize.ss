@@ -21,7 +21,7 @@
   (identifier #px"(^[a-zA-Z0-9_]+)(.*$)")
   (comment #px"(^;;)(.*$)")
   (semicolon #px"(^;)(.*$)")
-  (equals #px"(^=)(.*$)")
+  (equals #px"(^=)(\\s.*$)")
   (operator #px"(^[=<>+/\\-_!@$%^&*?]+)(.*$)")
   (lparen #px"(^[\\(])(.*$)")
   (rparen #px"(^[\\)])(.*$)")

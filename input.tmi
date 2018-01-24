@@ -1,6 +1,6 @@
 fact 0 = 1
 fact n = n * fact (n - 1)
-;;main = fact 10
+fact2 n = if n == 1 then 1 else n * fact2 (n - 1)
 foo (Bar a) = a
-a = fact (foo (Bar 10))
+a = foo (Bar (Both (fact 10) (fact2 10)))
 main = a

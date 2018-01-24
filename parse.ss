@@ -195,6 +195,8 @@
   (mtch sem
     ('let bindings body)
       `(let ,(map separate-app-op bindings) ,(separate-app-op body))
+    ('if b t e)
+      `(if ,(separate-app-op b) ,(separate-app-op t) ,(separate-app-op e))
     (a ('equals . d) b)
       `(,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
     ('app (a ('operator "$$" . d) b))
