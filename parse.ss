@@ -12,7 +12,9 @@
   (definition . ((exp equals exp)))
   (decls . ((definition semicolon decls) (definition)))
   (parenexp . ((lparen exp rparen)))
-  (base-exp . ((constructor) (identifier) (integer) (operator) (parenexp)))
+  (listexp . ((lsb comma-separated-exp-sequence rsb)))
+  (comma-separated-exp-sequence . ((base-exp) (comma-separated-exp-sequence comma base-exp)))
+  (base-exp . ((constructor) (identifier) (integer) (operator) (parenexp) (listexp)))
   (base-exp-seq . ((base-exp) (base-exp-seq base-exp)))
   (exp . ((if) (let) (where) (case) (base-exp-seq)))
   (case . ((case_keyword exp of_keyword lcb case_clauses rcb)))
@@ -156,6 +158,20 @@
       (cons (apply-and-descend f (car e)) (apply-and-descend f (cdr e)))
       e)))
 
+(define (un-cses-1 cses)
+  (mtch cses
+    ('comma-separated-exp-sequence ('base-exp a))
+      `(,a)
+    ('comma-separated-exp-sequence rdc ('comma . _) ('base-exp rac))
+      (append (un-cses-1 rdc) (list rac))))
+(define (un-cses e)
+  (foldr
+    (lambda (a d)
+      `(app ((constructor "Cons") ,a ,d)))
+    `(app ((constructor "Nil")))
+    (un-cses-1 e)))
+;(tracefun un-cses)
+
 (define (p2s-1 e)
   (mtch e
     ('let ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
@@ -166,6 +182,7 @@
       `(if ,b ,t ,e)
     ('exp x) x
     ('case case_keyword exp of_keyword lcb case_clauses rcb) `(case ,exp ,case_clauses)
+    ('listexp ('lsb . _) cses ('rsb . _)) (un-cses cses)
     x x))
 (define (p2s e) (apply-and-descend p2s-1 e))
 ;(tracefun p2s-1)
