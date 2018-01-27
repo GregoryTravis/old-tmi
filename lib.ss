@@ -112,6 +112,14 @@
         (apply a (append args (list result)))
         result))))
 
+(define (timing-hook name f)
+  (lambda args
+    (let-values (((results a b c) (time-apply f args)))
+      (display (list 'timing name a b c))
+      (display "\n")
+      (mtch results
+        (result) result))))
+
 (define (nth n list)
   (if (= 0 n)
       (car list)

@@ -279,3 +279,4 @@
     (display (tokens->src pre))
     ;(shew pre)
     (top-parse gram 'let pre)))
+;(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
