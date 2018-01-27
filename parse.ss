@@ -3,6 +3,7 @@
 (load "precedence.ss")
 (load "preprocess.ss")
 (load "tokenize.ss")
+(require profile)
 
 (define gram #hash(
   (top . ((decls)))
@@ -61,9 +62,9 @@
             (begin
               (hash-set! memo (list nt s e) #f)
               (mtch
-                (if (and (eq? (+ s 1) e) (eq? (car (nth s os)) nt))
+                (if (and (eq? (+ s 1) e) (eq? (car (vector-ref os s)) nt))
                   ; TODO maybe check before the memo check?
-                  `(,(nth s os))
+                  `(,(vector-ref os s))
                   (find-first-maybe
                     (lambda (production) (try-prodution gram nt os s e memo production))
                     (hash-ref gram nt (lambda () '()))))
@@ -242,7 +243,7 @@
   ;(shew 'parse os)
   (let ((gram (binarize gram)))
     ;(shew gram)
-    (mtch (parse gram nt os 0 (length os) (make-hash))
+    (mtch (parse gram nt (list->vector os) 0 (length os) (make-hash))
       (value) `(,(postprocess value))
       #f #f)))
 
@@ -278,5 +279,5 @@
     ((pre (preprocess-top (wrap-file (tokenize-top (read-file-as-string filename))))))
     (display (tokens->src pre))
     ;(shew pre)
-    (top-parse gram 'let pre)))
+    (profile-thunk (thunk (top-parse gram 'let pre)))))
 ;(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
