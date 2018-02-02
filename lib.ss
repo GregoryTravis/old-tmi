@@ -1113,3 +1113,29 @@
         (apply-until-fixpoint f oo))))
 
 (define (ntimes n x) (if (eq? n 0) '() (cons x (ntimes (- n 1) x))))
+
+;; If (f o) returns true, it is the start of a group continuing until just
+;; before the next such o.  os does not have to start with such an item.
+(define (group-by-starts f os)
+  (mtch os
+    '()
+      '()
+    (a . d)
+      (mtch (group-by-starts f d)
+        '()
+          `((,a))
+        ((aa . dd) . rest)
+          (if (f aa)
+            `((,a) (,aa . ,dd) . ,rest)
+            `((,a ,aa . ,dd) . ,rest)))))
+(define (gbs-test a) (eq? a 1))
+(assert (equal? '((0 0) (1 0 0) (1 0) (1)) (group-by-starts gbs-test '(0 0 1 0 0 1 0 1))))
+(assert (equal? '((0) (1 0 0) (1 0) (1)) (group-by-starts gbs-test '(0 1 0 0 1 0 1))))
+(assert (equal? '((1 0 0) (1 0) (1)) (group-by-starts gbs-test '(1 0 0 1 0 1))))
+(assert (equal? '((1) (1 0 0) (1 0) (1)) (group-by-starts gbs-test '(1 1 0 0 1 0 1))))
+(assert (equal? '((1) (1) (1 0 0) (1 0) (1)) (group-by-starts gbs-test '(1 1 1 0 0 1 0 1))))
+(assert (equal? '((1) (1) (1 0 0) (1 0) (1) (1)) (group-by-starts gbs-test '(1 1 1 0 0 1 0 1 1))))
+(assert (equal? '((1) (1) (1 0 0) (1 0) (1) (1) (1)) (group-by-starts gbs-test '(1 1 1 0 0 1 0 1 1 1))))
+(assert (equal? '((1) (1) (1 0 0) (1) (1 0) (1) (1) (1)) (group-by-starts gbs-test '(1 1 1 0 0 1 1 0 1 1 1))))
+(assert (equal? '((0 0 0) (1 0 0 0)) (group-by-starts gbs-test '(0 0 0 1 0 0 0))))
+(assert (equal? '((0 0 0 0 0 0)) (group-by-starts gbs-test '(0 0 0 0 0 0))))

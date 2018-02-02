@@ -141,6 +141,12 @@
     x x))
 (define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
 
+(define (un-definition-1 e)
+  (mtch e
+    ('definition . d) d
+    x x))
+(define (un-definition e) (apply-and-descend un-definition-1 e))
+
 (define (flatten-base-exp-seq e)
   (mtch e
     ('base-exp-seq rdc ('base-exp e))
@@ -216,6 +222,8 @@
       `(let ,(map separate-app-op bindings) ,(separate-app-op body))
     ('if b t e)
       `(if ,(separate-app-op b) ,(separate-app-op t) ,(separate-app-op e))
+    ('definition a ('equals . d) b)
+      `(,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
     (a ('equals . d) b)
       `(,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
     ('app (a ('operator "$$" . d) b))
@@ -237,14 +245,14 @@
 (define (postprocess e)
   ; Unparenexp must be after unapp
   ;(separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
-  (separate-app-op (precedence (unparenexp (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
+  (un-definition (separate-app-op (precedence (unparenexp (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)
   (let ((gram (binarize gram)))
     ;(shew gram)
     (mtch (parse gram nt (list->vector os) 0 (length os) (make-hash))
-      (value) `(,(postprocess value))
+      (value) `(,value)
       #f #f)))
 
 #|
@@ -274,10 +282,24 @@
         (in_keyword "in" (,(+ row 1) -1))
         (identifier "main" (,(+ row 1) 2)))))
 
+; Categorical!
+(define (maybe-list ms)
+  (if (any? (map (lambda (m) (eq? m #f)) ms))
+    #f
+    (list (map car ms))))
+
+; Split into tlfs and parse separately; won't work on already-preprocessed code
+; (if it lacks proper layout) (define (parse-file filename).
+;
+; TODO: if a tlf fails to parse, don't keep parsing the rest of the lines.
 (define (parse-file filename)
-  (let
-    ((pre (preprocess-top (wrap-file (tokenize-top (read-file-as-string filename))))))
-    (display (tokens->src pre))
-    ;(shew pre)
-    (profile-thunk (thunk (top-parse gram 'let pre)))))
-;(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
+  (let ((tokens (tokenize-top (read-file-as-string filename))))
+    (mtch (maybe-list (map (lambda (tlf) (top-parse gram 'definition (preprocess-top tlf)))
+                        (split-into-tlfs tokens)))
+      (value) `((let ,(map postprocess value) (app ((identifier "main")))))
+      #f #f)))
+
+(define (split-into-tlfs tokens)
+  (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
+
+(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
