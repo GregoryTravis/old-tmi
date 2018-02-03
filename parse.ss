@@ -251,9 +251,12 @@
       `(app ,(map separate-app-op (unfold-real-app sem)))
     ('app (a ('operator . d) b))
       `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
+    ('parenexp l e r)
+      `(parenexp ,l ,(separate-app-op e) ,r)
     ('app (a))
       `(app (,(separate-app-op a)))
     x x))
+(tracefun separate-app-op)
 
 (define (unfold-real-app sem)
   (mtch sem
@@ -281,7 +284,7 @@
 (define (postprocess e)
   ; Unparenexp must be after unapp
   ;(separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
-  (un-definition (separate-app-op (precedence (unparenexp (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))))
+  (un-definition (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)
