@@ -127,7 +127,6 @@
     (let ((all `(begin ,native-preamble ,compiled)))
       ;(shew 'all all)
       all)))
-;(hook-with timing-hook compile)
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from
@@ -136,7 +135,6 @@
 
 (define (run-compiled c)
   (eval c))
-;(hook-with timing-hook run-compiled)
 
 (define unconsify-magic 'ZC45$2E)
 
@@ -169,6 +167,8 @@
   (let ((op (open-output-string)))
     (pretty-print (unconsify o) op)
     (display (pretty-shew-postprocess (get-output-string op)))))
+
+;(hook-with timing-hook parse-file compile run-compiled)
 
 (assert (eq? (vector-length (current-command-line-arguments)) 1))
 (pretty-shew (run-compiled (compile-file (vector-ref (current-command-line-arguments) 0))))
