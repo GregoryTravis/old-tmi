@@ -319,3 +319,4 @@
   (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
 
 ;(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
+;(hook-with timing-hook parse-file)
