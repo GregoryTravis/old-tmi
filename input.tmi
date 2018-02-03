@@ -3,5 +3,8 @@ fact n = n * fact (n - 1)
 fact2 n = if n == 1 then 1 else n * fact2 (n - 1)
 fact3 n = if n == 1 then 1 else (n * fact2 (n - 1))
 foo (Bar a) = a
+map f Nil = Nil
+map f (Cons a d) = Cons (f a) (map f d)
+double x = x * 2
 a = foo (Bar (Both (fact 10) (fact2 10) (fact3 10) [1, 2, 3, 4]))
-main = a
+main = [(map double [1, 2, 3]), 50, (fact 10), (foo (Bar 45)), (foo (Bar (Both 43 44)))]

@@ -131,7 +131,7 @@
   (mtch (parse-file filename)
     (sem) (compile sem)))
 
-(define unconsify-magic 'ZDCCCXVCQADAFS)
+(define unconsify-magic 'ZC45$2E)
 
 ; Unconsify Cons lists throughout e.
 (define (unconsify e)
@@ -146,14 +146,16 @@
   (cons unconsify-magic (append (unconsify-cons-1 e) (list unconsify-magic))))
 (define (unconsify-cons-1 e)
   (mtch e
-    ('Cons a d) (cons a (unconsify-cons-1 d))
+    ('Cons a d) (cons (unconsify a) (unconsify-cons-1 d))
     'Nil '()))
 
 ; Convert parens with magic tokens to [].
+(define pretty-shew-postprocess-rewrites
+  `((,(string-append "(" (symbol->string unconsify-magic) " ") "[")
+    (,(string-append "(" (symbol->string unconsify-magic) "\n") "[\n")
+    (,(string-append " " (symbol->string unconsify-magic) ")") "]")))
 (define (pretty-shew-postprocess s)
-  (string-replace
-    (string-replace s (string-append "(" (symbol->string unconsify-magic) " ") "[")
-    (string-append " " (symbol->string unconsify-magic) ")") "]"))
+  (apply-string-rewrites s pretty-shew-postprocess-rewrites))
 
 ; pretty-print, but with [] lists
 (define (pretty-shew o)

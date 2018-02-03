@@ -1139,3 +1139,13 @@
 (assert (equal? '((1) (1) (1 0 0) (1) (1 0) (1) (1) (1)) (group-by-starts gbs-test '(1 1 1 0 0 1 1 0 1 1 1))))
 (assert (equal? '((0 0 0) (1 0 0 0)) (group-by-starts gbs-test '(0 0 0 1 0 0 0))))
 (assert (equal? '((0 0 0 0 0 0)) (group-by-starts gbs-test '(0 0 0 0 0 0))))
+
+(define (apply-string-rewrites s rewrites)
+  (mtch rewrites
+    ((from to) . rest)
+      (apply-string-rewrites (string-replace s from to) rest)
+    '() s))
+(assert (equal? "cbcg" (apply-string-rewrites "abag" '(("a" "c")))))
+(assert (equal? "cbch" (apply-string-rewrites "abag" '(("a" "c") ("g" "h")))))
+(assert (equal? "cbch" (apply-string-rewrites "abag" '(("g" "h") ("a" "c")))))
+(assert (equal? "dbdg" (apply-string-rewrites "abag" '(("a" "c") ("c" "d")))))
