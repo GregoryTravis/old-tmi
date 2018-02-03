@@ -327,12 +327,15 @@
     #f
     (list (map car ms))))
 
+(define (add-overture s)
+  (string-append (read-file-as-string "overture.tmi") "\n" s))
+
 ; Split into tlfs and parse separately; won't work on already-preprocessed code
 ; (if it lacks proper layout) (define (parse-file filename).
 ;
 ; TODO: if a tlf fails to parse, don't keep parsing the rest of the lines.
 (define (parse-file filename)
-  (let ((tokens (tokenize-top (read-file-as-string filename))))
+  (let ((tokens (tokenize-top (add-overture (read-file-as-string filename)))))
     (mtch (maybe-list (map (lambda (tlf) (top-parse gram 'definition (preprocess-top tlf)))
                         (split-into-tlfs tokens)))
       (value) `((let ,(map postprocess value) (app ((identifier "main")))))

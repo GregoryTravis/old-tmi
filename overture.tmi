@@ -1,0 +1,12 @@
+;; TMI oerture
+
+fact 0 = 1
+fact n = n * fact (n - 1)
+
+map f Nil = Nil
+map f (Cons a d) = Cons (f a) (map f d)
+
+insertion-sort Nil = Nil
+insertion-sort (Cons a d) = insert-into a (insertion-sort d)
+insert-into x Nil = [x]
+insert-into x (Cons a d) = if (x < a) then (Cons x (Cons a d)) else (Cons a (insert-into x d))
