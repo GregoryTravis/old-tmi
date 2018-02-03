@@ -23,6 +23,7 @@
   (comment #px"(^;;)(.*$)")
   (semicolon #px"(^;)(.*$)")
   (equals #px"(^=)(\\s.*$)")
+  (lambda #px"(^/\\.)(\\s.*$)")
   (operator #px"(^[=<>+/\\-_!@$%^&*?]+)(.*$)")
   (lparen #px"(^[\\(])(.*$)")
   (rparen #px"(^[\\)])(.*$)")

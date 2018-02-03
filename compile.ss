@@ -114,6 +114,8 @@
       `(,(string->symbol op) ,(compile-exp a) ,(compile-exp b))
     ('if b t e)
       `(if ,(compile-exp b) ,(compile-exp t) ,(compile-exp e))
+    ('let . _)
+      (compile-let e)
     x x
     ))
 ;(tracefun compile-exp)

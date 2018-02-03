@@ -15,7 +15,8 @@
   (parenexp . ((lparen exp rparen)))
   (listexp . ((lsb comma-separated-exp-sequence rsb)))
   (comma-separated-exp-sequence . ((exp) (comma-separated-exp-sequence comma exp)))
-  (base-exp . ((constructor) (identifier) (integer) (operator) (parenexp) (listexp)))
+  (lambda-exp . ((lambda parenexp exp)))
+  (base-exp . ((constructor) (identifier) (integer) (operator) (parenexp) (listexp) (lambda-exp)))
   (base-exp-seq . ((base-exp) (base-exp-seq base-exp)))
   (exp . ((if) (let) (where) (case) (base-exp-seq)))
   (case . ((case_keyword exp of_keyword lcb case_clauses rcb)))
@@ -242,10 +243,25 @@
     ;('app (a op b))
       ;`(,sem)))
 
+(define lambda-symgen (tagged-symbol-generator-generator 'lambda))
+
+(define (lambda->let-1 e)
+  (mtch e
+    ;('lambda-exp _ h _) (err h)
+    ('lambda-exp _ ('parenexp _ ('app pat) _) body)
+      (let ((name (lambda-symgen)))
+        `(let (((app ,(cons `(identifier ,(symbol->string name)) pat))
+                (equals "=")
+                ,body))
+              ;(equals "=")
+              (app ((identifier ,(symbol->string name))))))
+     x x))
+(define (lambda->let e) (apply-and-descend lambda->let-1 e))
+
 (define (postprocess e)
   ; Unparenexp must be after unapp
   ;(separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
-  (un-definition (separate-app-op (precedence (unparenexp (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))))))
+  (un-definition (separate-app-op (precedence (unparenexp (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)
@@ -302,4 +318,4 @@
 (define (split-into-tlfs tokens)
   (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
 
-(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
+;(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
