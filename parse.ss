@@ -14,7 +14,7 @@
   (decls . ((definition semicolon decls) (definition)))
   (parenexp . ((lparen exp rparen)))
   (listexp . ((lsb comma-separated-exp-sequence rsb)))
-  (comma-separated-exp-sequence . ((base-exp) (comma-separated-exp-sequence comma base-exp)))
+  (comma-separated-exp-sequence . ((exp) (comma-separated-exp-sequence comma exp)))
   (base-exp . ((constructor) (identifier) (integer) (operator) (parenexp) (listexp)))
   (base-exp-seq . ((base-exp) (base-exp-seq base-exp)))
   (exp . ((if) (let) (where) (case) (base-exp-seq)))
@@ -167,9 +167,9 @@
 
 (define (un-cses-1 cses)
   (mtch cses
-    ('comma-separated-exp-sequence ('base-exp a))
+    ('comma-separated-exp-sequence ('exp a))
       `(,a)
-    ('comma-separated-exp-sequence rdc ('comma . _) ('base-exp rac))
+    ('comma-separated-exp-sequence rdc ('comma . _) ('exp rac))
       (append (un-cses-1 rdc) (list rac))))
 (define (un-cses e)
   (foldr
