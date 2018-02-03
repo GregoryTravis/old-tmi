@@ -137,8 +137,8 @@
   ;(decls . ((definition semicolon decls) (definition)))
 (define (decls-unbinarize-1 e)
   (mtch e
-    ('decls ('definition . d)) (list d)
-    ('decls ('definition . d) semicolon ('decls . rest)) (cons d (decls-unbinarize-1 `(decls . ,rest)))
+    ('decls d) (list d)
+    ('decls d semicolon ('decls . rest)) (cons d (decls-unbinarize-1 `(decls . ,rest)))
     x x))
 (define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
 
@@ -180,20 +180,40 @@
     (un-cses-1 e)))
 ;(tracefun un-cses)
 
-(define (p2s-1 e)
+(define (p2s e)
   (mtch e
     ('let ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
-      `(let ,decls ,exp)
+      `(let ,(map p2s decls) ,(p2s exp))
     ('where exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
-      `(where ,decls ,exp)
+      `(where ,(map p2s decls) ,(p2s exp))
     ('if ('if_keyword . x) b ('then_keyword . x) t ('else_keyword . x) e)
-      `(if ,b ,t ,e)
-    ('exp x) x
-    ('case case_keyword exp of_keyword lcb case_clauses rcb) `(case ,exp ,case_clauses)
-    ('listexp ('lsb . _) cses ('rsb . _)) (un-cses cses)
-    x x))
-(define (p2s e) (apply-and-descend p2s-1 e))
-;(tracefun p2s-1)
+      `(if ,(p2s b) ,(p2s t) ,(p2s e))
+    ('exp x)
+      (p2s x)
+    ('case case_keyword exp of_keyword lcb case_clauses rcb)
+      `(case ,(p2s exp) ,(map p2s case_clauses))
+    ('case_clause pat _ exp)
+      `(case_clause ,(p2s pat) ,(p2s exp))
+    ('listexp ('lsb . _) cses ('rsb . _))
+      (p2s (un-cses cses))
+    ('definition pat e body)
+      `(definition ,(p2s pat) ,e ,(p2s body))
+    ('app os)
+      `(app ,(map p2s os))
+    ('identifier . _)
+      e
+    ('integer . _)
+      e
+    ('operator . _)
+      e
+    ('parenexp l e r)
+      `(parenexp ,l ,(p2s e) ,r)
+    ('constructor . _)
+      e
+    ('lambda-exp sym pat body)
+      `(lambda-exp ,sym ,(p2s pat) ,(p2s body))
+      ))
+;(tracefun p2s)
 
 ; Look for app trees and pass them to unapp-1
 (define (unapp e)
