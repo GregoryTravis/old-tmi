@@ -256,7 +256,6 @@
     ('app (a))
       `(app (,(separate-app-op a)))
     x x))
-(tracefun separate-app-op)
 
 (define (unfold-real-app sem)
   (mtch sem

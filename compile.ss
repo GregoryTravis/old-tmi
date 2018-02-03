@@ -121,9 +121,9 @@
 ;(tracefun compile-exp)
 
 (define (compile sem)
-  (shew 'sem sem)
+  ;(shew 'sem sem)
   (let ((compiled (compile-let sem)))
-    (shew compiled)
+    ;(shew compiled)
     (let ((all `(begin ,native-preamble ,compiled)))
       ;(shew 'all all)
       all)))
