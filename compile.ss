@@ -29,11 +29,11 @@
 (define (compile-multilambda-group ml)
   (mtch ml
     (name . defs)
-    `(,(string->symbol name) ,(compile-multilambda defs))))
+    `(,(string->symbol name) ,(compile-multilambda name defs))))
 
 (define pm-symgen (tagged-symbol-generator-generator 'pm))
 
-(define (compile-multilambda ml)
+(define (compile-multilambda name ml)
   ;; TODO check for duplicate patterns here
   (mtch ml
     ((('app (('identifier . d)))
@@ -42,9 +42,9 @@
      (compile-exp body)
     _
       (let ((args (pm-symgen)))
-        `(lambda ,args ,(compile-multilambda-1 args ml)))))
+        `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml)))))
 
-(define (compile-multilambda-1 args ml)
+(define (compile-multilambda-1 name args ml)
   (mtch ml
     ((('app (('identifier . d) . pat))
       (equals . d)
@@ -53,10 +53,10 @@
      (let ((vresult (pm-symgen)))
        `(let ((,vresult ,(compile-app-pattern args pat `(list ,(compile-exp body) 'hhh))))
           (if (eq? ,vresult #f)
-              ,(compile-multilambda-1 args the-rest)
+              ,(compile-multilambda-1 name args the-rest)
               (car ,vresult))))
    ; End of the list; nothing has matched, so crash
-   '() `(failllalalala)))
+   '() `(raise `(pattern-match-failure ,,(cons 'cons name)))))
 
 ; omg I hate myself, these 1s are there because my mtch macro
 ; is not hygienic

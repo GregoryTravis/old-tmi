@@ -8,7 +8,7 @@
 (define pat-decls '(
   (whitespace #px"(^\\s+)(.*$)")
   (let_keyword #px"(^let)(.*$)")
-  (in_keyword #px"(^in)(.*$)")
+  (in_keyword #px"(^in)(?![a-zA-Z0-9])(.*$)")
   (case_keyword #px"(^case)(.*$)")
   (of_keyword #px"(^of)(.*$)")
   (rdbl_arrow #px"(^=>)(.*$)")
