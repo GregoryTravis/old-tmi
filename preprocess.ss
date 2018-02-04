@@ -24,10 +24,13 @@
 (define (is-dedent-block-close? tokens group-stack)
   (mtch (list tokens group-stack)
     (((a as (ra ca)) . tokens) ((group-type (b bs (rb cb))) . gss))
-    (and (member group-type '(let_keyword of_keyword where_keyword))
-         (> ra rb)
-         (< ca cb))
-    x #f))
+     (and (member group-type '(let_keyword of_keyword where_keyword))
+          (> ra rb)
+          (< ca cb))
+    ('() (('where_keyword (b bs (rb cb))) . gss))
+      #t
+    x
+      #f))
 
 (define (preprocess tokens group-stack)
   (if (is-dedent-block-close? tokens group-stack)
@@ -57,4 +60,7 @@
           `(,a . ,(preprocess d group-stack))))))
 ;(tracefun preprocess)
 
-(define (preprocess-top tokens) (preprocess tokens '()))
+(define (preprocess-top tokens)
+  (let ((preprocessed-tokens (preprocess tokens '())))
+    ;(shew 'preprocess (tokens->src tokens) (tokens->src preprocessed-tokens))
+    preprocessed-tokens))
