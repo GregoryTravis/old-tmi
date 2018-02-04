@@ -1,9 +1,1 @@
-fact2 n = if n == 1 then 1 else n * fact2 (n - 1)
-fact3 n = if n == 1 then 1 else (n * fact2 (n - 1))
-foo (Bar a) = a
-double x = x * 2
-a = foo (Bar (Both (fact 10) (fact2 10) (fact3 10) [1, 2, 3, 4]))
-wut a = /. (b) a + b
-la = let r = 4 in r
-main = [map double [1, 2, 3], 50, fact 10, foo (Bar 45), foo (Bar (Both 43 44)), map (/. (x) x * 2) [4, 5, 6], (wut 1) 20,
-  34, (/. (a b) a * b) 10 12, map (wut 100) [4, 5, 6, 7], 1 < 2, insertion-sort [3, 4, 1, 2, 5]]
+main = 5
