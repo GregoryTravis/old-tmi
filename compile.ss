@@ -116,6 +116,8 @@
       `(if ,(compile-exp b) ,(compile-exp t) ,(compile-exp e))
     ('let . _)
       (compile-let e)
+    ('where . e)
+      (compile-let `(let . ,e))
     x x
     ))
 ;(tracefun compile-exp)

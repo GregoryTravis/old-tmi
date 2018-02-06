@@ -241,6 +241,8 @@
   (mtch sem
     ('let bindings body)
       `(let ,(map separate-app-op bindings) ,(separate-app-op body))
+    ('where bindings body)
+      `(where ,(map separate-app-op bindings) ,(separate-app-op body))
     ('if b t e)
       `(if ,(separate-app-op b) ,(separate-app-op t) ,(separate-app-op e))
     ('definition a ('equals . d) b)

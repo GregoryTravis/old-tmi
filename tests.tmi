@@ -33,4 +33,24 @@ foo5 a = let b =
           b * b
 t11 = test [36, 36, 36, 36, 36, 36] [foo0 3, foo1 3, foo2 3, foo3 3, foo4 3, foo5 3]
 
+t12 = a * a + a where a = 2
+;; Layout tests
+t13 = a * b + c where a = 2
+                      b = 10
+                      c = 7
+t14 = a * b + c where
+                 a = 2
+                 b = 10
+                 c = 7
+t15 = a * b + c
+       where
+        a = 2
+        b = 10
+        c = 7
+t16 = a * b + c
+       where a = 2
+             b = 10
+             c = 7
+t17 = test [6, 27, 27, 27, 27] [t12, t13, t14, t15, t16]
+
 main = 0
