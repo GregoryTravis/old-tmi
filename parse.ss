@@ -371,7 +371,8 @@
               ;(equals "=")
               (app ((identifier ,(symbol->string name))))))
      x x))
-(define (lambda->let e) (apply-and-descend lambda->let-1 e))
+;(define (lambda->let e) (apply-and-descend lambda->let-1 e))
+(define (lambda->let e) (general-recurser lambda->let-1 id e))
 
 (define (postprocess e)
   (let ((e (grammar-unbinarize e)))
