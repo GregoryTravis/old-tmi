@@ -42,6 +42,8 @@
           `(decls ,(rec def) ,semi ,(rec decls))
         ('decls def)
           `(decls ,(rec def))
+        ('decls-list ds)
+          `(decls-list ,(map rec ds))
         ('parenexp lp e rp)
           `(parenexp ,lp ,(rec e) ,rp)
         ('listexp lsb cses rsb)
@@ -211,13 +213,17 @@
 
   ;(definition . ((exp equals exp)))
   ;(decls . ((definition semicolon decls) (definition)))
-(define (decls-unbinarize-1 e)
+(define (decls-unbinarize-2 e)
   (mtch e
     ('decls d) (list d)
-    ('decls d semicolon ('decls . rest)) (cons d (decls-unbinarize-1 `(decls . ,rest)))
+    ('decls d semicolon ('decls . rest)) (cons d (decls-unbinarize-2 `(decls . ,rest)))))
+(define (decls-unbinarize-1 e)
+  (mtch e
+    ('decls . _) `(decls-list ,(decls-unbinarize-2 e))
     x x))
-(define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
-;(define (decls-unbinarize e) (general-recurser id decls-unbinarize-1 e))
+;(define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
+(define (decls-unbinarize e) (general-recurser decls-unbinarize-1 id e))
+;(tracefun decls-unbinarize decls-unbinarize-1)
 
 (define (un-definition-1 e)
   (mtch e
@@ -260,9 +266,9 @@
 (define (p2s e)
   (mtch e
     ('let ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
-      `(let ,(map p2s decls) ,(p2s exp))
+      `(let ,(p2s decls) ,(p2s exp))
     ('where exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
-      `(where ,(map p2s decls) ,(p2s exp))
+      `(where ,(p2s decls) ,(p2s exp))
     ('if ('if_keyword . x) b ('then_keyword . x) t ('else_keyword . x) e)
       `(if ,(p2s b) ,(p2s t) ,(p2s e))
     ('exp x)
@@ -275,6 +281,9 @@
       (p2s (un-cses cses))
     ('definition pat e body)
       `(definition ,(p2s pat) ,e ,(p2s body))
+    ('decls-list defs)
+      ;`(decls-list (map p2s defs))
+      (map p2s defs)
     ('app os)
       `(app ,(map p2s os))
     ('identifier . _)
