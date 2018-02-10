@@ -62,6 +62,8 @@
           `(base-exp-seq ,(rec es) ,(rec e))
         ('exp e)
           `(exp ,(rec e))
+        ('app es)
+          `(app ,(map rec es))
         ('case casek e ofk lcb ccs rcb)
           `(case ,casek ,(rec e) ,ofk ,lcb ,(rec ccs) ,rcb)
         ('case_clauses ccs semi cc)
@@ -235,7 +237,8 @@
   (mtch e
     ('base-exp-seq . d) `(app ,(flatten-base-exp-seq e))
     x x))
-(define (base-exp-seq-unbinarize e) (apply-and-descend base-exp-seq-unbinarize-1 e))
+;(define (base-exp-seq-unbinarize e) (apply-and-descend base-exp-seq-unbinarize-1 e))
+(define (base-exp-seq-unbinarize e) (general-recurser base-exp-seq-unbinarize-1 id e))
 
 (define (apply-and-descend f e)
   (let ((e (apply-until-fixpoint f e)))
