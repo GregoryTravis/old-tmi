@@ -70,7 +70,8 @@
   (mtch e
     ('app xs) `(app ,(apply-precedence-levels (add-explicit-app-op-to-list xs)))
     x x))
-(define (add-explicit-app-op e) (apply-and-descend add-explicit-app-op-1 e))
+;(define (add-explicit-app-op e) (apply-and-descend add-explicit-app-op-1 e))
+(define (add-explicit-app-op e) (general-recurser add-explicit-app-op-1 id e))
 ;(tracefun add-explicit-app-op) (tracefun add-explicit-app-op-to-list) (tracefun add-explicit-app-op-1) 
 (define (precedence e)
   (add-explicit-app-op e))
