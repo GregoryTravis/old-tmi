@@ -1149,3 +1149,12 @@
 (assert (equal? "cbch" (apply-string-rewrites "abag" '(("a" "c") ("g" "h")))))
 (assert (equal? "cbch" (apply-string-rewrites "abag" '(("g" "h") ("a" "c")))))
 (assert (equal? "dbdg" (apply-string-rewrites "abag" '(("a" "c") ("c" "d")))))
+
+#|
+;;; Please reconsider using this
+(define (apply-and-descend f e)
+  (let ((e (apply-until-fixpoint f e)))
+    (if (pair? e)
+      (cons (apply-and-descend f (car e)) (apply-and-descend f (cdr e)))
+      e)))
+|#

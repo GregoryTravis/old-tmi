@@ -217,7 +217,6 @@
     ('case_clauses ('case_clause . rest)) (list rest)
     ('case_clauses as semicolon ('case_clause . rest)) (append (case-clause-unbinarize-1 as) (list rest))
     x x))
-;(define (case-clause-unbinarize e) (apply-and-descend case-clause-unbinarize-1 e))
 (define (case-clause-unbinarize e) (general-recurser id case-clause-unbinarize-1 e))
 
   ;(definition . ((exp equals exp)))
@@ -230,7 +229,6 @@
   (mtch e
     ('decls . _) `(decls-list ,(decls-unbinarize-2 e))
     x x))
-;(define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
 (define (decls-unbinarize e) (general-recurser decls-unbinarize-1 id e))
 ;(tracefun decls-unbinarize decls-unbinarize-1)
 
@@ -244,14 +242,7 @@
   (mtch e
     ('base-exp-seq . d) `(app ,(flatten-base-exp-seq e))
     x x))
-;(define (base-exp-seq-unbinarize e) (apply-and-descend base-exp-seq-unbinarize-1 e))
 (define (base-exp-seq-unbinarize e) (general-recurser base-exp-seq-unbinarize-1 id e))
-
-(define (apply-and-descend f e)
-  (let ((e (apply-until-fixpoint f e)))
-    (if (pair? e)
-      (cons (apply-and-descend f (car e)) (apply-and-descend f (cdr e)))
-      e)))
 
 (define (un-cses-1 cses)
   (mtch cses
@@ -321,7 +312,6 @@
   (mtch e
     ('parenexp lparen app rparen) app
     x x))
-;(define (unparenexp e) (apply-and-descend unparenexp-1 e))
 (define (unparenexp e) (general-recurser unparenexp-1 id e))
 ;(define unparenexp id)
 
@@ -371,7 +361,6 @@
               ;(equals "=")
               (app ((identifier ,(symbol->string name))))))
      x x))
-;(define (lambda->let e) (apply-and-descend lambda->let-1 e))
 (define (lambda->let e) (general-recurser lambda->let-1 id e))
 
 (define (postprocess e)
