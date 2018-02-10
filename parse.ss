@@ -34,8 +34,12 @@
           `(top ,(rec decls))
         ('let letk lcb decls rcb ink exp)
           `(let ,letk ,lcb ,(rec decls) ,rcb ,ink ,(rec exp))
+        ('let decls exp)
+          `(let ,(map rec decls) ,(rec exp))
         ('where exp wherek lcb decls rcb)
           `(where ,(rec exp) ,wherek ,lcb ,(rec decls) ,rcb)
+        ('where decls body)
+          `(where ,(map rec decls) ,(rec body))
         ('definition lexp equalsk rexp)
           `(definition ,(rec lexp) ,equalsk ,(rec rexp))
         ('decls def semi decls)
@@ -62,6 +66,8 @@
           `(base-exp-seq ,(rec es) ,(rec e))
         ('exp e)
           `(exp ,(rec e))
+        ('binop a op b)
+          `(binop ,(rec a) ,(rec op) ,(rec b))
         ('app es)
           `(app ,(map rec es))
         ('case casek e ofk lcb ccs rcb)
@@ -74,6 +80,8 @@
           `(case_clause ,(rec pat) ,arr ,(rec exp))
         ('if ifk b thenk t elsek e)
           `(if ,ifk ,(rec b) ,thenk ,(rec t) ,elsek ,(rec e))
+        ('if b t e)
+          `(if ,(rec b) ,(rec t) ,(rec e))
         ;; Tokens.  TODO put 'token at the front of these
         ('whitespace s . _) e
         ('let_keyword s . _) e
@@ -101,7 +109,6 @@
         ('lcb s . _) e
         ('rcb s . _) e
         ))))
-
 ;(tracefun general-recurser)
 
 (define binarize-production-symgen (tagged-symbol-generator-generator "parsebin-"))
@@ -314,7 +321,8 @@
   (mtch e
     ('parenexp lparen app rparen) app
     x x))
-(define (unparenexp e) (apply-and-descend unparenexp-1 e))
+;(define (unparenexp e) (apply-and-descend unparenexp-1 e))
+(define (unparenexp e) (general-recurser unparenexp-1 id e))
 ;(define unparenexp id)
 
 ; At this point all expressions are (app (a b c)) where b is an operator, including $$.
@@ -329,7 +337,7 @@
     ('if b t e)
       `(if ,(separate-app-op b) ,(separate-app-op t) ,(separate-app-op e))
     ('definition a ('equals . d) b)
-      `(,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
+      `(definition ,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
     (a ('equals . d) b)
       `(,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
     ('app (a ('operator "$$" . d) b))
@@ -357,7 +365,7 @@
     ;('lambda-exp _ h _) (err h)
     ('lambda-exp _ ('parenexp _ ('app pat) _) body)
       (let ((name (lambda-symgen)))
-        `(let (((app ,(cons `(identifier ,(symbol->string name)) pat))
+        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) pat))
                 (equals "=")
                 ,body))
               ;(equals "=")
@@ -414,8 +422,10 @@
     #f
     (list (map car ms))))
 
+(define no-overture #f)
 (define (add-overture s)
-  (string-append (read-file-as-string "overture.tmi") "\n" s))
+  (if no-overture s
+    (string-append (read-file-as-string "overture.tmi") "\n" s)))
 
 ; Split into tlfs and parse separately; won't work on already-preprocessed code
 ; (if it lacks proper layout) (define (parse-file filename).

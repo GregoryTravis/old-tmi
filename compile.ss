@@ -15,7 +15,7 @@
   (group-byy
     (lambda (binding)
       (mtch binding
-        (('app (('identifier name . d) . d)) ('equals . _) body)
+        ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
           name
         #|
         ;; No-args case
@@ -36,7 +36,7 @@
 (define (compile-multilambda name ml)
   ;; TODO check for duplicate patterns here
   (mtch ml
-    ((('app (('identifier . d)))
+    (('definition ('app (('identifier . d)))
       (equals . d)
       body))
      (compile-exp body)
@@ -46,7 +46,8 @@
 
 (define (compile-multilambda-1 name args ml)
   (mtch ml
-    ((('app (('identifier . d) . pat))
+    (('definition
+      ('app (('identifier . d) . pat))
       (equals . d)
       body)
      . the-rest)
