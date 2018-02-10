@@ -1,3 +1,4 @@
+(require errortrace)
 (load "Lib.ss")
 (load "mtch.ss")
 (load "native-preamble.ss")
@@ -10,6 +11,8 @@
       `(letrec
         ,(map compile-multilambda-group (group-as-multilambdas bindings))
         ,(compile-exp exp))))
+
+(define case-symgen (tagged-symbol-generator-generator 'case))
 
 (define (group-as-multilambdas bindings)
   (group-byy
@@ -123,13 +126,31 @@
     ))
 ;(tracefun compile-exp)
 
+(define (case-clause->definition casefun-name cc)
+  (mtch cc
+    ('case_clause ('app (pat)) exp)
+      `(definition (app ((identifier ,(symbol->string casefun-name)) ,pat)) (equals "=") ,exp)
+    x x))
+
+(define (compile-simplify-1 e)
+  (mtch e
+    ('case exp clauses)
+      (let ((casefun-name (case-symgen)))
+        `(let
+          ,(map (lambda (cc) (case-clause->definition casefun-name cc)) clauses)
+          (app ((identifier ,(symbol->string casefun-name)) ,exp))))
+    x x))
+(define (compile-simplify e) (general-recurser compile-simplify-1 id e))
+
 (define (compile sem)
   ;(shew 'sem sem)
-  (let ((compiled (compile-let sem)))
-    ;(shew compiled)
-    (let ((all `(begin ,native-preamble ,compiled)))
-      ;(shew 'all all)
-      all)))
+  (let ((simple (compile-simplify sem)))
+    ;(shew 'simple simple)
+    (let ((compiled (compile-let simple)))
+      ;(shew compiled)
+      (let ((all `(begin ,native-preamble ,compiled)))
+        ;(shew 'all all)
+        all))))
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from

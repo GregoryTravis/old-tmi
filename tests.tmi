@@ -53,4 +53,15 @@ t16 = a * b + c
              c = 7
 t17 = test [6, 27, 27, 27, 27] [t12, t13, t14, t15, t16]
 
+t18 a = case a of (Boo a) => a + 100
+                  (Foo b) => b + 1000
+t19 a = case a of
+          (Boo a) => a + 100
+          (Foo b) => b + 1000
+t20 = let roo (Boo a) = a + 100
+          roo (Foo b) = b + 1000
+       in
+          roo
+t20 = test [[103, 1004], [103, 1004], [103, 1004]] [[t18 (Boo 3), t18 (Foo 4)], [t19 (Boo 3), t19 (Foo 4)], [t20 (Boo 3), t20 (Foo 4)]]
+
 main = 0

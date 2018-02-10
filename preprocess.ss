@@ -27,6 +27,8 @@
      (and (member group-type '(let_keyword of_keyword where_keyword))
           (> ra rb)
           (< ca cb))
+    ('() (('of_keyword (b bs (rb cb))) . gss))
+      #t
     ('() (('where_keyword (b bs (rb cb))) . gss))
       #t
     x
