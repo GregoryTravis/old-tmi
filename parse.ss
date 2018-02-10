@@ -225,12 +225,6 @@
 (define (decls-unbinarize e) (general-recurser decls-unbinarize-1 id e))
 ;(tracefun decls-unbinarize decls-unbinarize-1)
 
-(define (un-definition-1 e)
-  (mtch e
-    ('definition . d) d
-    x x))
-(define (un-definition e) (apply-and-descend un-definition-1 e))
-
 (define (flatten-base-exp-seq e)
   (mtch e
     ('base-exp-seq rdc ('base-exp e))
@@ -374,7 +368,7 @@
       (if (not (equal? e ee)) (err 'yeah e ee) '())))
   ; Unparenexp must be after unapp
   ;(separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
-  (un-definition (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))))
+  (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))))))
 
 (define (top-parse gram nt os)
   ;(shew 'parse os)
