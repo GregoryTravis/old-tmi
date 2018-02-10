@@ -25,6 +25,81 @@
   (if . ((if_keyword exp then_keyword exp else_keyword exp)))
 ))
 
+(define (general-recurser before-fun after-fun e)
+  (let ((e (before-fun e))
+        (rec (lambda (e) (general-recurser before-fun after-fun e))))
+    (after-fun
+      (mtch e
+        ('top decls)
+          `(top ,(rec decls))
+        ('let letk lcb decls rcb ink exp)
+          `(let ,letk ,lcb ,(rec decls) ,rcb ,ink ,(rec exp))
+        ('where exp wherek lcb decls rcb)
+          `(where ,(rec exp) ,wherek ,lcb ,(rec decls) ,rcb)
+        ('definition lexp equalsk rexp)
+          `(definition ,(rec lexp) ,equalsk ,(rec rexp))
+        ('decls def semi decls)
+          `(decls ,(rec def) ,semi ,(rec decls))
+        ('decls def)
+          `(decls ,(rec def))
+        ('parenexp lp e rp)
+          `(parenexp ,lp ,(rec e) ,rp)
+        ('listexp lsb cses rsb)
+          `(listexp ,lsb ,(rec cses) ,rsb)
+        ('comma-separated-exp-sequence exp)
+          `(comma-separated-exp-sequence ,(rec exp))
+        ('comma-separated-exp-sequence cses comma exp)
+          `(comma-separated-exp-sequence ,(rec cses) ,comma ,(rec exp))
+        ('lambda-exp lambda args exp)
+          `(lambda-exp ,lambda ,(rec args) ,(rec exp))
+        ('base-exp e)
+          `(base-exp ,(rec e))
+        ('base-exp-seq e)
+          `(base-exp-seq ,(rec e))
+        ('base-exp-seq es e)
+          `(base-exp-seq ,(rec es) ,(rec e))
+        ('exp e)
+          `(exp ,(rec e))
+        ('case casek e ofk lcb ccs rcb)
+          `(case ,casek ,(rec e) ,ofk ,lcb ,(rec ccs) ,rcb)
+        ('case_clauses ccs semi cc)
+          `(case_clauses ,(rec ccs) ,semi ,(rec cc))
+        ('case_clauses cc)
+          `(case_clauses ,(rec cc))
+        ('case_clause pat arr exp)
+          `(case_clause ,(rec pat) ,arr ,(rec exp))
+        ('if ifk b thenk t elsek e)
+          `(if ,ifk ,(rec b) ,thenk ,(rec t) ,elsek ,(rec e))
+        ;; Tokens.  TODO put 'token at the front of these
+        ('whitespace s . _) e
+        ('let_keyword s . _) e
+        ('in_keyword s . _) e
+        ('case_keyword s . _) e
+        ('of_keyword s . _) e
+        ('rdbl_arrow s . _) e
+        ('where_keyword s . _) e
+        ('if_keyword s . _) e
+        ('then_keyword s . _) e
+        ('else_keyword s . _) e
+        ('integer s . _) e
+        ('constructor s . _) e
+        ('identifier s . _) e
+        ('comma s . _) e
+        ('comment s . _) e
+        ('semicolon s . _) e
+        ('equals s . _) e
+        ('lambda s . _) e
+        ('operator s . _) e
+        ('lparen s . _) e
+        ('rparen s . _) e
+        ('lsb s . _) e
+        ('rsb s . _) e
+        ('lcb s . _) e
+        ('rcb s . _) e
+        ))))
+
+;(tracefun general-recurser)
+
 (define binarize-production-symgen (tagged-symbol-generator-generator "parsebin-"))
 (define (binarize-production production)
   (mtch production
@@ -131,7 +206,8 @@
     ('case_clauses ('case_clause . rest)) (list rest)
     ('case_clauses as semicolon ('case_clause . rest)) (append (case-clause-unbinarize-1 as) (list rest))
     x x))
-(define (case-clause-unbinarize e) (apply-and-descend case-clause-unbinarize-1 e))
+;(define (case-clause-unbinarize e) (apply-and-descend case-clause-unbinarize-1 e))
+(define (case-clause-unbinarize e) (general-recurser id case-clause-unbinarize-1 e))
 
   ;(definition . ((exp equals exp)))
   ;(decls . ((definition semicolon decls) (definition)))
@@ -141,6 +217,7 @@
     ('decls d semicolon ('decls . rest)) (cons d (decls-unbinarize-1 `(decls . ,rest)))
     x x))
 (define (decls-unbinarize e) (apply-and-descend decls-unbinarize-1 e))
+;(define (decls-unbinarize e) (general-recurser id decls-unbinarize-1 e))
 
 (define (un-definition-1 e)
   (mtch e
@@ -283,6 +360,9 @@
 (define (lambda->let e) (apply-and-descend lambda->let-1 e))
 
 (define (postprocess e)
+  (let ((e (grammar-unbinarize e)))
+    (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
+      (if (not (equal? e ee)) (err 'yeah e ee) '())))
   ; Unparenexp must be after unapp
   ;(separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
   (un-definition (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))))
@@ -341,6 +421,8 @@
                         (split-into-tlfs tokens)))
       (value) `((let ,(map postprocess value) (app ((identifier "main")))))
       #f #f)))
+
+; add overture, tokenize, split tlfs, preprocess, parse, postprocess
 
 (define (split-into-tlfs tokens)
   (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
