@@ -1,6 +1,8 @@
 ;(require errortrace)
 (load "Lib.ss")
 (load "mtch.ss")
+(load "parse.ss")
+(load "tokenize.ss")
 
 ;; S = epsilon | a S b
 ;; =>
@@ -51,7 +53,6 @@
                 (t rest)
                   (list (list symbol t) rest)
                 #f #f))))))
-
 (define (top-parse tokens)
   (mtch (parse 'S tokens #t)
     (t '()) t
@@ -146,3 +147,24 @@
 (define parsed (top-parse '(article noun verb article adjective article adjective noun)))
 (shew parsed)
 (shew (parsed-unbinarize parsed))
+
+(define grammar '(
+  (S decls)
+  (plet (seq let_keyword lcb decls rcb in_keyword exp))
+  (pwhere (seq exp where_keyword lcb decls rcb))
+  (definition (seq exp equals exp))
+  (decls (alt (seq definition semicolon decls) definition))
+  (parenexp (seq lparen exp rparen))
+  (listexp (seq lsb comma-separated-exp-sequence rsb))
+  (comma-separated-exp-sequence (alt exp (seq comma-separated-exp-sequence comma exp)))
+  (lambda-exp (seq lambda parenexp exp))
+  (base-exp (alt constructor identifier integer operator parenexp listexp lambda-exp))
+  (base-exp-seq (alt base-exp (seq base-exp-seq base-exp)))
+  (exp (alt pif plet pwhere case base-exp-seq))
+  (case (seq case_keyword exp of_keyword lcb case_clauses rcb))
+  (case_clauses (alt (seq case_clauses semicolon case_clause) case_clause))
+  (case_clause (seq exp rdbl_arrow exp))
+  (pif (seq if_keyword exp then_keyword exp else_keyword exp))
+))
+(define grammar (binarize-grammar grammar))
+;(shew (top-parse (map car (tokenize-top (read-file-as-string "input.tmi")))))
