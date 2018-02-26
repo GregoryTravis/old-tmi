@@ -196,4 +196,7 @@
 ;(hook-with timing-hook parse-file compile run-compiled)
 
 (assert (eq? (vector-length (current-command-line-arguments)) 1))
-(pretty-shew (run-compiled (compile-file (vector-ref (current-command-line-arguments) 0))))
+(define (main)
+  (pretty-shew (run-compiled (compile-file (vector-ref (current-command-line-arguments) 0)))))
+(hook-with timing-hook main)
+(main)

@@ -222,7 +222,7 @@
 (define (case-clause-unbinarize-2 e)
   (mtch e
     ('case_clauses ('case_clause . rest)) `((case_clause . ,rest))
-    ('case_clauses as semicolon ('case_clause . rest)) (append (case-clause-unbinarize-2 as) `((case_clause . ,rest)))))
+    ('case_clauses ('case_clause . rest) semicolon as) (cons `(case_clause . ,rest) (case-clause-unbinarize-2 as)) ))
 (define (case-clause-unbinarize-1 e)
   (mtch e
     ('case_clauses . _) `(case-clauses-list ,(case-clause-unbinarize-2 e))
