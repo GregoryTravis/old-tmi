@@ -1,1 +1,1 @@
-racket -r packrat.ss
+racket -r compile.ss input.tmi

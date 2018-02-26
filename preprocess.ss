@@ -66,3 +66,4 @@
   (let ((preprocessed-tokens (preprocess tokens '())))
     ;(shew 'preprocess (tokens->src tokens) (tokens->src preprocessed-tokens))
     preprocessed-tokens))
+;(tracefun preprocess-top)

@@ -2,6 +2,7 @@
 (load "Lib.ss")
 (load "mtch.ss")
 (load "parse.ss")
+(load "preprocess.ss")
 (load "tokenize.ss")
 
 ;; S = epsilon | a S b
@@ -17,50 +18,69 @@
     (Y (seq X b))
     (X (seq a S))))
 
+;; Hash set and return
+(define (hsar hash key value)
+  (hash-set! hash key value)
+  value)
+
 ;; Returns #f or (tree rest)
-(define (parse symbol tokens top-level?)
-  (cond
-    ((eq? symbol 'epsilon)
-      (if top-level?
-        #f
-        (list 'epsilon tokens)))
-    ;;; Hack: this means anything not in the grammar is a token
-    ((not (assoc symbol grammar))
-      (if (and (not (null? tokens)) (eq? symbol (car tokens))) (list (car tokens) (cdr tokens)) #f))
-    (#t (mtch (assoc symbol grammar)
-          (_ ('seq x y))
-            (mtch (parse x tokens top-level?)
-              (tx rest)
-                (mtch (parse y rest #f)
-                  (ty rest)
-                    (list (list symbol tx ty) rest)
-                  #f #f)
-              #f #f)
-          (_ ('alt x y))
-            (mtch (parse x tokens top-level?)
-              (t rest)
-                (list (list symbol t) rest)
-              #f
-                (mtch (parse y tokens top-level?)
-                  (t rest)
-                    (list (list symbol t) rest)
-                  #f
-                    #f))
-          (_ x)
-            (begin
-              (assert (atom? x))
-              (mtch (parse x tokens top-level?)
-                (t rest)
-                  (list (list symbol t) rest)
-                #f #f))))))
+(define (parse symbol tokens s e top-level? memo)
+  (let ((memo-val (hash-ref memo (list symbol s) '())))
+    (if (not (eq? memo-val '()))
+      memo-val
+      (begin
+        ;; Innfinite recursion prevention
+        (hsar memo (list symbol s) #f)
+        (hsar memo (list symbol s)
+          (cond
+            ((eq? symbol 'epsilon)
+              (if top-level?
+                #f
+                (list 'epsilon s)))
+            ;;; Hack: this means anything not in the grammar is a token
+            ((not (assoc symbol grammar))
+              (if (and (not (eq? s e)) (eq? symbol (car (vector-ref tokens s)))) (list (vector-ref tokens s) (+ s 1)) #f))
+            (#t (mtch (assoc symbol grammar)
+                  (_ ('seq x y))
+                    (mtch (parse x tokens s e top-level? memo)
+                      (tx new-s)
+                        (mtch (parse y tokens new-s e #f memo)
+                          (ty new-new-s)
+                            (list (list symbol tx ty) new-new-s)
+                          #f #f)
+                      #f #f)
+                  (_ ('alt x y))
+                    (mtch (parse x tokens s e top-level? memo)
+                      (t new-s)
+                        (list (list symbol t) new-s)
+                      #f
+                        (mtch (parse y tokens s e top-level? memo)
+                          (t new-s)
+                            (list (list symbol t) new-s)
+                          #f
+                            #f))
+                  (_ x)
+                    (begin
+                      (assert (atom? x))
+                      (mtch (parse x tokens s e top-level? memo)
+                        (t new-s)
+                          (list (list symbol t) new-s)
+                        #f #f))))))))))
 (define (top-parse tokens)
-  (mtch (parse 'S tokens #t)
-    (t '()) t
+  ;(shew 'TOP tokens)
+  (mtch (parse 'S (list->vector tokens) 0 (length tokens) #t (make-hash))
+    (t final-s) (if (eq? final-s (length tokens)) t #f)
     _ #f))
 
-;(tracefun parse)
-;(S (Y (X a (S epsilon)) b))
-;(shew (parse 'S '(a b) #t))
+#|
+(tracefun-with
+  (lambda (app runner)
+    (mtch app (parse symbol tokens s e top-level? memo)
+      (plain-ol-tracer (list 'parse symbol s e top-level?) runner)))
+  parse)
+|#
+;(tracefun top-parse)
+; (S (Y (X a (S epsilon)) b))
 ;(shew (top-parse '(a b)))
 ;(shew (top-parse '(a a b b)))
 
@@ -131,35 +151,52 @@
   (if (list? e)
     (mtch (map parsed-unbinarize e)
       (s (bg . es))
-        (if (starts-with (symbol->string bg) "bg-")
+        (if (and (symbol? bg) (starts-with (symbol->string bg) "bg-"))
           `(,s . ,es)
           `(,s (,bg . ,es)))
       (s x (bg . es))
-        (if (starts-with (symbol->string bg) "bg-")
+        (if (and (symbol? bg) (starts-with (symbol->string bg) "bg-"))
           `(,s ,x . ,es)
           `(,s ,x (,bg . ,es)))
       x x)
     e))
 
+#|
 (shew _grammar)
 (define grammar (binarize-grammar _grammar))
 (shew grammar)
 (define parsed (top-parse '(article noun verb article adjective article adjective noun)))
 (shew parsed)
 (shew (parsed-unbinarize parsed))
+|#
+
+(define no-overture #t)
+(define (add-overture s)
+  (if no-overture s
+    (string-append (read-file-as-string "overture.tmi") "\n" s)))
+
+(define (wrap-file tokens)
+  (mtch (last tokens)
+    (a as (row col))
+      `((let_keyword "let" (-1 -1))
+        ,@tokens
+        (in_keyword "in" (,(+ row 1) -1))
+        (identifier "main" (,(+ row 1) 2)))))
 
 (define grammar '(
-  (S decls)
+  ;(S decls)
+  (S plet)
   (plet (seq let_keyword lcb decls rcb in_keyword exp))
   (pwhere (seq exp where_keyword lcb decls rcb))
   (definition (seq exp equals exp))
   (decls (alt (seq definition semicolon decls) definition))
   (parenexp (seq lparen exp rparen))
   (listexp (seq lsb comma-separated-exp-sequence rsb))
-  (comma-separated-exp-sequence (alt exp (seq comma-separated-exp-sequence comma exp)))
+  (comma-separated-exp-sequence (alt (seq exp comma comma-separated-exp-sequence) exp))
   (lambda-exp (seq lambda parenexp exp))
   (base-exp (alt constructor identifier integer operator parenexp listexp lambda-exp))
-  (base-exp-seq (alt base-exp (seq base-exp-seq base-exp)))
+  (base-exp-seq (alt (seq base-exp base-exp-seq) base-exp))
+  ;(base-exp-seq (alt base-exp (seq base-exp base-exp-seq)))
   (exp (alt pif plet pwhere case base-exp-seq))
   (case (seq case_keyword exp of_keyword lcb case_clauses rcb))
   (case_clauses (alt (seq case_clauses semicolon case_clause) case_clause))
@@ -167,4 +204,13 @@
   (pif (seq if_keyword exp then_keyword exp else_keyword exp))
 ))
 (define grammar (binarize-grammar grammar))
-;(shew (top-parse (map car (tokenize-top (read-file-as-string "input.tmi")))))
+;(shew grammar)
+(hook-with timing-hook top-parse)
+(hook-with timing-hook preprocess-top)
+(hook-with timing-hook tokenize-top)
+(hook-with timing-hook parsed-unbinarize)
+(define (parse-file filename)
+  (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-overture (read-file-as-string filename)))))))))
+    (shew parsed)
+    (mtch parsed
+      (S parsed) (list (postprocess parsed)))))

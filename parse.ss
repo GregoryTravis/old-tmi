@@ -138,8 +138,8 @@
                       (nt . rhses) (map (lambda (rhs) `(,nt ,rhs)) rhses)))
                (hash->list grammar)))))))
 
+#|
 ; Returns (value) or #f
-; TODO not using memo yet
 (define (parse gram nt os s e memo)
   (if (eq? s e)
     ; TODO implement epsilon?
@@ -217,6 +217,7 @@
       `(,(grammar-unbinarize a) . ,(grammar-unbinarize d))
     aa aa))
 ;(tracefun unbinarize)
+|#
 
 (define (case-clause-unbinarize-2 e)
   (mtch e
@@ -243,8 +244,8 @@
 
 (define (flatten-base-exp-seq e)
   (mtch e
-    ('base-exp-seq rdc ('base-exp e))
-      (append (flatten-base-exp-seq rdc) (list e))
+    ('base-exp-seq ('base-exp e) d)
+      (cons e (flatten-base-exp-seq d))
     ('base-exp-seq ('base-exp e))
       (list e)))
 (define (base-exp-seq-unbinarize-1 e)
@@ -377,13 +378,11 @@
 (define (lambda->let e) (general-recurser lambda->let-1 id e))
 
 (define (postprocess e)
-  (let ((e (grammar-unbinarize e)))
-    (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
-      (if (not (equal? e ee)) (err 'yeah e ee) '())))
-  ; Unparenexp must be after unapp
-  ;(separate-app-op (precedence (unparenexp (unapp (p2s (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e)))))))))
-  (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize (grammar-unbinarize e))))))))))
+  (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
+    (if (not (equal? e ee)) (err 'yeah e ee) '()))
+  (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize e)))))))))
 
+#|
 (define (top-parse gram nt os)
   ;(shew 'parse os)
   (let ((gram (binarize gram)))
@@ -391,6 +390,7 @@
     (mtch (parse gram nt (list->vector os) 0 (length os) (make-hash))
       (value) `(,value)
       #f #f)))
+|#
 
 #|
 (tracefun-with
@@ -425,21 +425,25 @@
     #f
     (list (map car ms))))
 
+#|
 (define no-overture #f)
 (define (add-overture s)
   (if no-overture s
     (string-append (read-file-as-string "overture.tmi") "\n" s)))
+|#
 
 ; Split into tlfs and parse separately; won't work on already-preprocessed code
 ; (if it lacks proper layout) (define (parse-file filename).
 ;
 ; TODO: if a tlf fails to parse, don't keep parsing the rest of the lines.
+#|
 (define (parse-file filename)
-  (let ((tokens (tokenize-top (add-overture (read-file-as-string filename)))))
+  (let ((tokens (wrap-file (tokenize-top (add-overture (read-file-as-string filename))))))
     (mtch (maybe-list (map (lambda (tlf) (top-parse gram 'definition (preprocess-top tlf)))
                         (split-into-tlfs tokens)))
       (value) `((let ,(map postprocess value) (app ((identifier "main")))))
       #f #f)))
+|#
 
 ; add overture, tokenize, split tlfs, preprocess, parse, postprocess
 

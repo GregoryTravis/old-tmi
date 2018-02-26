@@ -2,6 +2,7 @@
 (load "Lib.ss")
 (load "mtch.ss")
 (load "native-preamble.ss")
+(load "packrat.ss")
 (load "parse.ss")
 
 ; Returns map from function name to list of alternate funs
