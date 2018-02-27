@@ -73,11 +73,13 @@
     _ #f))
 
 
+#|
 (tracefun-with
   (lambda (app runner)
     (mtch app (parse symbol tokens s e top-level? memo)
-      (plain-ol-tracer (list 'parse symbol s top-level?) runner)))
+      (plain-ol-tracer (list 'parse symbol s (if (< s e) (vector-ref tokens s) '???) top-level?) runner)))
   parse)
+|#
 
 ;(tracefun top-parse)
 ; (S (Y (X a (S epsilon)) b))
@@ -170,7 +172,7 @@
 (shew (parsed-unbinarize parsed))
 |#
 
-(define no-overture #t)
+(define no-overture #f)
 (define (add-overture s)
   (if no-overture s
     (string-append (read-file-as-string "overture.tmi") "\n" s)))
@@ -187,7 +189,8 @@
   ;(S decls)
   (S plet)
   (plet (seq let_keyword lcb decls rcb in_keyword exp))
-  (pwhere (seq exp where_keyword lcb decls rcb))
+  ;(pwhere (seq exp where_keyword lcb decls rcb))
+  (pwhere-suffix (seq where_keyword lcb decls rcb))
   (definition (seq exp equals exp))
   (decls (alt (seq definition semicolon decls) definition))
   (parenexp (seq lparen exp rparen))
@@ -197,20 +200,23 @@
   (base-exp (alt constructor identifier integer operator parenexp listexp lambda-exp))
   (base-exp-seq (alt (seq base-exp base-exp-seq) base-exp))
   ;(base-exp-seq (alt base-exp (seq base-exp base-exp-seq)))
-  (exp (alt pif plet pwhere case base-exp-seq))
+  (exp (alt where-exp non-where-exp))
+  (where-exp (seq non-where-exp pwhere-suffices))
+  (pwhere-suffices (alt (seq pwhere-suffix pwhere-suffices) pwhere-suffix))
+  (non-where-exp (alt pif plet case base-exp-seq))
   (case (seq case_keyword exp of_keyword lcb case_clauses rcb))
   (case_clauses (alt (seq case_clause semicolon case_clauses) case_clause))
   (case_clause (seq exp rdbl_arrow exp))
   (pif (seq if_keyword exp then_keyword exp else_keyword exp))
 ))
 (define grammar (binarize-grammar grammar))
-(shew grammar)
+;(shew grammar)
 (hook-with timing-hook top-parse)
 (hook-with timing-hook preprocess-top)
 (hook-with timing-hook tokenize-top)
 ;(hook-with timing-hook parsed-unbinarize)
 (define (parse-file filename)
   (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-overture (read-file-as-string filename)))))))))
-    (shew parsed)
+    ;(shew parsed)
     (mtch parsed
       (S parsed) (list (postprocess parsed)))))

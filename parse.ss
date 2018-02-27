@@ -36,8 +36,29 @@
           `(plet ,letk ,lcb ,(rec decls) ,rcb ,ink ,(rec exp))
         ('let decls exp)
           `(let ,(map rec decls) ,(rec exp))
-        ('pwhere exp wherek lcb decls rcb)
-          `(pwhere ,(rec exp) ,wherek ,lcb ,(rec decls) ,rcb)
+        ;('pwhere exp wherek lcb decls rcb)
+          ;`(pwhere ,(rec exp) ,wherek ,lcb ,(rec decls) ,rcb)
+        ;; This only handles the case of 1 suffix, because the grammar parses
+        ;; multiple suffices as being right-associative and thus there's only ever|#
+        ;; one.
+        ('where-exp ('non-where-exp e) ('pwhere-suffices ('pwhere-suffix wherek lcb decls rcb)))
+          `(where-exp (non-where-exp ,(rec e)) (pwhere-suffices (pwhere-suffix ,wherek ,lcb ,(rec decls) ,rcb)))
+#|
+  (where-exp
+   (non-where-exp (base-exp-seq (base-exp (identifier "a" (0 7)))))
+   (pwhere-suffices
+    (pwhere-suffix
+     (where_keyword "where" (0 9))
+     (lcb "{")
+     (decls
+      (definition
+       (exp (non-where-exp (base-exp-seq (base-exp (identifier "a" (0 15))))))
+       (equals "=" (0 17))
+       (exp (non-where-exp (base-exp-seq (base-exp (integer "1" (0 19))))))))
+     (rcb "}"))))
+|#
+
+
         ('where decls body)
           `(where ,(map rec decls) ,(rec body))
         ('definition lexp equalsk rexp)
@@ -66,6 +87,8 @@
           `(base-exp-seq ,(rec es) ,(rec e))
         ('exp e)
           `(exp ,(rec e))
+        ('non-where-exp e)
+          `(non-where-exp ,(rec e))
         ('binop a op b)
           `(binop ,(rec a) ,(rec op) ,(rec b))
         ('app es)
@@ -268,15 +291,27 @@
     (un-cses-1 e)))
 ;(tracefun un-cses)
 
+#|
+(define (un-non-where-exp-1 e)
+  (mtch e
+    ('non-where-exp e) e
+    x x))
+(define (un-non-where-exp e) (general-recurser un-non-where-exp-1 e id))
+|#
+
 (define (p2s e)
   (mtch e
     ('plet ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
       `(let ,(p2s decls) ,(p2s exp))
-    ('pwhere exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
+    ;('pwhere exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
+      ;`(where ,(p2s decls) ,(p2s exp))
+    ('where-exp ('non-where-exp exp) ('pwhere-suffices ('pwhere-suffix ('where_keyword . x) ('lcb . x) decls ('rcb . x))))
       `(where ,(p2s decls) ,(p2s exp))
     ('pif ('if_keyword . x) b ('then_keyword . x) t ('else_keyword . x) e)
       `(if ,(p2s b) ,(p2s t) ,(p2s e))
     ('exp x)
+      (p2s x)
+    ('non-where-exp x)
       (p2s x)
     ('case case_keyword exp of_keyword lcb ('case-clauses-list case_clauses) rcb)
       `(case ,(p2s exp) ,(map p2s case_clauses))
