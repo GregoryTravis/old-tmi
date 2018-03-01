@@ -220,3 +220,4 @@
     ;(shew parsed)
     (mtch parsed
       (S parsed) (list (postprocess parsed)))))
+(hook-with timing-hook parse-file)

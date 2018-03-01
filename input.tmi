@@ -2,5 +2,9 @@ t18 a = case a of (Boo a) => a + 100
                   (Foo b) => b + 1000
 r = t18 (Boo 3)
 a = [1, 2, 3]
+t18 a = case a of (Boo a) => a + 100
+                  (Foo b) => b + 1000
+r = t18 (Boo 3)
+a = [1, 2, 3]
 umain = a + 10 where a = b + 1 where b = 1
 main = fact 10
