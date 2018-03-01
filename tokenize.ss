@@ -32,19 +32,19 @@
   (lcb #px"(^[\\{])")
   (rcb #px"(^[\\}])")
 ))
+#|
 (define until-newline-regex #px"(^[^\n]*\n)(.*$)")
 ;(shew (regexp-match until-newline-regex "asdf\nzxcv\n"))
 ;(shew (regexp-match until-newline-regex "asdf\nzxcv\nasdfasfd"))
 ;(shew (regexp-match until-newline-regex "asdf\nzxcv"))
 ;(shew (regexp-match until-newline-regex "\nasdf\nzxcv"))
+|#
 
-(define (try-tokenize pat-decl s)
+(define (try-tokenize pat-decl s start)
   (mtch pat-decl
     (token-type token-regex)
-      (mtch (regexp-match token-regex s)
-        (all token-src)
-          (let ((rest (substring s (string-length token-src))))
-            `((,token-type ,token-src ,rest)))
+      (mtch (regexp-match token-regex s start)
+        (all token-src) `((,token-type ,token-src))
         #f #f)))
 ;(tracefun try-tokenize)
 
@@ -69,18 +69,25 @@
 (assert (equal? '(4 1) (next-rowcol '(3 2) "b\na")))
 (assert (equal? '(5 2) (next-rowcol '(3 2) "b\na\ncd")))
 
+#|
 (define (remove-until-newline s)
   (mtch (regexp-match until-newline-regex s)
     (all comment rest) rest))
+|#
 
-(define (tokenize s rowcol)
-  (if (eq? (string-length s) 0)
+(define (next-newline s start)
+  (mtch (regexp-match #px"^([^\n]*\n)" s start)
+    #f (string-length s)
+    (all rest-of-line) (+ start (string-length rest-of-line))))
+
+(define (tokenize s start rowcol)
+  (if (eq? start (string-length s))
     '()
-    (mtch (find-first-maybe (lambda (pat-decl) (try-tokenize pat-decl s)) pat-decls)
-      (('comment token-src rest))
-        (tokenize (remove-until-newline rest) (mtch rowcol (r c) `(,(+ r 1) 0)))
-      ((token-type token-src rest))
-        `((,token-type ,token-src ,rowcol) . ,(tokenize rest (next-rowcol rowcol token-src))))))
+    (mtch (find-first-maybe (lambda (pat-decl) (try-tokenize pat-decl s start)) pat-decls)
+      (('comment token-src))
+        (tokenize s (next-newline s start) (mtch rowcol (r c) `(,(+ r 1) 0)))
+      ((token-type token-src))
+        `((,token-type ,token-src ,rowcol) . ,(tokenize s (+ start (string-length token-src)) (next-rowcol rowcol token-src))))))
 
 (define (remove-whitespace toks)
   (grep (lambda (token) (not (eq? (car token) 'whitespace))) toks))
@@ -89,7 +96,7 @@
     ;(a . d) `(,a . ,(remove-whitespace d))))
 
 (define (tokenize-top s)
-  (remove-whitespace (tokenize s '(0 0))))
+  (remove-whitespace (tokenize s 0 '(0 0))))
 
 ;(shew (tokenize-top (read-file-as-string "input.tmi")))
 (hook-with timing-hook tokenize-top)
