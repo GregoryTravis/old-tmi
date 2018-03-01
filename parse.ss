@@ -3,27 +3,6 @@
 (load "precedence.ss")
 (load "preprocess.ss")
 (load "tokenize.ss")
-(require profile)
-
-(define gram #hash(
-  (top . ((decls)))
-  ;(app . ((exp exp) (app exp)))
-  (plet . ((let_keyword lcb decls rcb in_keyword exp)))
-  (pwhere . ((exp where_keyword lcb decls rcb)))
-  (definition . ((exp equals exp)))
-  (decls . ((definition semicolon decls) (definition)))
-  (parenexp . ((lparen exp rparen)))
-  (listexp . ((lsb comma-separated-exp-sequence rsb)))
-  (comma-separated-exp-sequence . ((exp) (comma-separated-exp-sequence comma exp)))
-  (lambda-exp . ((lambda parenexp exp)))
-  (base-exp . ((constructor) (identifier) (integer) (operator) (parenexp) (listexp) (lambda-exp)))
-  (base-exp-seq . ((base-exp) (base-exp-seq base-exp)))
-  (exp . ((pif) (plet) (pwhere) (case) (base-exp-seq)))
-  (case . ((case_keyword exp of_keyword lcb case_clauses rcb)))
-  (case_clauses . ((case_clauses semicolon case_clause) (case_clause)))
-  (case_clause . ((exp rdbl_arrow exp)))
-  (pif . ((if_keyword exp then_keyword exp else_keyword exp)))
-))
 
 (define (general-recurser before-fun after-fun e)
   (let ((e (before-fun e))
@@ -43,22 +22,6 @@
         ;; one.
         ('where-exp ('non-where-exp e) ('pwhere-suffices ('pwhere-suffix wherek lcb decls rcb)))
           `(where-exp (non-where-exp ,(rec e)) (pwhere-suffices (pwhere-suffix ,wherek ,lcb ,(rec decls) ,rcb)))
-#|
-  (where-exp
-   (non-where-exp (base-exp-seq (base-exp (identifier "a" (0 7)))))
-   (pwhere-suffices
-    (pwhere-suffix
-     (where_keyword "where" (0 9))
-     (lcb "{")
-     (decls
-      (definition
-       (exp (non-where-exp (base-exp-seq (base-exp (identifier "a" (0 15))))))
-       (equals "=" (0 17))
-       (exp (non-where-exp (base-exp-seq (base-exp (integer "1" (0 19))))))))
-     (rcb "}"))))
-|#
-
-
         ('where decls body)
           `(where ,(map rec decls) ,(rec body))
         ('definition lexp equalsk rexp)
@@ -139,108 +102,6 @@
         ('rcb s . _) e
         ))))
 ;(tracefun general-recurser)
-
-(define binarize-production-symgen (tagged-symbol-generator-generator "parsebin-"))
-(define (binarize-production production)
-  (mtch production
-    (nt (a b c . rest))
-      (let ((new-nt (binarize-production-symgen)))
-        `((,nt (,a ,new-nt)) . ,(binarize-production `(,new-nt (,b ,c . ,rest)))))
-    (nt rhses) `((,nt ,rhses))))
-
-(define (regroup-binarized-grammar gram)
-  (make-hash (map (lambda (group) (cons (caar group) (map cadr group))) (group-by car gram))))
-
-(define (binarize grammar)
-  (regroup-binarized-grammar
-    (flatten1
-      (map binarize-production
-        (flatten1
-          (map (lambda (ntdef)
-                 (mtch ntdef
-                      (nt . rhses) (map (lambda (rhs) `(,nt ,rhs)) rhses)))
-               (hash->list grammar)))))))
-
-#|
-; Returns (value) or #f
-(define (parse gram nt os s e memo)
-  (if (eq? s e)
-    ; TODO implement epsilon?
-    #f
-    (let ((memo-val (hash-ref memo (list nt s e) '())))
-      (if (not (null? memo-val))
-          ; This includes the recursion-prevention #f value
-          memo-val
-          ;; These two lines probably not needed, redudant to previous if
-          (if (eq? memo-val #f)
-            #f  
-            ; memo placeholder for recursion prevention
-            (begin
-              (hash-set! memo (list nt s e) #f)
-              (mtch
-                (if (and (eq? (+ s 1) e) (eq? (car (vector-ref os s)) nt))
-                  ; TODO maybe check before the memo check?
-                  `(,(vector-ref os s))
-                  (find-first-maybe
-                    (lambda (production) (try-prodution gram nt os s e memo production))
-                    (hash-ref gram nt (lambda () '()))))
-                (value)
-                  (begin
-                    (hash-set! memo (list nt s e) `(,value))
-                    `(,value))
-                #f
-                  (begin
-                    ;(hash-remove! memo (list nt s e))
-                    ;; Probably redundant?
-                    (hash-set! memo (list nt s e) #f)
-                    #f))))))))
-
-(define (try-prodution gram nt os s e memo production)
-  (mtch production
-    (a b)
-      (mtch (find-first-maybe (lambda (m) (try-two gram a b os s m e memo)) (gen-integer-sequence s e))
-        ((resulta resultb)) `((,nt ,resulta ,resultb))
-        #f #f)
-    (a)
-      (mtch (parse gram a os s e memo)
-        (result) `((,nt ,result))
-        #f #f)))
-
-#|
-(tracefun-with
-  (lambda (app runner)
-    (mtch app (try-prodution gram nt os s e memo production)
-      (plain-ol-tracer (list 'try-prodution nt os s e production) runner)))
-  try-prodution)
-|#
-
-(define (try-two gram a b os s m e memo)
-  (mtch (parse gram a os s m memo)
-    (resulta)
-      (mtch (parse gram b os m e memo)
-        (resultb) `((,resulta ,resultb))
-        #f #f)
-    #f #f))
-
-#|
-(tracefun-with
-  (lambda (app runner)
-    (mtch app (try-two gram a b os s m e memo)
-      (plain-ol-tracer (list 'try-two a b os s m e) runner)))
-  try-two)
-|#
-
-(define (grammar-unbinarize e)
-  (mtch e
-    (a (b . c))
-      (if (and (symbol? b) (starts-with (symbol->string b) "parsebin-"))
-          `(,(grammar-unbinarize a) . ,(grammar-unbinarize c))
-          `(,(grammar-unbinarize a) (,(grammar-unbinarize b) . ,(grammar-unbinarize c))))
-    (a . d)
-      `(,(grammar-unbinarize a) . ,(grammar-unbinarize d))
-    aa aa))
-;(tracefun unbinarize)
-|#
 
 (define (case-clause-unbinarize-2 e)
   (mtch e
