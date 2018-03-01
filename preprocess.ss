@@ -1,4 +1,4 @@
-(load "Lib.ss")
+(load "lib.ss")
 (load "mtch.ss")
 
 (define (tokens->src-1 tokens current-line current-column)

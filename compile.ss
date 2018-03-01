@@ -1,5 +1,5 @@
 (require errortrace)
-(load "Lib.ss")
+(load "lib.ss")
 (load "mtch.ss")
 (load "native-preamble.ss")
 (load "packrat.ss")
