@@ -1,9 +1,3 @@
-(load "lib.ss")
-(load "mtch.ss")
-(load "precedence.ss")
-(load "preprocess.ss")
-(load "tokenize.ss")
-
 (define (general-recurser before-fun after-fun e)
   (let ((e (before-fun e))
         (rec (lambda (e) (general-recurser before-fun after-fun e))))

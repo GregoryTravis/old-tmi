@@ -1,9 +1,13 @@
+(define start-time (current-milliseconds))
 (require errortrace)
 (load "lib.ss")
 (load "mtch.ss")
 (load "native-preamble.ss")
+(load "preprocess.ss")
+(load "tokenize.ss")
 (load "packrat.ss")
 (load "parse.ss")
+(load "precedence.ss")
 
 ; Returns map from function name to list of alternate funs
 (define (compile-let sem)
@@ -199,4 +203,7 @@
 (define (main)
   (pretty-shew (run-compiled (compile-file (vector-ref (current-command-line-arguments) 0)))))
 (hook-with timing-hook main)
+(shew 'INIT (- (current-milliseconds) start-time))
+(main)
+(main)
 (main)

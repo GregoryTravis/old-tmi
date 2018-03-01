@@ -1,6 +1,3 @@
-(load "lib.ss")
-(load "mtch.ss")
-
 (define operator-precedence-levels
   '(($$)
     (* /)

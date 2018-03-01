@@ -1,10 +1,3 @@
-;(require errortrace)
-(load "lib.ss")
-(load "mtch.ss")
-(load "parse.ss")
-(load "preprocess.ss")
-(load "tokenize.ss")
-
 ;; S = epsilon | a S b
 ;; =>
 ;; S = Y | epsilon
