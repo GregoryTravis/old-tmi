@@ -281,8 +281,8 @@
   (mtch cses
     ('comma-separated-exp-sequence ('exp a))
       `(,a)
-    ('comma-separated-exp-sequence rdc ('comma . _) ('exp rac))
-      (append (un-cses-1 rdc) (list rac))))
+    ('comma-separated-exp-sequence ('exp e) ('comma . _) rest)
+      (cons e (un-cses-1 rest))))
 (define (un-cses e)
   (foldr
     (lambda (a d)
