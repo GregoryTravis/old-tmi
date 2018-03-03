@@ -29,13 +29,6 @@
   (lcb #px"(^[\\{])")
   (rcb #px"(^[\\}])")
 ))
-#|
-(define until-newline-regex #px"(^[^\n]*\n)(.*$)")
-;(shew (regexp-match until-newline-regex "asdf\nzxcv\n"))
-;(shew (regexp-match until-newline-regex "asdf\nzxcv\nasdfasfd"))
-;(shew (regexp-match until-newline-regex "asdf\nzxcv"))
-;(shew (regexp-match until-newline-regex "\nasdf\nzxcv"))
-|#
 
 (define (try-tokenize pat-decl s start)
   (mtch pat-decl
@@ -66,12 +59,6 @@
 (assert (equal? '(4 1) (next-rowcol '(3 2) "b\na")))
 (assert (equal? '(5 2) (next-rowcol '(3 2) "b\na\ncd")))
 
-#|
-(define (remove-until-newline s)
-  (mtch (regexp-match until-newline-regex s)
-    (all comment rest) rest))
-|#
-
 (define (next-newline s start)
   (mtch (regexp-match #px"^([^\n]*\n)" s start)
     #f (string-length s)
@@ -96,4 +83,4 @@
   (remove-whitespace (tokenize s 0 '(0 0))))
 
 ;(shew (tokenize-top (read-file-as-string "input.tmi")))
-(hook-with timing-hook tokenize-top)
+;(hook-with timing-hook tokenize-top)

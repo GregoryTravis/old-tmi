@@ -146,14 +146,6 @@
     (un-cses-1 e)))
 ;(tracefun un-cses)
 
-#|
-(define (un-non-where-exp-1 e)
-  (mtch e
-    ('non-where-exp e) e
-    x x))
-(define (un-non-where-exp e) (general-recurser un-non-where-exp-1 e id))
-|#
-
 (define (p2s e)
   (mtch e
     ('plet ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
@@ -272,35 +264,6 @@
     (if (not (equal? e ee)) (err 'yeah e ee) '()))
   (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize e)))))))))
 
-#|
-(define (top-parse gram nt os)
-  ;(shew 'parse os)
-  (let ((gram (binarize gram)))
-    ;(shew gram)
-    (mtch (parse gram nt (list->vector os) 0 (length os) (make-hash))
-      (value) `(,value)
-      #f #f)))
-|#
-
-#|
-(tracefun-with
-  (lambda (app runner)
-    (mtch app ('parse gram nt os s e memo) (plain-ol-tracer (list 'parse nt s e) runner)))
-  parse)
-|#
-
-#|
-(shew (top-parse gram 'rcb '(rcb)))
-(shew (top-parse gram 'exp '(identifier)))
-(shew (top-parse gram 'app '(identifier identifier)))
-(shew (top-parse gram 'exp '(identifier identifier)))
-(shew (top-parse gram 'exp '(identifier identifier identifier)))
-(shew (top-parse gram 'exp '(lparen identifier rparen)))
-(shew (top-parse gram 'exp '(lparen identifier rparen)))
-(shew (top-parse gram 'exp '(lparen lparen identifier rparen rparen)))
-(shew (top-parse gram 'decls '(identifier equals identifier identifier semicolon identifier equals identifier)))
-|#
-
 (define (wrap-file tokens)
   (mtch (last tokens)
     (a as (row col))
@@ -314,31 +277,3 @@
   (if (any? (map (lambda (m) (eq? m #f)) ms))
     #f
     (list (map car ms))))
-
-#|
-(define no-overture #f)
-(define (add-overture s)
-  (if no-overture s
-    (string-append (read-file-as-string "overture.tmi") "\n" s)))
-|#
-
-; Split into tlfs and parse separately; won't work on already-preprocessed code
-; (if it lacks proper layout) (define (parse-file filename).
-;
-; TODO: if a tlf fails to parse, don't keep parsing the rest of the lines.
-#|
-(define (parse-file filename)
-  (let ((tokens (wrap-file (tokenize-top (add-overture (read-file-as-string filename))))))
-    (mtch (maybe-list (map (lambda (tlf) (top-parse gram 'definition (preprocess-top tlf)))
-                        (split-into-tlfs tokens)))
-      (value) `((let ,(map postprocess value) (app ((identifier "main")))))
-      #f #f)))
-|#
-
-; add overture, tokenize, split tlfs, preprocess, parse, postprocess
-
-(define (split-into-tlfs tokens)
-  (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
-
-;(hook-with timing-hook parse-file tokenize-top preprocess-top top-parse binarize postprocess)
-;(hook-with timing-hook parse-file)
