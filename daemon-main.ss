@@ -1,0 +1,2 @@
+(load "daemon.ss")
+(daemon)
