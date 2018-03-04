@@ -1,2 +1,1 @@
-racket -r test.ss
-diff <(racket -r compile.ss tests.tmi) <(echo 0)
+echo '(begin (dload "compile.ss") (main "tests.tmi"))' >> /tmp/racket-daemon-ctrl
