@@ -1,6 +1,9 @@
-main =
-  Command ["open-input-file", "g"]
-    (/. (p) (Command ["shew", p]
-    (/. (void) (Command ["read-char", p]
-    (/. (c) (Command ["shew", c]
-    (/. (void) (Command (Done)))))))))
+read-a-char port k = (Command ["read-char", port] k)
+read-file filename =
+  Command ["open-input-file", filename]
+    (/. (port) (Command ["shew", port]
+    (/. (void) (read-a-char port
+    (/. (c) (read-a-char port
+    (/. (c2) (Command ["pretty-shew", [c, c2]]
+    (/. (v) (Command (Done)))))))))))
+main = read-file "g"
