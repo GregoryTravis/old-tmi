@@ -169,7 +169,7 @@
     (sem) (compile sem)))
 
 (define (run-compiled c)
-(shew c)
+;(shew c)
   (eval c))
 
 (define unconsify-magic 'ZC45$2E)
