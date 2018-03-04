@@ -12,10 +12,18 @@
   (let ((a (read-maybe port)))
     (mtch a
       #f '()
-      x (let ((x (read (open-input-string x))))
-          ;(shew 'eval x)
+      e (let ((e (read (open-input-string e))))
+          ;(shew 'eval e)
           (display "\n")
-          (eval x)))))
+          (execute e)))))
+
+(define (safe-run thunk)
+  (with-handlers
+    ([(lambda (exn) #t) (lambda (exn) (shew 'show exn))])
+    (thunk)))
+
+(define (execute e)
+  (safe-run (lambda () (eval e))))
 
 (define dloaded-files (make-hash))
 (define (dload filename)
@@ -25,8 +33,8 @@
             (> mtime (hash-ref dloaded-files filename)))
       (begin
         (hash-set! dloaded-files filename now)
-        (shew 'loading filename)
-        (load filename))
+        (shew `(loading ,filename))
+        (safe-run (lambda () (load filename))))
       ;(shew 'already filename)
       '())))
 
@@ -37,7 +45,7 @@
         (let ((files (hash-keys dloaded-files)))
           ;(shew 'checking files)
           (map dload files)
-          (sleep 1)
+          (sleep .1)
           (check-ctrl ctrl-port)
           (loop)))))
       (loop))))

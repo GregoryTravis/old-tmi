@@ -190,7 +190,7 @@
   (listexp (seq lsb comma-separated-exp-sequence rsb))
   (comma-separated-exp-sequence (alt (seq exp comma comma-separated-exp-sequence) exp))
   (lambda-exp (seq lambda parenexp exp))
-  (base-exp (alt constructor identifier integer operator parenexp listexp lambda-exp))
+  (base-exp (alt constructor identifier integer operator parenexp listexp lambda-exp string))
   (base-exp-seq (alt (seq base-exp base-exp-seq) base-exp))
   ;(base-exp-seq (alt base-exp (seq base-exp base-exp-seq)))
   (exp (alt where-exp non-where-exp))

@@ -1,5 +1,5 @@
 (define start-time (current-milliseconds))
-(require errortrace)
+;(require errortrace)
 (dload "lib.ss")
 (dload "mtch.ss")
 (dload "native-preamble.ss")
@@ -108,8 +108,10 @@
   (mtch e
     ('identifier name . d)
       (string->symbol name)
-    ('integer name . d)
-      (string->number name)
+    ('integer s . d)
+      (string->number s)
+    ('string s . d)
+      (strip-quotes s)
     ('constructor name . d)
       (let ((args (pm-symgen)))
         `(lambda ,args (cons (quote ,(string->symbol name)) ,args)))
@@ -127,9 +129,13 @@
       (compile-let e)
     ('where . e)
       (compile-let `(let . ,e))
-    x x
     ))
 ;(tracefun compile-exp)
+
+(define (strip-quotes s)
+  (assert (eq? (string-ref s 0) #\"))
+  (assert (eq? (string-ref s (- (string-length s) 1)) #\"))
+  (substring s 1 (- (string-length s) 1)))
 
 (define (case-clause->definition casefun-name cc)
   (mtch cc
@@ -163,6 +169,7 @@
     (sem) (compile sem)))
 
 (define (run-compiled c)
+(shew c)
   (eval c))
 
 (define unconsify-magic 'ZC45$2E)

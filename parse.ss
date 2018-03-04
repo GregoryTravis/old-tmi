@@ -80,6 +80,7 @@
         ('then_keyword s . _) e
         ('else_keyword s . _) e
         ('integer s . _) e
+        ('string s . _) e
         ('constructor s . _) e
         ('identifier s . _) e
         ('comma s . _) e
@@ -176,6 +177,8 @@
     ('identifier . _)
       e
     ('integer . _)
+      e
+    ('string . _)
       e
     ('operator . _)
       e

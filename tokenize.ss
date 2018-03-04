@@ -28,6 +28,7 @@
   (rsb "[\\]]")
   (lcb "[\\{]")
   (rcb "[\\}]")
+  (string "\"[^\"]\"")
 ))
 
 (define combined-pattern
