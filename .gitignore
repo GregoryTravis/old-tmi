@@ -1,9 +1,3 @@
 misc
-grammar.py
-*.tmi.pre
-*.tmi.py
-_input.tmi
-input.tmi.py
-*.pyc
 notes.txt
 log.txt

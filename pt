@@ -1,7 +1,0 @@
-rm -f _input.tmi.out
-parse.py > _input.tmi.out
-cat input.tmi
-echo ======
-cat _input.tmi.out
-diff input.tmi.out _input.tmi.out
-rm -f _input.tmi.out
