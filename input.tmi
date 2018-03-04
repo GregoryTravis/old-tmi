@@ -16,6 +16,8 @@ read-file-old filename =
 read-file filename k =
   Command ["open-input-file", filename]
     (/. (port) (Command ["shew", port]
-    (/. (void) read-all-chars port k)))
+    (/. (void) read-all-chars port (/. (cs) (Command ["list->string", cs] k)))))
 
-main = read-file "g" (/. (cs) (Command ["pretty-shew", cs] (/. (void) (Command (Done)))))
+main = read-file "g"
+  (/. (s) (Command ["pretty-shew", s]
+  (/. (void) (Command (Done)))))

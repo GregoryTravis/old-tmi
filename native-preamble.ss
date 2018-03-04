@@ -3,8 +3,10 @@
 
 (define (native-unconsify e)
   (mtch e
-    ('Cons a d) (cons a (native-unconsify d))
-    'Nil '()))
+    ('Cons a d) (cons (native-unconsify a) (native-unconsify d))
+    'Nil '()
+    (a . d) (fail 'native-data e)
+    x x))
 
 (define (driver-main command)
   ;(shew 'command command)
