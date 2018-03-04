@@ -1,13 +1,5 @@
 (define start-time (current-milliseconds))
 (require errortrace)
-(load "lib.ss")
-(load "mtch.ss")
-(load "native-preamble.ss")
-(load "preprocess.ss")
-(load "tokenize.ss")
-(load "packrat.ss")
-(load "parse.ss")
-(load "precedence.ss")
 
 ; Returns map from function name to list of alternate funs
 (define (compile-let sem)
@@ -199,8 +191,8 @@
 
 ;(hook-with timing-hook parse-file compile run-compiled)
 
-(assert (eq? (vector-length (current-command-line-arguments)) 1))
+;(assert (eq? (vector-length (current-command-line-arguments)) 1))
 (define (main)
-  (pretty-shew (run-compiled (compile-file (vector-ref (current-command-line-arguments) 0)))))
+  (pretty-shew (run-compiled (compile-file "input.tmi"))))
 ;(hook-with timing-hook main)
-(main)
+;(main)
