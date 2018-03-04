@@ -64,4 +64,4 @@ t20 = let roo (Boo a) = a + 100
           roo
 t20 = test [[103, 1004], [103, 1004], [103, 1004]] [[t18 (Boo 3), t18 (Foo 4)], [t19 (Boo 3), t19 (Foo 4)], [t20 (Boo 3), t20 (Foo 4)]]
 
-main = 0
+main = Command ["shew", "OK"] (/. (void) Command (Done))
