@@ -1,9 +1,21 @@
 read-a-char port k = (Command ["read-char", port] k)
-read-file filename =
+
+read-all-chars port k =
+  Command ["read-char", port]
+  (/. (c) (Command ["eof-object?", c]
+  (/. (b) if b then (k Nil) else (read-all-chars port (/. (cs) (k (Cons c cs)))))))
+
+read-file-old filename =
   Command ["open-input-file", filename]
     (/. (port) (Command ["shew", port]
     (/. (void) (read-a-char port
     (/. (c) (read-a-char port
     (/. (c2) (Command ["pretty-shew", [c, c2]]
     (/. (v) (Command (Done)))))))))))
-main = read-file "g"
+
+read-file filename k =
+  Command ["open-input-file", filename]
+    (/. (port) (Command ["shew", port]
+    (/. (void) read-all-chars port k)))
+
+main = read-file "g" (/. (cs) (Command ["shew", cs] (/. (void) (Command (Done)))))
