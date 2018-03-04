@@ -18,4 +18,4 @@ read-file filename k =
     (/. (port) (Command ["shew", port]
     (/. (void) read-all-chars port k)))
 
-main = read-file "g" (/. (cs) (Command ["shew", cs] (/. (void) (Command (Done)))))
+main = read-file "g" (/. (cs) (Command ["pretty-shew", cs] (/. (void) (Command (Done)))))

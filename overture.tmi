@@ -6,6 +6,9 @@ fact n = n * fact (n - 1)
 map f Nil = Nil
 map f (Cons a d) = Cons (f a) (map f d)
 
+nth 0 (Cons a d) = a
+nth n (Cons a d) = nth (n - 1) d
+
 insertion-sort Nil = Nil
 insertion-sort (Cons a d) = insert-into a (insertion-sort d)
 insert-into x Nil = [x]

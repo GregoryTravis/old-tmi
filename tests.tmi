@@ -64,4 +64,16 @@ t20 = let roo (Boo a) = a + 100
           roo
 t20 = test [[103, 1004], [103, 1004], [103, 1004]] [[t18 (Boo 3), t18 (Foo 4)], [t19 (Boo 3), t19 (Foo 4)], [t20 (Boo 3), t20 (Foo 4)]]
 
+t21 = test 10 (nth 0 [10, 20, 30])
+t22 = test 20 (nth 1 [10, 20, 30])
+t23 = test 30 (nth 2 [10, 20, 30])
+
+;; Naked constructors
+id x = x
+dub x = [x, x]
+t24 = test Nil (nth 0 (dub Nil))
+t25 = test Nil (nth 1 (dub Nil))
+t26 x = case x of (Nil a b) => a + b
+t27 = test 3 (t26 (Nil 1 2))
+
 main = Command ["shew", "OK"] (/. (void) Command (Done))
