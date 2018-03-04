@@ -17,9 +17,13 @@
           (display "\n")
           (execute e)))))
 
+(define (show-exn exn)
+  (shew exn)
+  (print-error-trace (current-output-port) exn))
+
 (define (safe-run thunk)
   (with-handlers
-    ([(lambda (exn) #t) (lambda (exn) (shew 'show exn))])
+    ([(lambda (exn) #t) (lambda (exn) (show-exn exn))])
     (thunk)))
 
 (define (execute e)

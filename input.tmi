@@ -1,2 +1,6 @@
-;; main = Command ["open-input-file"]
-main = "a"
+main =
+  Command ["open-input-file", "g"]
+    (/. (p) (Command ["shew", p]
+    (/. (void) (Command ["read-char", p]
+    (/. (c) (Command ["shew", c]
+    (/. (void) (Command (Done)))))))))

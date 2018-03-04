@@ -2,12 +2,14 @@
 ;(require errortrace)
 (dload "lib.ss")
 (dload "mtch.ss")
-(dload "native-preamble.ss")
 (dload "preprocess.ss")
 (dload "tokenize.ss")
 (dload "packrat.ss")
 (dload "parse.ss")
 (dload "precedence.ss")
+;; This is meant to be included in the compiled program, but since we're just
+;; running in here in the compiler process, we just load it.
+(dload "native-preamble.ss")
 
 ; Returns map from function name to list of alternate funs
 (define (compile-let sem)
@@ -153,15 +155,16 @@
     x x))
 (define (compile-simplify e) (general-recurser compile-simplify-1 id e))
 
+(define (wrap-main main)
+  `(driver-main ,main))
+
 (define (compile sem)
   ;(shew 'sem sem)
   (let ((simple (compile-simplify sem)))
     ;(shew 'simple simple)
     (let ((compiled (compile-let simple)))
       ;(shew compiled)
-      (let ((all `(begin ,native-preamble ,compiled)))
-        ;(shew 'all all)
-        all))))
+      (wrap-main compiled))))
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from
@@ -169,7 +172,7 @@
     (sem) (compile sem)))
 
 (define (run-compiled c)
-;(shew c)
+  ;(shew c)
   (eval c))
 
 (define unconsify-magic 'ZC45$2E)
@@ -200,9 +203,11 @@
 
 ; pretty-print, but with [] lists
 (define (pretty-shew o)
-  (let ((op (open-output-string)))
-    (pretty-print (unconsify o) op)
-    (display (pretty-shew-postprocess (get-output-string op)))))
+  (if (not (void? o))
+    (let ((op (open-output-string)))
+      (pretty-print (unconsify o) op)
+      (display (pretty-shew-postprocess (get-output-string op))))
+    '()))
 
 ;(hook-with timing-hook parse-file compile run-compiled)
 

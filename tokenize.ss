@@ -28,7 +28,7 @@
   (rsb "[\\]]")
   (lcb "[\\{]")
   (rcb "[\\}]")
-  (string "\"[^\"]\"")
+  (string "\"[^\"]*\"")
 ))
 
 (define combined-pattern
@@ -46,7 +46,8 @@
 
 (define (match-token s start)
   (mtch (regexp-match combined-pattern s start)
-    (all . groups) `(,(which-token token-res groups) ,all)))
+    (all . groups) `(,(which-token token-res groups) ,all)
+    x (err 'tokenization-failure (substring s start))))
 
 ; This should work too, and be faster but less portable?
 ; (string-split "\nab\nc\n\nde\n\n" "\n" #:trim? #f)

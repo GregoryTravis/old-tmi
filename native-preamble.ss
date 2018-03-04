@@ -1,4 +1,19 @@
-(define native-preamble
-  '(begin
-    (define == equal?)
-    (define (!= a b) (not (equal? a b)))))
+(define == equal?)
+(define (!= a b) (not (equal? a b)))
+
+(define (native-unconsify e)
+  (mtch e
+    ('Cons a d) (cons a (native-unconsify d))
+    'Nil '()))
+
+(define (driver-main command)
+  ;(shew 'command command)
+  (mtch command
+    ('Command ('Cons command-name args) k)
+      (let ((command (string->symbol command-name))
+            (args (native-unconsify args)))
+        ;(shew `(command (,command . ,args)))
+        (driver-main (k (eval (cons command args)))))
+    ;; TODO this should be ('Command ('Done))
+    ('Command 'Done)
+      (void)))

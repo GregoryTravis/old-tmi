@@ -267,14 +267,6 @@
     (if (not (equal? e ee)) (err 'yeah e ee) '()))
   (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize e)))))))))
 
-(define (wrap-file tokens)
-  (mtch (last tokens)
-    (a as (row col))
-      `((let_keyword "let" (-1 -1))
-        ,@tokens
-        (in_keyword "in" (,(+ row 1) -1))
-        (identifier "main" (,(+ row 1) 2)))))
-
 ; Categorical!
 (define (maybe-list ms)
   (if (any? (map (lambda (m) (eq? m #f)) ms))
