@@ -76,4 +76,4 @@ t25 = test Nil (nth 1 (dub Nil))
 t26 x = case x of (Nil a b) => a + b
 t27 = test 3 (t26 (Nil 1 2))
 
-main = Command ["shew", "OK"] (/. (void) Command (Done))
+main = Command ["shew", "OK"]

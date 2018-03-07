@@ -8,14 +8,21 @@
     (a . d) (fail 'native-data e)
     x x))
 
-(define (driver-main command)
-  ;(shew 'command command)
-  (mtch command
-    ('Command ('Cons command-name args) k)
-      (let ((command (string->symbol command-name))
-            (args (native-unconsify args)))
-        ;(shew `(native command (,command . ,args)))
-        (driver-main (k (apply (eval command) args)))) ;(eval (cons command args)))))
-    ;; TODO this should be ('Command ('Done))
-    ('Command 'Done)
-      (void)))
+(define (traceo f . args)
+  (shew 'traceo f args)
+  (let ((result (apply f args)))
+    (shew 'traceo-ret result)
+    result))
+
+(define (driver-main io)
+  (mtch io
+    ;; TODO instead of renaming 'args' why not use hygienic macros?
+    ('Command ('Cons proc-name args2))
+      (let ((proc (eval (string->symbol proc-name)))
+            (args2 (native-unconsify args2)))
+        (apply proc args2))
+    ('Return x)
+      x
+    ('Seq io kio)
+      (driver-main (kio (driver-main io)))))
+;(tracefun driver-main)
