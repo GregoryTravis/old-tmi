@@ -19,14 +19,13 @@ filter p (Cons a d) = if (p a) then (Cons a (filter p d)) else (filter p d)
 
 test expected actual = if expected == actual then True else (err (TestFailure expected actual))
 
-read-all-chars port =
-  (Seq (Command ["read-char", port])
-    (/. (c) (Seq (Command ["eof-object?", c])
-                 (/. (b) if b then (Return Nil) else (Seq (read-all-chars port) (/. (tail) (Return (Cons c tail))))))))
+read-all-chars port = do c <- Command ["read-char", port]
+                         is-eof <- Command ["eof-object?", c]
+                         if is-eof then (Return Nil) else do tail <- read-all-chars port 
+                                                             Return (Cons c tail)
 
-read-file filename = Seq (Command ["open-input-file", filename])
-  ;; (/. (port) Seq (read-all-chars port) (/. (list) (Seq (Command ["pretty-shew", list]) (/. (void) (Return 12)))))
-  (/. (port) Seq (read-all-chars port)
-    (/. (lst) Seq (Command ["list->string", lst])
-      (/. (s) Seq (Command ["pretty-shew", s])
-        (/. (blah) Command ["close-input-port", port]))))
+read-file filename = do port <- Command ["open-input-file", filename]
+                        chars <- read-all-chars port
+                        s <- Command ["list->string", chars]
+                        vd <- Command ["pretty-shew", s]
+                        Command ["close-input-port", port]

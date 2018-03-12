@@ -13,7 +13,7 @@
 (define (should-insert-semicolon tokens group-stack)
   (mtch (list tokens group-stack)
     (((a as (ra ca)) . tokens) ((group-type (b bs (rb cb))) . gss))
-    (and (member group-type '(let_keyword of_keyword where_keyword))
+    (and (member group-type '(let_keyword of_keyword where_keyword do_keyword))
          (> ra rb)
          (eq? ca cb))
     x #f))
@@ -21,7 +21,7 @@
 (define (is-dedent-block-close? tokens group-stack)
   (mtch (list tokens group-stack)
     (((a as (ra ca)) . tokens) ((group-type (b bs (rb cb))) . gss))
-     (and (member group-type '(let_keyword of_keyword where_keyword))
+     (and (member group-type '(let_keyword of_keyword where_keyword do_keyword))
           (> ra rb)
           (< ca cb))
     ('() (('of_keyword (b bs (rb cb))) . gss))
@@ -53,6 +53,8 @@
         (mtch group-stack
           (('let_keyword next) . gs-rest)
             `((rcb "}") (in_keyword . ,x) . ,(preprocess rest gs-rest)))
+      (('do_keyword . x) next . rest)
+        `((do_keyword . ,x) (lcb "{") . ,(preprocess `(,next . ,rest) `((do_keyword ,next) . ,group-stack)))
       (a . d)
         (append
           (if (should-insert-semicolon tokens group-stack) '((semicolon ";")) '())

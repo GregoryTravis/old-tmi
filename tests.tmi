@@ -76,4 +76,14 @@ t25 = test Nil (nth 1 (dub Nil))
 t26 x = case x of (Nil a b) => a + b
 t27 = test 3 (t26 (Nil 1 2))
 
-main = Command ["shew", "OK"]
+;; Commands and do
+t28 = do port <- Command ["open-input-string", "abc"]
+         chars <- read-all-chars port
+         s <- Command ["list->string", chars]
+         Return 1 ;; (test "abc" s)
+
+run-do-tests = do vd <- t28
+                  Return "OK"
+
+main = do ok <- run-do-tests
+          Command ["shew", ok]

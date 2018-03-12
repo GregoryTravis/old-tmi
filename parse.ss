@@ -9,6 +9,18 @@
           `(plet ,letk ,lcb ,(rec decls) ,rcb ,ink ,(rec exp))
         ('let decls exp)
           `(let ,(map rec decls) ,(rec exp))
+        ('pdo dok lcb assignments semi exp rcb)
+          `(pdo ,dok ,lcb ,(rec assignments) ,semi ,(rec exp) ,rcb)
+        ('pdo assignments exp)
+          `(pdo ,(map rec assignments) ,(rec exp))
+        ('do_assignments assignment ('semicolon . a) assignments)
+          `(do_assignments ,(rec assignment) (semicolon . ,a) ,(rec assignments))
+        ('do_assignments assignment)
+          `(do_assignments ,(rec assignment))
+        ('do_assignment pat ('larrow . x) body)
+          `(do_assignment ,(rec pat) (larrow . ,x) ,(rec body))
+        ('do_assignment pat body)
+          `(do_assignment ,(rec pat) ,(rec body))
         ;('pwhere exp wherek lcb decls rcb)
           ;`(pwhere ,(rec exp) ,wherek ,lcb ,(rec decls) ,rcb)
         ;; This only handles the case of 1 suffix, because the grammar parses
@@ -133,6 +145,13 @@
     x x))
 (define (base-exp-seq-unbinarize e) (general-recurser base-exp-seq-unbinarize-1 id e))
 
+(define (flatten-do-assignments e)
+  (mtch e
+    ('do_assignments assignment ('semicolon . _) assignments)
+      (cons assignment (flatten-do-assignments assignments))
+    ('do_assignments assignment)
+      (list assignment)))
+
 (define (un-cses-1 cses)
   (mtch cses
     ('comma-separated-exp-sequence ('exp a))
@@ -157,6 +176,10 @@
       `(where ,(p2s decls) ,(p2s exp))
     ('pif ('if_keyword . x) b ('then_keyword . x) t ('else_keyword . x) e)
       `(if ,(p2s b) ,(p2s t) ,(p2s e))
+    ('pdo ('do_keyword . _) ('lcb . _) assignments ('semicolon . _) exp ('rcb . _))
+      `(pdo ,(map p2s (flatten-do-assignments assignments)) ,(p2s exp))
+    ('do_assignment pat ('larrow . _) body)
+      `(do_assignment ,(p2s pat) ,(p2s body))
     ('exp x)
       (p2s x)
     ('non-where-exp x)
@@ -219,6 +242,10 @@
       `(let ,(map separate-app-op bindings) ,(separate-app-op body))
     ('where bindings body)
       `(where ,(map separate-app-op bindings) ,(separate-app-op body))
+    ('pdo assignments exp)
+      `(pdo ,(map separate-app-op assignments) ,(separate-app-op exp))
+    ('do_assignment pat body)
+      `(do_assignment ,(separate-app-op pat) ,(separate-app-op body))
     ('case exp ccs)
       `(case ,(separate-app-op exp) ,(map separate-app-op ccs))
     ('case_clause pat exp)
@@ -262,10 +289,21 @@
      x x))
 (define (lambda->let e) (general-recurser lambda->let-1 id e))
 
+(define (rewrite-do-1 e)
+  (mtch e
+    ('pdo '() exp)
+      exp
+    ('pdo (('do_assignment pat body) . assignments) exp)
+      (begin
+        (mtch pat ('app (('identifier . _))) #t) ;; Assertion
+        `(app ((constructor "Seq") ,body (lambda-exp (lambda "/.") (parenexp (lparen "(") ,pat (rparen ")")) ,(rewrite-do-1 `(pdo ,assignments ,exp))))))
+    x x))
+(define (rewrite-do e) (general-recurser id rewrite-do-1 e))
+
 (define (postprocess e)
   (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
     (if (not (equal? e ee)) (err 'yeah e ee) '()))
-  (unparenexp (separate-app-op (precedence (lambda->let (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize e)))))))))
+  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize e))))))))))
 
 ; Categorical!
 (define (maybe-list ms)
