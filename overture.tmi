@@ -27,5 +27,5 @@ read-all-chars port = do c <- Command ["read-char", port]
 read-file filename = do port <- Command ["open-input-file", filename]
                         chars <- read-all-chars port
                         s <- Command ["list->string", chars]
-                        vd <- Command ["pretty-shew", s]
-                        Command ["close-input-port", port]
+                        vd <- Command ["close-input-port", port]
+                        Return s

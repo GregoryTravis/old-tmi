@@ -82,7 +82,11 @@ t28 = do port <- Command ["open-input-string", "abc"]
          s <- Command ["list->string", chars]
          Return 1 ;; (test "abc" s)
 
+t29 = do s <- read-file "test-files/read-test-file"
+         Return (test "asdf" s)
+
 run-do-tests = do vd <- t28
+                  vd <- t29
                   Return "OK"
 
 main = do ok <- run-do-tests
