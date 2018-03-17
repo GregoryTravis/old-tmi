@@ -139,11 +139,6 @@
       (cons e (flatten-base-exp-seq d))
     ('base-exp-seq ('base-exp e))
       (list e)))
-(define (base-exp-seq-unbinarize-1 e)
-  (mtch e
-    ('base-exp-seq . d) `(app ,(flatten-base-exp-seq e))
-    x x))
-(define (base-exp-seq-unbinarize e) (general-recurser base-exp-seq-unbinarize-1 id e))
 
 (define (flatten-do-assignments e)
   (mtch e
