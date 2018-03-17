@@ -126,12 +126,6 @@
   (mtch e
     ('decls d) (list d)
     ('decls d semicolon ('decls . rest)) (cons d (decls-unbinarize-2 `(decls . ,rest)))))
-(define (decls-unbinarize-1 e)
-  (mtch e
-    ('decls . _) `(decls-list ,(decls-unbinarize-2 e))
-    x x))
-(define (decls-unbinarize e) (general-recurser decls-unbinarize-1 id e))
-;(tracefun decls-unbinarize decls-unbinarize-1)
 
 (define (flatten-base-exp-seq e)
   (mtch e
@@ -165,12 +159,8 @@
   (mtch e
     ('base-exp-seq ('base-exp be) . d)
       `(app ,(map p2s (flatten-base-exp-seq e)))
-    #|
-    ('base-exp-seq ('base-exp e) d)
-      (cons (p2s e) (p2s d))
-    ('base-exp-seq ('base-exp e))
-      (list (p2s e))
-      |#
+    ('decls . _)
+      (p2s `(decls-list ,(decls-unbinarize-2 e)))
     ('plet ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
       `(let ,(p2s decls) ,(p2s exp))
     ;('pwhere exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
@@ -306,7 +296,7 @@
 (define (postprocess e)
   (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
     (if (not (equal? e ee)) (err 'yeah e ee) '()))
-  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s (decls-unbinarize (case-clause-unbinarize e)))))))))
+  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s (case-clause-unbinarize e))))))))
 
 ; Categorical!
 (define (maybe-list ms)
