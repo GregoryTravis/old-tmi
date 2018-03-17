@@ -168,6 +168,14 @@
 
 (define (p2s e)
   (mtch e
+    ('base-exp-seq ('base-exp be) . d)
+      `(app ,(map p2s (flatten-base-exp-seq e)))
+    #|
+    ('base-exp-seq ('base-exp e) d)
+      (cons (p2s e) (p2s d))
+    ('base-exp-seq ('base-exp e))
+      (list (p2s e))
+      |#
     ('plet ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
       `(let ,(p2s decls) ,(p2s exp))
     ;('pwhere exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
@@ -303,7 +311,7 @@
 (define (postprocess e)
   (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
     (if (not (equal? e ee)) (err 'yeah e ee) '()))
-  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s (base-exp-seq-unbinarize (decls-unbinarize (case-clause-unbinarize e))))))))))
+  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s (decls-unbinarize (case-clause-unbinarize e)))))))))
 
 ; Categorical!
 (define (maybe-list ms)
