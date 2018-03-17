@@ -72,8 +72,6 @@
           `(case_clause ,(rec pat) ,arr ,(rec exp))
         ('case_clause pat exp)
           `(case_clause ,(rec pat) ,(rec exp))
-        ('case-clauses-list cc)
-          `(case-clauses-list ,(map rec cc))
         ('pif ifk b thenk t elsek e)
           `(pif ,ifk ,(rec b) ,thenk ,(rec t) ,elsek ,(rec e))
         ('if b t e)
@@ -112,14 +110,7 @@
   (mtch e
     ('case_clauses ('case_clause . rest)) `((case_clause . ,rest))
     ('case_clauses ('case_clause . rest) semicolon as) (cons `(case_clause . ,rest) (case-clause-unbinarize-2 as)) ))
-(define (case-clause-unbinarize-1 e)
-  (mtch e
-    ('case_clauses . _) `(case-clauses-list ,(case-clause-unbinarize-2 e))
-    x x))
-(define (case-clause-unbinarize e) (general-recurser case-clause-unbinarize-1 id e))
 
-  ;(definition . ((exp equals exp)))
-  ;(decls . ((definition semicolon decls) (definition)))
 (define (decls-unbinarize-2 e)
   (mtch e
     ('decls d) (list d)
@@ -159,6 +150,8 @@
       `(app ,(map p2s (flatten-base-exp-seq e)))
     ('decls . _)
       (map p2s (decls-unbinarize-2 e))
+    ('case_clauses . _)
+      (case-clause-unbinarize-2 e)
     ('plet ('let_keyword . x) ('lcb . x) decls ('rcb . x) ('in_keyword . x) exp)
       `(let ,(p2s decls) ,(p2s exp))
     ;('pwhere exp ('where_keyword . x) ('lcb . x) decls ('rcb . x))
@@ -175,8 +168,8 @@
       (p2s x)
     ('non-where-exp x)
       (p2s x)
-    ('case case_keyword exp of_keyword lcb ('case-clauses-list case_clauses) rcb)
-      `(case ,(p2s exp) ,(map p2s case_clauses))
+    ('case case_keyword exp of_keyword lcb ('case_clauses . cc) rcb)
+      `(case ,(p2s exp) ,(map p2s (p2s `(case_clauses . ,cc))))
     ('case_clause pat _ exp)
       `(case_clause ,(p2s pat) ,(p2s exp))
     ('listexp ('lsb . _) cses ('rsb . _))
@@ -291,7 +284,7 @@
 (define (postprocess e)
   (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
     (if (not (equal? e ee)) (err 'yeah e ee) '()))
-  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s (case-clause-unbinarize e))))))))
+  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s e)))))))
 
 ; Categorical!
 (define (maybe-list ms)
