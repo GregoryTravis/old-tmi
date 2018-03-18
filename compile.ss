@@ -25,14 +25,10 @@
   (group-byy
     (lambda (binding)
       (mtch binding
-        ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
+        ('definition ('identifier name . d) ('equals . _) body)
           name
-        #|
-        ;; No-args case
-        ;(('identifier name . d) ('equals . _) body)
-          ;name))
-          |#
-          ))
+        ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
+          name))
     bindings))
 
 ; Takes ("name" def def def), returns scheme letrec (name val) form
@@ -46,7 +42,7 @@
 (define (compile-multilambda name ml)
   ;; TODO check for duplicate patterns here
   (mtch ml
-    (('definition ('app (('identifier . d)))
+    (('definition ('identifier . d)
       (equals . d)
       body))
      (compile-exp body)
@@ -54,15 +50,21 @@
       (let ((args (pm-symgen)))
         `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml)))))
 
+(define (cm-args-pat e)
+  (mtch e
+    ('app (('identifier . d) . pat))
+      pat
+    ('identifier . d)
+      '()))
 (define (compile-multilambda-1 name args ml)
   (mtch ml
     (('definition
-      ('app (('identifier . d) . pat))
+      dpat
       (equals . d)
       body)
      . the-rest)
      (let ((vresult (pm-symgen)))
-       `(let ((,vresult ,(compile-app-pattern args pat `(list ,(compile-exp body) 'hhh))))
+       `(let ((,vresult ,(compile-app-pattern args (cm-args-pat dpat) `(list ,(compile-exp body) 'hhh))))
           (if (eq? ,vresult #f)
               ,(compile-multilambda-1 name args the-rest)
               (car ,vresult))))
@@ -149,7 +151,7 @@
 
 (define (case-clause->definition casefun-name cc)
   (mtch cc
-    ('case_clause ('app (pat)) exp)
+    ('case_clause pat exp)
       `(definition (app ((identifier ,(symbol->string casefun-name)) ,pat)) (equals "=") ,exp)
     x x))
 

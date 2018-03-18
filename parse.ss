@@ -146,6 +146,8 @@
 
 (define (p2s e)
   (mtch e
+    ('base-exp-seq ('base-exp be))
+      (p2s be)
     ('base-exp-seq ('base-exp be) . d)
       `(app ,(map p2s (flatten-base-exp-seq e)))
     ('decls . _)
@@ -257,12 +259,16 @@
 
 (define lambda-symgen (tagged-symbol-generator-generator 'lambda))
 
+(define (blah-pat-args e)
+  (mtch e
+    ('app pat) pat
+    pat `(,pat)))
 (define (lambda->let-1 e)
   (mtch e
     ;('lambda-exp _ h _) (err h)
-    ('lambda-exp _ ('parenexp _ ('app pat) _) body)
+    ('lambda-exp _ ('parenexp _ pat _) body)
       (let ((name (lambda-symgen)))
-        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) pat))
+        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) (blah-pat-args pat)))
                 (equals "=")
                 ,body))
               ;(equals "=")
@@ -276,15 +282,14 @@
       exp
     ('pdo (('do_assignment pat body) . assignments) exp)
       (begin
-        (mtch pat ('app (('identifier . _))) #t) ;; Assertion
+        (mtch pat ('identifier . _) #t) ;; Assertion
         `(app ((constructor "Seq") ,body (lambda-exp (lambda "/.") (parenexp (lparen "(") ,pat (rparen ")")) ,(rewrite-do-1 `(pdo ,assignments ,exp))))))
     x x))
 (define (rewrite-do e) (general-recurser id rewrite-do-1 e))
 
 (define (postprocess e)
-  (let ((ee (general-recurser (lambda (x) x) (lambda (x) x) e)))
-    (if (not (equal? e ee)) (err 'yeah e ee) '()))
   (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s e)))))))
+;(tracefun lambda->let rewrite-do separate-app-op precedence unparenexp postprocess)
 
 ; Categorical!
 (define (maybe-list ms)
