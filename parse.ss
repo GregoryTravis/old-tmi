@@ -60,6 +60,8 @@
           `(binop ,(rec a) ,(rec op) ,(rec b))
         ('app es)
           `(app ,(map rec es))
+        ('qapp es)
+          `(qapp ,(map rec es))
         ('case casek e ofk lcb ccs rcb)
           `(case ,casek ,(rec e) ,ofk ,lcb ,(rec ccs) ,rcb)
         ('case e ccs)

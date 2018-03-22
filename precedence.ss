@@ -3,33 +3,11 @@
     (* /)
     (+ -)))
 
-#|
-(define (combine-these ops app-list)
-  (mtch app-list
-    (a ('operator op . x) b) `(,(combine-these ops a) (operator ,op . ,x) ,(combine-these ops b))
-    (a ('operator op . x) b . d)
-    (begin (shew 'yeah (member (string->symbol op) ops) op ops)
-      (if (member (string->symbol op) ops)
-        (combine-these ops `((app (,(combine-these ops a) (operator ,op . ,x) ,(combine-these ops b))) . ,d))
-        `(,(combine-these ops a) (operator ,op . ,x) . ,(combine-these ops `(,b . ,d)))))
-    (a . d) `(,(combine-these ops a) . ,(combine-these ops d))
-    x x))
-
-(define (combine-these ops app-list)
-  (mtch app-list
-    (a ('operator op . x) b . d)
-      (if (member (string->symbol op) ops)
-        (combine-these ops `((app (,a (operator ,op . ,x) ,b)) . ,d))
-        `(,a (operator ,op . ,x) ,(combine-these ops `(,b . ,d))))
-    (a) `(,a)
-    x x))
-|#
-
 (define (reduce-once ops app-list)
   (mtch app-list
     (a ('operator op . x) b . d)
       (if (member (string->symbol op) ops)
-        `((app (,a (operator ,op . ,x) ,b)) . ,d)
+        `((qapp (,a (operator ,op . ,x) ,b)) . ,d)
         `(,a (operator ,op ,x) . ,(reduce-once ops `(,b . ,d))))
     (a) `(,a)))
 
@@ -41,6 +19,7 @@
       (if (eq? (length app-list) (length reduced-maybe))
         app-list
         (combine-these ops reduced-maybe)))))
+;(tracefun combine-these)
 
 (define (apply-precedence-levels-1 opls app-list)
   (if (null? opls)
@@ -77,7 +56,11 @@
   (mtch sem
     ('app (a ('operator "$$" . d) b))
       `(app ,(map separate-app-op (unfold-real-app sem)))
+    ('qapp (a ('operator "$$" . d) b))
+      `(app ,(map separate-app-op (unfold-real-app sem)))
     ('app (a ('operator . d) b))
+      `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
+    ('qapp (a ('operator . d) b))
       `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
     x x))
 (define (separate-app-op e)
@@ -87,9 +70,13 @@
   (mtch sem
     ('app (a ('operator "$$" . d) b))
       (append (unfold-real-app a) `(,b))
+    ('qapp (a ('operator "$$" . d) b))
+      (append (unfold-real-app a) `(,b))
     x `(,x)))
     ;('app (a op b))
       ;`(,sem)))
+;(tracefun unfold-real-app separate-app-op-1)
 
 (define (precedence e)
   (separate-app-op (add-explicit-app-op e)))
+;(tracefun precedence)
