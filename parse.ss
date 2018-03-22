@@ -216,27 +216,6 @@
 (define (unparenexp e) (general-recurser unparenexp-1 id e))
 ;(define unparenexp id)
 
-; At this point all expressions are (app (a b c)) where b is an operator, including $$.
-; There may also be (app (a)).
-; Convert $$-chains to regular multi-arg app nodes, and the rest to binops.
-(define (separate-app-op-1 sem)
-  (mtch sem
-    ('app (a ('operator "$$" . d) b))
-      `(app ,(map separate-app-op (unfold-real-app sem)))
-    ('app (a ('operator . d) b))
-      `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
-    x x))
-(define (separate-app-op e)
-  (general-recurser separate-app-op-1 id e))
-
-(define (unfold-real-app sem)
-  (mtch sem
-    ('app (a ('operator "$$" . d) b))
-      (append (unfold-real-app a) `(,b))
-    x `(,x)))
-    ;('app (a op b))
-      ;`(,sem)))
-
 (define lambda-symgen (tagged-symbol-generator-generator 'lambda))
 
 (define (blah-pat-args e)
@@ -268,7 +247,7 @@
 (define (rewrite-do e) (general-recurser id rewrite-do-1 e))
 
 (define (postprocess e)
-  (unparenexp (separate-app-op (precedence (lambda->let (rewrite-do (p2s e)))))))
+  (unparenexp (precedence (lambda->let (rewrite-do (p2s e))))))
 ;(tracefun lambda->let rewrite-do separate-app-op precedence unparenexp postprocess)
 
 ; Categorical!

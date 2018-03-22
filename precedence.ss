@@ -69,5 +69,27 @@
     x x))
 (define (add-explicit-app-op e) (general-recurser add-explicit-app-op-1 id e))
 ;(tracefun add-explicit-app-op) (tracefun add-explicit-app-op-to-list) (tracefun add-explicit-app-op-1) 
+
+; At this point all expressions are (app (a b c)) where b is an operator, including $$.
+; There may also be (app (a)).
+; Convert $$-chains to regular multi-arg app nodes, and the rest to binops.
+(define (separate-app-op-1 sem)
+  (mtch sem
+    ('app (a ('operator "$$" . d) b))
+      `(app ,(map separate-app-op (unfold-real-app sem)))
+    ('app (a ('operator . d) b))
+      `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
+    x x))
+(define (separate-app-op e)
+  (general-recurser separate-app-op-1 id e))
+
+(define (unfold-real-app sem)
+  (mtch sem
+    ('app (a ('operator "$$" . d) b))
+      (append (unfold-real-app a) `(,b))
+    x `(,x)))
+    ;('app (a op b))
+      ;`(,sem)))
+
 (define (precedence e)
-  (add-explicit-app-op e))
+  (separate-app-op (add-explicit-app-op e)))
