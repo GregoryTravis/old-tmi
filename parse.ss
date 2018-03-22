@@ -219,35 +219,15 @@
 ; At this point all expressions are (app (a b c)) where b is an operator, including $$.
 ; There may also be (app (a)).
 ; Convert $$-chains to regular multi-arg app nodes, and the rest to binops.
-(define (separate-app-op sem)
+(define (separate-app-op-1 sem)
   (mtch sem
-    ('let bindings body)
-      `(let ,(map separate-app-op bindings) ,(separate-app-op body))
-    ('where bindings body)
-      `(where ,(map separate-app-op bindings) ,(separate-app-op body))
-    ('pdo assignments exp)
-      `(pdo ,(map separate-app-op assignments) ,(separate-app-op exp))
-    ('do_assignment pat body)
-      `(do_assignment ,(separate-app-op pat) ,(separate-app-op body))
-    ('case exp ccs)
-      `(case ,(separate-app-op exp) ,(map separate-app-op ccs))
-    ('case_clause pat exp)
-      `(case_clause ,(separate-app-op pat) ,(separate-app-op exp))
-    ('if b t e)
-      `(if ,(separate-app-op b) ,(separate-app-op t) ,(separate-app-op e))
-    ('definition a ('equals . d) b)
-      `(definition ,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
-    (a ('equals . d) b)
-      `(,(separate-app-op a) (equals . ,d) ,(separate-app-op b))
     ('app (a ('operator "$$" . d) b))
       `(app ,(map separate-app-op (unfold-real-app sem)))
     ('app (a ('operator . d) b))
       `(binop ,(separate-app-op a) (operator . ,d) ,(separate-app-op b))
-    ('parenexp l e r)
-      `(parenexp ,l ,(separate-app-op e) ,r)
-    ('app (a))
-      `(app (,(separate-app-op a)))
     x x))
+(define (separate-app-op e)
+  (general-recurser separate-app-op-1 id e))
 
 (define (unfold-real-app sem)
   (mtch sem
