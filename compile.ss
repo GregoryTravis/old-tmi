@@ -91,6 +91,14 @@
          ,body1
          #f)))
 
+(define (compile-type-pattern target1 e body1)
+  (mtch e
+    (('identifier type . _) ('identifier var . _))
+      `(if (,(string->symbol (string-append "t-" type "?")) ,target1)
+          (let ((,(string->symbol var) ,target1))
+            ,body1)
+          #f)))
+
 (define (compile-pattern target1 pat1 body1)
   (mtch pat1
     ('identifier name . _)
@@ -104,8 +112,10 @@
       `(if (equal? ,target1 (quote ,(string->symbol value)))
          ,body1
          #f)
-    ('app es)
-      (compile-app-pattern target1 es body1)))
+    ('app (('constructor . cd) . ad))
+      (compile-app-pattern target1 `((constructor . ,cd) . ,ad) body1)
+    ('app (('identifier . cd) var))
+      (compile-type-pattern target1 `((identifier . ,cd) ,var) body1)))
 ;(tracefun compile-pattern-and-body)
 
 (define (compile-exp e)

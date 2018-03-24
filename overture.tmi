@@ -17,6 +17,9 @@ insert-into x (Cons a d) = if (x < a) then (Cons x (Cons a d)) else (Cons a (ins
 filter p Nil = Nil
 filter p (Cons a d) = if (p a) then (Cons a (filter p d)) else (filter p d)
 
+plusplus (int a) (int b) = a + b
+plusplus (string a) (string b) = (string-append a b)
+
 test expected actual = if expected == actual then True else (err (TestFailure expected actual))
 
 read-all-chars port = do c <- Command ["read-char", port]

@@ -26,3 +26,6 @@
     ('Seq io kio)
       (driver-main (kio (driver-main io)))))
 ;(tracefun driver-main)
+
+(define t-int? integer?)
+(define t-string? string?)
