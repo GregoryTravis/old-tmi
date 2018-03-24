@@ -155,6 +155,12 @@
       `(definition (app ((identifier ,(symbol->string casefun-name)) ,pat)) (equals "=") ,exp)
     x x))
 
+;; Handle both 1-arg and 2+-arg lambda arg patterns
+(define (lambda-pat-args e)
+  (mtch e
+    ('app pat) pat
+    pat `(,pat)))
+
 (define (compile-simplify-1 e)
   (mtch e
     ('case exp clauses)
@@ -162,6 +168,19 @@
         `(let
           ,(map (lambda (cc) (case-clause->definition casefun-name cc)) clauses)
           (app ((identifier ,(symbol->string casefun-name)) ,exp))))
+    ('pdo '() exp)
+      exp
+    ('pdo (('do_assignment pat body) . assignments) exp)
+      (begin
+        (mtch pat ('identifier . _) #t) ;; Assertion
+        `(app ((constructor "Seq") ,body (lambda-exp ,pat (pdo ,assignments ,exp)))))
+    ('lambda-exp pat body)
+      (let ((name (lambda-symgen)))
+        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) (lambda-pat-args pat)))
+                (equals "=")
+                ,body))
+              ;(equals "=")
+              (app ((identifier ,(symbol->string name))))))
     x x))
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
@@ -176,38 +195,10 @@
       ;(shew compiled)
       (wrap-main compiled))))
 
-(define (blah-pat-args e)
-  (mtch e
-    ('app pat) pat
-    pat `(,pat)))
-(define (lambda->let-1 e)
-  (mtch e
-    ;('lambda-exp _ h _) (err h)
-    ('lambda-exp pat body)
-      (let ((name (lambda-symgen)))
-        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) (blah-pat-args pat)))
-                (equals "=")
-                ,body))
-              ;(equals "=")
-              (app ((identifier ,(symbol->string name))))))
-     x x))
-(define (lambda->let e) (general-recurser-s lambda->let-1 id e))
-
-(define (rewrite-do-1 e)
-  (mtch e
-    ('pdo '() exp)
-      exp
-    ('pdo (('do_assignment pat body) . assignments) exp)
-      (begin
-        (mtch pat ('identifier . _) #t) ;; Assertion
-        `(app ((constructor "Seq") ,body (lambda-exp ,pat ,(rewrite-do-1 `(pdo ,assignments ,exp))))))
-    x x))
-(define (rewrite-do e) (general-recurser-s id rewrite-do-1 e))
-
 (define (compile-file filename)
   ; Not sure where this extra list comes from
   (mtch (parse-file filename)
-    (sem) (compile (lambda->let (rewrite-do sem)))))
+    (sem) (compile sem)))
 
 (define (run-compiled c)
   ;(shew c)
