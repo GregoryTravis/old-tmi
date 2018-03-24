@@ -1,7 +1,7 @@
 (define operator-precedence-levels
   '(($$)
     (* /)
-    (+ -)
+    (+ - ++)
     (< > ==)))
 
 (define (wrapapp-wrap xs)

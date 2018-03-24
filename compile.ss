@@ -28,7 +28,9 @@
         ('definition ('identifier name . d) ('equals . _) body)
           name
         ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
-          name))
+          name
+        ('definition ('binop lpat ('operator op . _) rpat) ('equals . _) body)
+          op))
     bindings))
 
 ; Takes ("name" def def def), returns scheme letrec (name val) form
@@ -55,7 +57,9 @@
     ('app (('identifier . d) . pat))
       pat
     ('identifier . d)
-      '()))
+      '()
+    ('binop lpat ('operator . _) rpat)
+      `(,lpat ,rpat)))
 (define (compile-multilambda-1 name args ml)
   (mtch ml
     (('definition
