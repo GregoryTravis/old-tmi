@@ -242,7 +242,7 @@
 (define (rewrite-do e) (general-recurser id rewrite-do-1 e))
 
 (define (postprocess e)
-  (precedence (lambda->let (rewrite-do (p2s e)))))
+  (lambda->let (rewrite-do (precedence (p2s e)))))
 ;(tracefun lambda->let rewrite-do separate-app-op precedence postprocess)
 
 ; Categorical!
