@@ -176,10 +176,38 @@
       ;(shew compiled)
       (wrap-main compiled))))
 
+(define (blah-pat-args e)
+  (mtch e
+    ('app pat) pat
+    pat `(,pat)))
+(define (lambda->let-1 e)
+  (mtch e
+    ;('lambda-exp _ h _) (err h)
+    ('lambda-exp pat body)
+      (let ((name (lambda-symgen)))
+        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) (blah-pat-args pat)))
+                (equals "=")
+                ,body))
+              ;(equals "=")
+              (app ((identifier ,(symbol->string name))))))
+     x x))
+(define (lambda->let e) (general-recurser-s lambda->let-1 id e))
+
+(define (rewrite-do-1 e)
+  (mtch e
+    ('pdo '() exp)
+      exp
+    ('pdo (('do_assignment pat body) . assignments) exp)
+      (begin
+        (mtch pat ('identifier . _) #t) ;; Assertion
+        `(app ((constructor "Seq") ,body (lambda-exp ,pat ,(rewrite-do-1 `(pdo ,assignments ,exp))))))
+    x x))
+(define (rewrite-do e) (general-recurser-s id rewrite-do-1 e))
+
 (define (compile-file filename)
   ; Not sure where this extra list comes from
   (mtch (parse-file filename)
-    (sem) (compile sem)))
+    (sem) (compile (lambda->let (rewrite-do sem)))))
 
 (define (run-compiled c)
   ;(shew c)
