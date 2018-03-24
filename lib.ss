@@ -347,6 +347,9 @@
        '()
        (err "Assertion failure" ',exp ,@stuff)))
 
+(define (asseq a b)
+  (assert (equal? a b) a b))
+
 (define (id x) x)
 
 (define (err . args)
