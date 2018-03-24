@@ -85,7 +85,7 @@
     ('base-exp-seq ('base-exp be))
       (p2s be)
     ('base-exp-seq ('base-exp be) . d)
-      `(app ,(map p2s (flatten-base-exp-seq e)))
+      (p2s `(app ,(flatten-base-exp-seq e)))
     ('decls . _)
       (map p2s (decls-unbinarize-2 e))
     ('case_clauses . _)
@@ -115,7 +115,7 @@
     ('definition pat e body)
       `(definition ,(p2s pat) ,e ,(p2s body))
     ('app os)
-      `(app ,(map p2s os))
+      (precedence (map p2s os))
     ('identifier . _)
       e
     ('integer . _)
@@ -148,7 +148,7 @@
 (define lambda-symgen (tagged-symbol-generator-generator 'lambda))
 
 (define (postprocess e)
-  (precedence (p2s e))))
+  (p2s e))
 ;(tracefun lambda->let rewrite-do separate-app-op precedence postprocess)
 
 ; Categorical!

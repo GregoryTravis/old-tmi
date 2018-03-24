@@ -54,14 +54,6 @@
       `(binop ,(un-wrapapp-wrap a) ,op ,(un-wrapapp-wrap b))))
 ;(tracefun un-wrapapp-wrap)
 
-(define (precedence-app xs)
+(define (precedence xs)
   (mtch (nest-ops operator-precedence-levels (add-$$ (wrapapp-wrap xs)))
     (b) (un-wrapapp-wrap b)))
-
-(define (precedence-1 e)
-  (mtch e
-    ('app xs) (precedence-app xs)
-    x x))
-
-(define (precedence e)
-  (general-recurser-s precedence-1 id e))
