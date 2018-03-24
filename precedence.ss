@@ -64,4 +64,4 @@
     x x))
 
 (define (precedence e)
-  (general-recurser precedence-1 id e))
+  (general-recurser-s precedence-1 id e))

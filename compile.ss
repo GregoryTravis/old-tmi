@@ -163,7 +163,7 @@
           ,(map (lambda (cc) (case-clause->definition casefun-name cc)) clauses)
           (app ((identifier ,(symbol->string casefun-name)) ,exp))))
     x x))
-(define (compile-simplify e) (general-recurser compile-simplify-1 id e))
+(define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
 (define (wrap-main main)
   `(driver-main ,main))
