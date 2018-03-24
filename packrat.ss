@@ -215,5 +215,5 @@
   (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-overture (read-file-as-string filename)))))))))
     ;(shew parsed)
     (mtch parsed
-      (S parsed) (list (postprocess parsed)))))
+      (S parsed) (list (parse-postprocess parsed)))))
 ;(hook-with timing-hook parse-file)

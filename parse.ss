@@ -147,7 +147,7 @@
 
 (define lambda-symgen (tagged-symbol-generator-generator 'lambda))
 
-(define (postprocess e)
+(define (parse-postprocess e)
   (p2s e))
 ;(tracefun lambda->let rewrite-do separate-app-op precedence postprocess)
 
