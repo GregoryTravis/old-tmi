@@ -1,2 +1,1 @@
-main = do s <- read-file "g"
-          Command ["pretty-shew", s]
+main = Return ("a" ++ "b")

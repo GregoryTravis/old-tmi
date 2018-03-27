@@ -26,18 +26,20 @@
     (lambda (binding)
       (mtch binding
         ('definition ('identifier name . d) ('equals . _) body)
-          name
+          `(fun ,name)
         ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
-          name
+          `(fun ,name)
         ('definition ('binop lpat ('operator op . _) rpat) ('equals . _) body)
-          op))
+          `(binop ,op)))
     bindings))
 
 ; Takes ("name" def def def), returns scheme letrec (name val) form
 (define (compile-multilambda-group ml)
   (mtch ml
-    (name . defs)
-    `(,(string->symbol name) ,(compile-multilambda name defs))))
+    (('fun name) . defs)
+      `(,(string->symbol name) ,(compile-multilambda name defs))
+    (('binop name) . defs)
+      `(,(string->symbol (++ "op" name)) ,(compile-multilambda name defs))))
 
 (define pm-symgen (tagged-symbol-generator-generator 'pm))
 
@@ -148,7 +150,7 @@
     ('app es)
       (map compile-exp es)
     ('binop a ('operator op . _) b)
-      `(,(string->symbol op) ,(compile-exp a) ,(compile-exp b))
+      `(,(string->symbol (string-append "op" op)) ,(compile-exp a) ,(compile-exp b))
     ('if b t e)
       `(if ,(compile-exp b) ,(compile-exp t) ,(compile-exp e))
     ('let . _)

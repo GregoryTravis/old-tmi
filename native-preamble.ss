@@ -29,3 +29,16 @@
 
 (define t-int? integer?)
 (define t-string? string?)
+
+;; Only for native scheme operators used without overloading; eventually most of these will disappear
+(define op+ +)
+(define op* *)
+(define op/ /)
+(define op+ +)
+(define op- -)
+;(define op++ ++)
+(define op< <)
+(define op> >)
+(define op== ==)
+; This isn't used yet except in precedence
+; (define op$$ $$)
