@@ -85,7 +85,7 @@ t28 = do port <- Command ["open-input-string", "abc"]
 t29 = do s <- read-file "test-files/read-test-file"
          Return (test "asdf" s)
 
-t30 = test [3, "asdfzxcv"] [1 + 2, "asdf" ++ "zxcv"]
+t30 = test [3, "asdfzxcv"] [1 + 2, "asdf" + "zxcv"]
 
 run-do-tests = do vd <- t28
                   vd <- t29
