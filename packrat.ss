@@ -209,7 +209,7 @@
   (phash-entry (seq identifier equals exp))
 ))
 (define grammar (binarize-grammar grammar))
-(shew grammar)
+;(shew grammar)
 ;(hook-with timing-hook top-parse)
 ;(hook-with timing-hook preprocess-top)
 ;(hook-with timing-hook tokenize-top)
