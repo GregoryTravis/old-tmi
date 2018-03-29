@@ -42,3 +42,8 @@
 ; (define op$$ $$)
 
 (define native-+ +)
+
+(define (coll-make-hash pairs)
+  (let ((hash (make-hash)))
+    (map (lambda (p) (mtch p (k . v) (hash-set! hash k v))) pairs)
+    hash))

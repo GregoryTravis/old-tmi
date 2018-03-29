@@ -28,8 +28,10 @@
   (rparen "[\\)]")
   (lsb "[\\[]")
   (rsb "[\\]]")
-  (p-lcb "[\\{-]")
-  (p-rcb "[\\-}]")
+  (p-lcb "\\{-")
+  (p-rcb "-\\}")
+  (lcb "\\{")
+  (rcb "\\}")
   (string "\"[^\"]*\"")
 ))
 
@@ -95,5 +97,5 @@
 (define (tokenize-top s)
   (remove-whitespace (tokenize s 0 '(0 0))))
 
-;(shew (tokenize-top (read-file-as-string "input.tmi")))
+;(tracefun tokenize-top)
 ;(hook-with timing-hook tokenize-top)

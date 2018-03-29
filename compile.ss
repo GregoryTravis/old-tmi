@@ -124,6 +124,12 @@
       (compile-type-pattern target1 `((identifier . ,cd) ,var) body1)))
 ;(tracefun compile-pattern-and-body)
 
+(define (compile-hash-literal entries)
+  `(coll-make-hash
+     (list . ,(map (lambda (e) (mtch e ('hash-entry ('identifier i . _) e)
+                                       `(cons ',(string->symbol i) ,(compile-exp e))))
+                 entries))))
+
 (define (compile-exp e)
   (mtch e
     ('identifier name . d)
@@ -157,6 +163,8 @@
       (compile-let e)
     ('where . e)
       (compile-let `(let . ,e))
+    ('hash entries)
+      (compile-hash-literal entries)
     ))
 ;(tracefun compile-exp)
 

@@ -33,6 +33,10 @@
           `(case_clause ,(rec pat) ,(rec exp))
         ('if b t e)
           `(if ,(rec b) ,(rec t) ,(rec e))
+        ('hash-entry ('identifier . ii) e)
+          `(hash-entry (identifier . ,ii) ,(rec e))
+        ('hash es)
+          `(hash ,(map rec es))
         ;; Tokens.  TODO put 'token at the front of these
         ('integer s . _) e
         ('string s . _) e
@@ -130,6 +134,14 @@
       e
     ('lambda-exp sym pat body)
       `(lambda-exp ,(p2s pat) ,(p2s body))
+    ('phash ('lcb . _) entries ('rcb . _))
+      `(hash ,(p2s entries))
+    ('phash-entries e ('comma . _) es)
+      `(,(p2s e) . ,(p2s es))
+    ('phash-entries e)
+      `(,(p2s e))
+    ('phash-entry ('identifier . id) ('equals . _) e)
+      `(hash-entry (identifier . ,id) ,(p2s e))
       ))
 ;(tracefun p2s)
 
