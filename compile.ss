@@ -229,40 +229,6 @@
   ;(shew c)
   (eval c))
 
-(define unconsify-magic 'ZC45$2E)
-
-; Unconsify Cons lists throughout e.
-(define (unconsify e)
-  (mtch e
-    ('Cons a d) (unconsify-cons e)
-    (a . d) (map unconsify e)
-    x x))
-
-; Convert (Cons 1 (Cons 2 ... Nil)) format to (<magic> 1 2 ... <magic>) format.
-; The magic will be replaced with square brackets later.
-(define (unconsify-cons e)
-  (cons unconsify-magic (append (unconsify-cons-1 e) (list unconsify-magic))))
-(define (unconsify-cons-1 e)
-  (mtch e
-    ('Cons a d) (cons (unconsify a) (unconsify-cons-1 d))
-    'Nil '()))
-
-; Convert parens with magic tokens to [].
-(define pretty-shew-postprocess-rewrites
-  `((,(string-append "(" (symbol->string unconsify-magic) " ") "[")
-    (,(string-append "(" (symbol->string unconsify-magic) "\n") "[\n")
-    (,(string-append " " (symbol->string unconsify-magic) ")") "]")))
-(define (pretty-shew-postprocess s)
-  (apply-string-rewrites s pretty-shew-postprocess-rewrites))
-
-; pretty-print, but with [] lists
-(define (pretty-shew o)
-  (if (not (void? o))
-    (let ((op (open-output-string)))
-      (pretty-print (unconsify o) op)
-      (display (pretty-shew-postprocess (get-output-string op))))
-    '()))
-
 ;(hook-with timing-hook parse-file compile run-compiled)
 
 ;(assert (eq? (vector-length (current-command-line-arguments)) 1))
