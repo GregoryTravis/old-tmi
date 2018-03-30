@@ -88,7 +88,7 @@ t29 = do s <- read-file "test-files/read-test-file"
 t30 = test [3, "asdfzxcv"] [1 + 2, "asdf" + "zxcv"]
 
 ;; Just for parsing
-t31 = Return { a : { c : let r = 5 in r + r }, b : 13 }
+t31 = Return { a: { c: let r = 5 in r + r }, b: 13 }
 
 run-do-tests = do vd <- t28
                   vd <- t29

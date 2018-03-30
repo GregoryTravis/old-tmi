@@ -1,1 +1,1 @@
-main = Return { a : { c : let r = 5 in r + r }, b : 13 }
+main = Return { a: { c: let r = 5 in r + r }, b: 13 }
