@@ -20,6 +20,7 @@
   (identifier "[a-zA-Z0-9_][a-zA-Z0-9_=<>+/\\-_!@$%^&*?]*")
   (comma ",")
   (comment ";;")
+  (colon ":")
   (semicolon ";")
   (equals "=(?=\\s)")
   (lambda "/\\.(?=\\s)")

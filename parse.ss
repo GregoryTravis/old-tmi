@@ -140,7 +140,7 @@
       `(,(p2s e) . ,(p2s es))
     ('phash-entries e)
       `(,(p2s e))
-    ('phash-entry ('identifier . id) ('equals . _) e)
+    ('phash-entry ('identifier . id) ('colon . _) e)
       `(hash-entry (identifier . ,id) ,(p2s e))
       ))
 ;(tracefun p2s)

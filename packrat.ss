@@ -206,7 +206,7 @@
   (pif (seq if_keyword exp then_keyword exp else_keyword exp))
   (phash (seq lcb phash-entries rcb))
   (phash-entries (alt (seq phash-entry comma phash-entries) phash-entry))
-  (phash-entry (seq identifier equals exp))
+  (phash-entry (seq identifier colon exp))
 ))
 (define grammar (binarize-grammar grammar))
 ;(shew grammar)
