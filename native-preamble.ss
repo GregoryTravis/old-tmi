@@ -49,6 +49,7 @@
       (lambda (p)
         (mtch p (k . v)
           (begin
+            (assert (symbol? k))
             (assert (not (hash-has-key? hash k)))
             (hash-set! hash k v))))
       pairs)

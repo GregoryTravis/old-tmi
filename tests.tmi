@@ -90,9 +90,11 @@ t30 = test [3, "asdfzxcv"] [1 + 2, "asdf" + "zxcv"]
 ;; Just for parsing
 t31 = Return { a: { c: let r = 5 in r + r }, b: 13 }
 
+t32 = test "{a: {c: 10}, b: 13}" (tmi-pretty-print { a: { c: let r = 5 in r + r }, b: 13 })
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   Return "OK"
 
 main = do ok <- run-do-tests
-          Command ["shew", ok]
+          Return "OK"

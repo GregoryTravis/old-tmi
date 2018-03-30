@@ -7,6 +7,7 @@
 (dload "packrat.ss")
 (dload "parse.ss")
 (dload "precedence.ss")
+(dload "pretty-print.ss")
 ;; This is meant to be included in the compiled program, but since we're just
 ;; running in here in the compiler process, we just load it.
 (dload "native-preamble.ss")
@@ -266,6 +267,7 @@
 
 ;(assert (eq? (vector-length (current-command-line-arguments)) 1))
 (define (main filename)
-  (pretty-shew (run-compiled (compile-file filename))))
+  (display (tmi-pretty-print (run-compiled (compile-file filename))))
+  (display "\n"))
 ;(hook-with timing-hook main)
 ;(main)
