@@ -10,6 +10,11 @@
     'Nil '()
     x x))
 
+(define (consify l)
+  (mtch l
+    (a . d) `(Cons ,a ,(consify d))
+    '() 'Nil))
+
 (define (traceo f . args)
   (shew 'traceo f args)
   (let ((result (apply f args)))
@@ -57,10 +62,22 @@
       pairs)
     hash))
 
-(define (read-data filename)
-  (call-with-input-file* filename
-    (lambda (in) (read-json in))))
+;; Convert any hash to an equal? hash.  Recursive.
+(define (->hash-equal o)
+  (if (hash? o)
+    (make-hash (map (lambda (e) (mtch e (k . v) `(,k . ,(->hash-equal v)))) (hash->list o)))
+    (mtch o
+      (a . d) (map ->hash-equal o)
+      x x)))
 
-(define (write-data filename data)
+;; Only handles a list of records
+(define (json->tmi json)
+  (consify (map ->hash-equal json)))
+
+(define (native-read-data filename)
+  (call-with-input-file* filename
+    (lambda (in) (json->tmi (read-json in)))))
+
+(define (native-write-data filename data)
   (call-with-output-file* filename #:exists 'replace
     (lambda (out) (write-json data out))))

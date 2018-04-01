@@ -1,2 +1,3 @@
+;; main = Command ["read-data", "jjj"]
 main = do d <- Command ["read-data", "jjj"]
           Command ["write-data", "out", d]

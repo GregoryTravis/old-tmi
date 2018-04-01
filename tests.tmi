@@ -93,8 +93,13 @@ t31 = Return { a: { c: let r = 5 in r + r }, b: 13 }
 t32 = test "{a: {c: 10}, b: 13}" (tmi-pretty-print { a: { c: let r = 5 in r + r }, b: 13 })
 t33 = test "[4, 5]" (tmi-pretty-print [4, 5])
 
+t34 = do s <- read-data "test-files/read-data-test-file"
+         Return (test [{a: {c: 10}, b: 13}, {h: 56}] s)
+         ;; Return (test 1 s)
+
 run-do-tests = do vd <- t28
                   vd <- t29
+                  vd <- t34
                   Return "OK"
 
 main = do ok <- run-do-tests

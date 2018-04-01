@@ -32,3 +32,6 @@ read-file filename = do port <- Command ["open-input-file", filename]
                         s <- Command ["list->string", chars]
                         vd <- Command ["close-input-port", port]
                         Return s
+
+read-data filename = Command ["native-read-data", filename]
+write-data filename o = Command ["native-write", filename, o]
