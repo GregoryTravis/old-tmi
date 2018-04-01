@@ -95,7 +95,12 @@ t33 = test "[4, 5]" (tmi-pretty-print [4, 5])
 
 t34 = do s <- read-data "test-files/read-data-test-file"
          Return (test [{a: {c: 10}, b: 13}, {h: 56}] s)
-         ;; Return (test 1 s)
+
+t35 = test True (all [True])
+t36 = test True (all [True, True])
+;; t37 = test True (all Nil))
+t38 = test False (all [False])
+t39 = test False (all [False, True])
 
 run-do-tests = do vd <- t28
                   vd <- t29

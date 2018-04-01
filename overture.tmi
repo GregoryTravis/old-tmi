@@ -20,7 +20,12 @@ filter p (Cons a d) = if (p a) then (Cons a (filter p d)) else (filter p d)
 (int a) + (int b) = native-+ a b
 (string a) + (string b) = string-append a b
 
+all (Cons True d) = all d
+all Nil = True
+all x = False
+
 test expected actual = if expected == actual then True else (err (TestFailure expected actual))
+assert v checks = if (all checks) then v else (err (AssertionFailure v checks))
 
 read-all-chars port = do c <- Command ["read-char", port]
                          is-eof <- Command ["eof-object?", c]
@@ -34,4 +39,4 @@ read-file filename = do port <- Command ["open-input-file", filename]
                         Return s
 
 read-data filename = Command ["native-read-data", filename]
-write-data filename o = Command ["native-write", filename, o]
+write-data filename o = Command ["native-write-data", filename, o]
