@@ -1,6 +1,1 @@
-a = assert 12 [True,
-               True]
-;; b = assert 13 [False]
-nain = do d <- read-data "jjj"
-          write-data "out" d
-main = Return (if False then 1 else 2)
+main = Return 12

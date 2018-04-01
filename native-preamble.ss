@@ -1,14 +1,5 @@
 (require json)
 
-#|
-(define == equal?)
-(define (!= a b) (not (equal? a b)))
-(define (== a b)
-  (if (equal? a b) 'True 'False))
-(define (!= a b)
-  (if (equal? a b) 'False 'True))
-|#
-
 ;; Must be True or False; not using mtch since it's used so much (probably).
 (define (tmi-if b)
   (assert (or (eq? b 'True) (eq? b 'False)) 'not-boolean b)

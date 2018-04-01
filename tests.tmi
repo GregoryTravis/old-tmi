@@ -102,6 +102,8 @@ t36 = test True (all [True, True])
 t38 = test False (all [False])
 t39 = test False (all [False, True])
 
+t40 = test 31 (assert 31 [True])
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34
