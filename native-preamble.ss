@@ -1,11 +1,13 @@
+(require json)
+
 (define == equal?)
 (define (!= a b) (not (equal? a b)))
 
+; Stops at the first non-Cons construction.
 (define (native-unconsify e)
   (mtch e
     ('Cons a d) (cons (native-unconsify a) (native-unconsify d))
     'Nil '()
-    (a . d) (fail 'native-data e)
     x x))
 
 (define (traceo f . args)
@@ -54,3 +56,11 @@
             (hash-set! hash k v))))
       pairs)
     hash))
+
+(define (read-data filename)
+  (call-with-input-file* filename
+    (lambda (in) (read-json in))))
+
+(define (write-data filename data)
+  (call-with-output-file* filename #:exists 'replace
+    (lambda (out) (write-json data out))))

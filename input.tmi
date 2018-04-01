@@ -1,1 +1,2 @@
-main = Return [4, 5]
+main = do d <- Command ["read-data", "jjj"]
+          Command ["write-data", "out", d]
