@@ -1,5 +1,6 @@
 (define start-time (current-milliseconds))
 ;(require errortrace)
+(require json)
 (dload "lib.ss")
 (dload "mtch.ss")
 (dload "preprocess.ss")
@@ -221,19 +222,44 @@
       (wrap-main compiled))))
 
 (define (compile-file filename)
+  (compile-string (read-file-as-string filename)))
+
+(define (compile-string s)
   ; Not sure where this extra list comes from
-  (mtch (parse-file filename)
+  (mtch (parse-string s)
     (sem) (compile sem)))
 
 (define (run-compiled c)
   ;(shew c)
   (eval c))
 
+(define (read-data filename)
+  ;(shew 'GGG (string-append "let {- " (read-file-as-string filename) " -} in main"))
+  (let ((ss
+             ;(string-append "let {- " (read-file-as-string filename) " -} in main")))
+             (string-append "let {- main = Return " (read-file-as-string filename) " -} in main")))
+             ;(shew 'well ss)
+             ;(string-append (read-file-as-string filename))))
+  (let ((s (parse-string-no-preprocess ss)))
+    (mtch s
+      (sem)
+        (begin
+          ;(shew 'sem sem (compile sem))
+          (let ((qq (eval (compile sem))))
+            qq))))))
 ;(hook-with timing-hook parse-file compile run-compiled)
+(hook-with timing-hook read-data parse-string-no-preprocess)
+
+(define (yoyo)
+  (let ((v (read-json (open-input-file "jjj"))))
+    (shew v)))
+(hook-with timing-hook yoyo)
 
 ;(assert (eq? (vector-length (current-command-line-arguments)) 1))
 (define (main filename)
+  (yoyo)
   (display (tmi-pretty-print (run-compiled (compile-file filename))))
+;(read-data "jjj")
   (display "\n"))
 ;(hook-with timing-hook main)
 ;(main)

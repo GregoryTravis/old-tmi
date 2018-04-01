@@ -1,1 +1,2 @@
-main = Return [4, 5]
+;; main = Return {a: {c: 10}, b: 13}
+main = Return 12 ;; Command ["read-data", "jjj"]

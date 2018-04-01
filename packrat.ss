@@ -214,10 +214,22 @@
 ;(hook-with timing-hook preprocess-top)
 ;(hook-with timing-hook tokenize-top)
 ;(hook-with timing-hook parsed-unbinarize)
-(define (parse-file filename)
-  (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-overture (read-file-as-string filename)))))))))
+
+(define (parse-string s)
+  ;(shew 'asss (tokenize-top s))
+  ;(shew 'asss (preprocess-top (wrap-file (tokenize-top (add-overture s)))))
+  (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-overture s))))))))
     ;(shew parsed)
     (mtch parsed
       (S parsed) (list (parse-postprocess parsed)))))
+
+(define (parse-string-no-preprocess s)
+  ;(shew 'fuck s)
+  ;(shew 'fuck (tokenize-top s))
+  (let ((parsed (parsed-unbinarize (top-parse (tokenize-top s)))))
+    ;(shew parsed)
+    (mtch parsed
+      (S parsed) (list (parse-postprocess parsed)))))
+
 ;(tracefun tokenize-top)
 ;(hook-with timing-hook parse-file)
