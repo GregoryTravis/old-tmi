@@ -165,10 +165,10 @@
 (shew (parsed-unbinarize parsed))
 |#
 
-(define no-overture #f)
-(define (add-overture s)
-  (if no-overture s
-    (string-append (read-file-as-string "overture.tmi") "\n" s)))
+(define no-libs #f)
+(define (add-libs s)
+  (if no-libs s
+    (string-append (read-file-as-string "overture.tmi") (read-file-as-string "rel.tmi") "\n" s)))
 
 (define (wrap-file tokens)
   (mtch (last tokens)
@@ -215,7 +215,7 @@
 ;(hook-with timing-hook tokenize-top)
 ;(hook-with timing-hook parsed-unbinarize)
 (define (parse-file filename)
-  (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-overture (read-file-as-string filename)))))))))
+  (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-libs (read-file-as-string filename)))))))))
     ;(shew parsed)
     (mtch parsed
       (S parsed) (list (parse-postprocess parsed)))))

@@ -1,2 +1,3 @@
-deref (Cons (Entry k v) d) kk = if k == kk then v else deref d kk
-deref Nil kk = assert Nil [False]
+deref-e (Cons (Entry k v) d) kk = if k == kk then v else deref-e d kk
+deref-e Nil kk = assert Nil [False]
+deref rec k = deref-e (rec-to-entries rec) k

@@ -1,1 +1,1 @@
-main = Return [(rec-to-entries {a: 10, b: 20}), (entries-to-rec (rec-to-entries {a: 10, b: 20}))]
+main = Return (deref {a: 10, b: 20} "a")
