@@ -1,0 +1,2 @@
+deref (Cons (Entry k v) d) kk = if k == kk then v else deref d kk
+deref Nil kk = assert Nil [False]
