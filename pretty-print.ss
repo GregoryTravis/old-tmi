@@ -7,7 +7,8 @@
   (cond
     ((hash? o)
       `("{" ,(join-things-list ", "
-        (map (lambda (k) `(,(tmi-pp-render k) ": " ,(tmi-pp-render (hash-ref o k)))) (hash-keys o))) "}"))
+        (map (lambda (k) `(,(tmi-pp-render (string->symbol k)) ": "
+                           ,(tmi-pp-render (hash-ref o k)))) (hash-keys o))) "}"))
     ((symbol? o) (symbol->string o))
     (#t (mtch o
           ('Cons a d)

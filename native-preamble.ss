@@ -74,7 +74,7 @@
           (begin
             (assert (symbol? k))
             (assert (not (hash-has-key? hash k)))
-            (hash-set! hash k v))))
+            (hash-set! hash (symbol->string k) v))))
       pairs)
     hash))
 
@@ -86,9 +86,17 @@
       (a . d) (map ->hash-equal o)
       x x)))
 
+;; Change symbol keys to strings
+(define (string-hash-keys h)
+  (if (hash? h)
+    (make-hash (map (lambda (k) (cons (symbol->string k) (string-hash-keys (hash-ref h k)))) (hash-keys h)))
+    (mtch h
+      (a . d) (map string-hash-keys o)
+      x x)))
+
 ;; Only handles a list of records
 (define (json->tmi json)
-  (consify-1 (map ->hash-equal json)))
+  (consify-1 (map string-hash-keys (map ->hash-equal json))))
 
 (define (native-read-data filename)
   (call-with-input-file* filename
