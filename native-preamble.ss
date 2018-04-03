@@ -12,10 +12,12 @@
     'Nil '()
     x x))
 
+#|
 (define (consify l)
   (mtch l
     (a . d) `(Cons ,a ,(consify d))
     '() 'Nil))
+|#
 
 (define (traceo f . args)
   (shew 'traceo f args)
@@ -86,7 +88,7 @@
 
 ;; Only handles a list of records
 (define (json->tmi json)
-  (consify (map ->hash-equal json)))
+  (consify-1 (map ->hash-equal json)))
 
 (define (native-read-data filename)
   (call-with-input-file* filename

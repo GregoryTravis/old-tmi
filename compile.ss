@@ -8,6 +8,7 @@
 (dload "parse.ss")
 (dload "precedence.ss")
 (dload "pretty-print.ss")
+(dload "native-rel.ss")
 ;; This is meant to be included in the compiled program, but since we're just
 ;; running in here in the compiler process, we just load it.
 (dload "native-preamble.ss")

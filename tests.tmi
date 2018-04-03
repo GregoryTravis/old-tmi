@@ -104,6 +104,8 @@ t39 = test False (all [False, True])
 
 t40 = test 31 (assert 31 [True])
 
+t41 = test {a: 10, b: 20} (entries-to-rec (rec-to-entries {a: 10, b: 20}))
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34

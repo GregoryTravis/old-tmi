@@ -1032,9 +1032,9 @@
    ((null? l) 'Nil)
    (#t l)))
 
-(define (consify-top-layer l)
+(define (consify-1 l)
   (cond
-   ((pair? l) `(Cons ,(car l) ,(consify-top-layer (cdr l))))
+   ((pair? l) `(Cons ,(car l) ,(consify-1 (cdr l))))
    ((null? l) 'Nil)
    (#t l)))
 
