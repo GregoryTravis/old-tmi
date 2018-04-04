@@ -46,10 +46,16 @@
 (define pm-symgen (tagged-symbol-generator-generator 'pm))
 
 (define trace-def-enabled #f)
-(define (trace-def name args-var)
+(define (trace-def name src)
   (if trace-def-enabled
-    `((shew (list 'trace-def ,name ,args-var)))
-    '()))
+    (let ((targs (pm-symgen))
+          (retval-s (pm-symgen)))
+      `(lambda ,targs
+         (shew (cons '+ (cons ',name ,targs)))
+         (let ((,retval-s (apply ,src ,targs)))
+           (shew (list '- ,retval-s))
+           ,retval-s)))
+    src))
 
 (define (compile-multilambda name ml)
   ;; TODO check for duplicate patterns here
@@ -60,7 +66,7 @@
      (compile-exp body)
     _
       (let ((args (pm-symgen)))
-        `(lambda ,args ,@(trace-def name args) ,(compile-multilambda-1 `(,name ,args) args ml)))))
+        (trace-def name `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml))))))
 
 (define (cm-args-pat e)
   (mtch e

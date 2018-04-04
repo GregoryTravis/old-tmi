@@ -1,3 +1,9 @@
 deref-e (Cons (Entry k v) d) kk = if k == kk then v else deref-e d kk
 deref-e Nil kk = assert Nil [False]
 deref rec k = deref-e (rec-to-entries rec) k
+
+member a (Cons aa d) = if a == aa then True else (member a d)
+member a Nil = False
+
+list-append (Cons a d) lyst = (Cons a (list-append d lyst))
+list-append Nil lyst = lyst
