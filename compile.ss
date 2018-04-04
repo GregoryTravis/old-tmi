@@ -53,7 +53,7 @@
       `(lambda ,targs
          (shew (cons '+ (cons ',name ,targs)))
          (let ((,retval-s (apply ,src ,targs)))
-           (shew (list '- ,retval-s))
+           (shew (list '- (cons ',name ,targs) ,retval-s))
            ,retval-s)))
     src))
 

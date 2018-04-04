@@ -7,3 +7,17 @@ member a Nil = False
 
 list-append (Cons a d) lyst = (Cons a (list-append d lyst))
 list-append Nil lyst = lyst
+
+not True = False
+not False = True
+
+and True True = True
+and True False = False
+and False True = False
+and False False = False
+
+unique? (Cons a d) = and (not (member a d)) (unique? d)
+unique? Nil = True
+
+;; Does not check if a or b is non-unique.
+list-intersect? a b = not (unique? (list-append a b))
