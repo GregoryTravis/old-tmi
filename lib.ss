@@ -317,7 +317,9 @@
    (#t (cons (car lyst) (unique (cdr lyst))))))
 
 (define (has-duplicates? lyst)
-  (not (eq? (length lyst) (length (unique lyst)))))
+  (not (unique? lyst)))
+(define (unique? lyst)
+  (eq? (length lyst) (length (unique lyst))))
 
 (define (any? lyst)
   (if (null? lyst)

@@ -67,21 +67,16 @@
 (define native-+ +)
 
 (define (coll-make-hash pairs)
-  (let ((hash (make-hash)))
+  (assert (unique? (map car pairs)))
+  (make-immutable-hash
     (map
-      (lambda (p)
-        (mtch p (k . v)
-          (begin
-            (assert (symbol? k))
-            (assert (not (hash-has-key? hash k)))
-            (hash-set! hash (symbol->string k) v))))
-      pairs)
-    hash))
+      (lambda (p) (mtch p (k . v) `(,(symbol->string k) . ,v)))
+      pairs)))
 
-;; Convert any hash to an equal? hash.  Recursive.
+;; Convert any hash to an immutable equal? hash.  Recursive.
 (define (->hash-equal o)
   (if (hash? o)
-    (make-hash (map (lambda (e) (mtch e (k . v) `(,k . ,(->hash-equal v)))) (hash->list o)))
+    (make-immutable-hash (map (lambda (e) (mtch e (k . v) `(,k . ,(->hash-equal v)))) (hash->list o)))
     (mtch o
       (a . d) (map ->hash-equal o)
       x x)))
@@ -89,7 +84,8 @@
 ;; Change symbol keys to strings
 (define (string-hash-keys h)
   (if (hash? h)
-    (make-hash (map (lambda (k) (cons (symbol->string k) (string-hash-keys (hash-ref h k)))) (hash-keys h)))
+    (make-immutable-hash 
+      (map (lambda (k) (cons (symbol->string k) (string-hash-keys (hash-ref h k)))) (hash-keys h)))
     (mtch h
       (a . d) (map string-hash-keys o)
       x x)))
