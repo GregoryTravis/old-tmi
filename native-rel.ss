@@ -21,5 +21,5 @@
         (equal? v0 v1)))))
 (assert (hash-equal? (entries-to-rec '(Cons (Entry a 10) (Cons (Entry b 20) Nil))) (entries-to-rec '(Cons (Entry a 10) (Cons (Entry b 20) Nil)))))
 
-;;(define (extend rec k v)
-  ;;(hash-set rec k v))
+(define (extend rec k v)
+  (hash-set rec k v))

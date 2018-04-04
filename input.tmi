@@ -1,1 +1,1 @@
-main = Return (deref {a: 10, b: 20} "a")
+main = Return (extend {a: 10, b: 20} "c" 30)
