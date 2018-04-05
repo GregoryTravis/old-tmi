@@ -21,3 +21,9 @@ unique? Nil = True
 
 ;; Does not check if a or b is non-unique.
 list-intersect? a b = not (unique? (list-append a b))
+
+key-of-entry (Entry k v) = k
+keys rec = map key-of-entry (rec-to-entries rec)
+
+add-recs a b = if (not (list-intersect? (keys a) (keys b))) then (add-recs-1 (rec-to-entries a) (rec-to-entries b)) else (err (RecOverlap a b))
+add-recs-1 es0 es1 = entries-to-rec (list-append es0 es1)

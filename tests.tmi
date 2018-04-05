@@ -144,6 +144,9 @@ t76 = test False (list-intersect? [1] [3])
 t77 = test False (list-intersect? [1] Nil)
 t78 = test False (list-intersect? Nil [3])
 t79 = test False (list-intersect? Nil Nil)
+t80 = test ["b", "a"] (keys {a: 10, b: 20})
+t81 = test {a: 10, b: 20, c: 30} (add-recs {a: 10} {b: 20, c: 30})
+t82 = test {a: 10, b: 20, c: 30} (add-recs {a: 10, b: 20} {c: 30})
 
 run-do-tests = do vd <- t28
                   vd <- t29
