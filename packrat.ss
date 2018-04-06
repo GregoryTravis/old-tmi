@@ -214,10 +214,44 @@
 ;(hook-with timing-hook preprocess-top)
 ;(hook-with timing-hook tokenize-top)
 ;(hook-with timing-hook parsed-unbinarize)
+
+(define (split-into-tlfs tokens)
+  (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
+
 (define (parse-file filename)
-  (let ((parsed (parsed-unbinarize (top-parse (preprocess-top (wrap-file (tokenize-top (add-libs (read-file-as-string filename)))))))))
-    ;(shew parsed)
+  (parse-tokens (tokenize-top (add-libs (read-file-as-string filename))) filename))
+
+(define (parse-tokens-maybe tokens filename)
+  (parsed-unbinarize (top-parse (preprocess-top (wrap-file tokens)))))
+
+(define (parse-tokens tokens filename)
+  (let ((parsed (parse-tokens-maybe tokens filename)))
     (mtch parsed
-      (S parsed) (list (parse-postprocess parsed)))))
+      (S parsed) (list (parse-postprocess parsed))
+      #f (parse-tlfs-separately tokens filename))))
+
+(define (parse-tlfs-separately tokens filename)
+  (let ((tlfs (split-into-tlfs tokens)))
+    (if (< (length tlfs) 2)
+      (err 'parse-failure tokens)
+      (parse-until-failure tlfs filename))))
+(define (parse-until-failure tlfs filename)
+  (mtch tlfs
+    (a . d)
+      (mtch (parse-tokens-maybe a filename)
+        (S parsed)
+          (parse-until-failure d filename)
+        #f
+          (parse-error a filename))
+    '()
+      (err 'file-failed-but-tlfs-did-not-weird)))
+
+(define (parse-error tokens filename)
+  (let ((line (mtch (car tokens) (_ _ (line _)) line)))
+    (display
+      (string-append "Parse failure in " filename " on line " (number->string line) ":\n"
+        "\n  " (string-trim (tokens->src tokens)) "\n\n"))
+    (err 'parse-failure)))
+
 ;(tracefun tokenize-top)
 ;(hook-with timing-hook parse-file)
