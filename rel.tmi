@@ -16,6 +16,9 @@ and True False = False
 and False True = False
 and False False = False
 
+filter (Cons a d) f = if (f a) then (Cons a (filter d f)) else (filter d f)
+filter Nil f = Nil
+
 unique? (Cons a d) = and (not (member a d)) (unique? d)
 unique? Nil = True
 
@@ -27,3 +30,5 @@ keys rec = map key-of-entry (rec-to-entries rec)
 
 add-recs a b = if (not (list-intersect? (keys a) (keys b))) then (add-recs-1 (rec-to-entries a) (rec-to-entries b)) else (err (RecOverlap a b))
 add-recs-1 es0 es1 = entries-to-rec (list-append es0 es1)
+
+wherre rel f = filter rel f
