@@ -32,3 +32,8 @@ add-recs a b = if (not (list-intersect? (keys a) (keys b))) then (add-recs-1 (re
 add-recs-1 es0 es1 = entries-to-rec (list-append es0 es1)
 
 wherre rel f = filter rel f
+
+proj rel fields = map (/. (rec) proj-rec rec fields) rel
+proj-rec rec fields = entries-to-rec (filter (/. (e) entry-key-in-keys e fields) (rec-to-entries rec))
+
+entry-key-in-keys (Entry k v) keys = member k keys
