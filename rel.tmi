@@ -40,8 +40,15 @@ entry-key-in-keys (Entry k v) keys = member k keys
 
 rmkey rec k = if (member k (keys rec)) then (entries-to-rec (rmkey-1 (rec-to-entries rec) k)) else (err (NoSuchKey k rec))
 rmkey-1 (Cons (Entry k v) d) kk = if k == kk then d else (Cons (Entry k v) (rmkey-1 d kk))
+rmkey-1 Nil kk = err (Ummmmm)
 
 mkrec kvs = entries-to-rec (map list-to-entry kvs)
 list-to-entry (Cons k (Cons v Nil)) = (Entry k v)
 
 un-deref rec k v = add-recs (rmkey rec k) (mkrec [[k, v]])
+
+pnot p = /. (x) (not (p x))
+
+un-where rel f w = let yes = wherre rel f
+                       no = wherre rel (pnot f)
+                    in (list-append no w)

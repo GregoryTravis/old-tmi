@@ -62,7 +62,7 @@ t20 = let roo (Boo a) = a + 100
           roo (Foo b) = b + 1000
        in
           roo
-t20 = test [[103, 1004], [103, 1004], [103, 1004]] [[t18 (Boo 3), t18 (Foo 4)], [t19 (Boo 3), t19 (Foo 4)], [t20 (Boo 3), t20 (Foo 4)]]
+t20-1 = test [[103, 1004], [103, 1004], [103, 1004]] [[t18 (Boo 3), t18 (Foo 4)], [t19 (Boo 3), t19 (Foo 4)], [t20 (Boo 3), t20 (Foo 4)]]
 
 t21 = test 10 (nth 0 [10, 20, 30])
 t22 = test 20 (nth 1 [10, 20, 30])
@@ -183,6 +183,10 @@ t99 = test {a: 10, b: 20} (mkrec [["a", 10], ["b", 20]])
 t100-temp = test (rmkey {a: 10} "a") (mkrec Nil) ;; Trick to construct empty rec
 
 t101 = test {a: 10, b: 30} (un-deref {a: 10, b: 20} "b" 30)
+
+t102 = test [{a: 10, b: 20}, {a: 11, b: 31}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 11) [{a: 11, b: 31}])
+t102 = test [{a: 10, b: 31}, {a: 11, b: 21}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 10) [{a: 11, b: 31}])
+t102 = test [{a: 10, b: 20}, {a: 11, b: 21}, {a: 12, b:32}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 12) [{a: 12, b: 32}])
 
 run-do-tests = do vd <- t28
                   vd <- t29

@@ -250,7 +250,7 @@
   (let ((line (mtch (car tokens) (_ _ (line _)) line)))
     (display
       (string-append "Parse failure in " filename " on line " (number->string line) ":\n"
-        "\n  " (string-trim (tokens->src tokens)) "\n\n"))
+        "\n" (string-trim (tokens->src tokens)) "\n\n"))
     (err 'parse-failure)))
 
 ;(tracefun tokenize-top)
