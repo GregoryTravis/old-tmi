@@ -126,6 +126,3 @@
           (all? (map (lambda (rec1) (member? rec1 rel0)) rel1))))
     'True
     'False))
-
-(define (jukk as bs)
-  (zip (unconsify as) (unconsify bs)))
