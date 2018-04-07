@@ -52,3 +52,6 @@ pnot p = /. (x) (not (p x))
 un-where rel f w = let yes = wherre rel f
                        no = wherre rel (pnot f)
                     in (list-append no w)
+
+one (Cons a Nil) = a
+un-one lyst x = [x]

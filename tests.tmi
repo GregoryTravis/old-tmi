@@ -191,6 +191,18 @@ t104 = test [{a: 10, b: 20}, {a: 11, b: 21}, {a: 12, b:32}] (un-where [{a: 10, b
 t105 = test 10 (read (deref-node "a") {a: 10, b: 20})
 t106 = test {a: 11, b:20} (write (deref-node "a") {a: 10, b: 20} 11)
 
+t107 = test 33 (one [33])
+t108 = test [34] (un-one [32] 34)
+
+t109 = test [[{b: 21, a: 11}, {b: 22, a: 12}], [{b: 21, a: 11}, {b: 22, a: 10}]]
+            (let rel = [{a: 10, b: 20}, {a: 11, b: 21}]
+                 wn = wherre-node (/. (rec) (deref rec "a") == 10)
+                 dn = deref-node "b"
+                 on = one-node
+              in let own = compose-nodes on wn
+                  in let down = compose-nodes dn own
+                      in [(write own rel {a: 12, b: 22}), (write down rel 22)])
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34
