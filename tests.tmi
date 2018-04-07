@@ -172,6 +172,18 @@ t91 = test [{c: 30}, {c: 31}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31
 ;; t92 = test [{}, {}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] Nil)
 t93 = test [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] ["a", "b", "c"])
 
+t94 = test {b: 20, c: 30} (rmkey {a: 10, b: 20, c: 30} "a")
+t95 = test {a: 10, c: 30} (rmkey {a: 10, b: 20, c: 30} "b")
+t96 = test {a: 10, b: 20} (rmkey {a: 10, b: 20, c: 30} "c")
+t97 = test {b: 20} (rmkey {a: 10, b: 20} "a")
+
+t98 = test {a: 10} (mkrec [["a", 10]])
+t99 = test {a: 10, b: 20} (mkrec [["a", 10], ["b", 20]])
+;; t100 = test {} (mkrec Nil)
+t100-temp = test (rmkey {a: 10} "a") (mkrec Nil) ;; Trick to construct empty rec
+
+t101 = test {a: 10, b: 30} (un-deref {a: 10, b: 20} "b" 30)
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34
