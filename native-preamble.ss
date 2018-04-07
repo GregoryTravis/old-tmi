@@ -90,9 +90,21 @@
       (a . d) (map string-hash-keys o)
       x x)))
 
+;; Change string keys to symbols
+(define (symbol-hash-keys h)
+  (if (hash? h)
+    (make-immutable-hash 
+      (map (lambda (k) (cons (string->symbol k) (symbol-hash-keys (hash-ref h k)))) (hash-keys h)))
+    (mtch h
+      (a . d) (map symbol-hash-keys o)
+      x x)))
+
 ;; Only handles a list of records
 (define (json->tmi json)
   (consify-1 (map string-hash-keys (map ->hash-equal json))))
+;; Only handles a list of records
+(define (tmi->json o)
+  (map symbol-hash-keys o))
 
 (define (native-read-data filename)
   (call-with-input-file* filename
@@ -100,4 +112,20 @@
 
 (define (native-write-data filename data)
   (call-with-output-file* filename #:exists 'replace
-    (lambda (out) (write-json data out))))
+    (lambda (out) (write-json (tmi->json data) out))))
+
+(define (display-newline o)
+  (display o)
+  (display "\n"))
+
+(define (rel-equal? rel0 rel1)
+  (if
+    (let ((rel0 (unconsify rel0))
+          (rel1 (unconsify rel1)))
+     (and (all? (map (lambda (rec0) (member? rec0 rel1)) rel0))
+          (all? (map (lambda (rec1) (member? rec1 rel0)) rel1))))
+    'True
+    'False))
+
+(define (jukk as bs)
+  (zip (unconsify as) (unconsify bs)))

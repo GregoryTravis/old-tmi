@@ -203,9 +203,41 @@ t109 = test [[{b: 21, a: 11}, {b: 22, a: 12}], [{b: 21, a: 11}, {b: 22, a: 10}]]
                   in let down = compose-nodes dn own
                       in [(write own rel {a: 12, b: 22}), (write down rel 22)])
 
+;; Actually a test for test-rel which should go away
+t110 = test-rel [{a: 10}, {a: 11}] [{a: 11}, {a: 10}]
+
+;; Woo-hoo.  Read a file, change a cell, write, read again,
+;; revert the cell, write.
+t111 = let
+  wn = wherre-node (/. (rec) (deref rec "a") == 10)
+  wn2 = wherre-node (/. (rec) (deref rec "b") == 21)
+  dn = deref-node "c"
+  on = one-node
+  down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
+  orig-db = [{a: 10, b: 20, c: 30},
+             {a: 10, b: 21, c: 31},
+             {a: 11, b: 20, c: 32},
+             {a: 11, b: 21, c: 33},
+             {a: 11, b: 22, c: 34}]
+  modified-db = [{a: 10, b: 20, c: 30},
+                 {a: 10, b: 21, c: 3100},
+                 {a: 11, b: 20, c: 32},
+                 {a: 11, b: 21, c: 33},
+                 {a: 11, b: 22, c: 34}]
+in do db <- read-data "db.json"
+      dummy <- Return (test db orig-db)
+      vd <- write-data "db2.json" (write down db 3100)
+      mdb <- read-data "db2.json"
+      dummy2 <- Return (test-rel mdb modified-db)
+      vd <- write-data "db3.json" (write down mdb 31)
+      odb <- read-data "db3.json"
+      dummy3 <- Return (test-rel odb db)
+      Return "done"
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34
+                  vd <- t111
                   Return "OK"
 
 main = do ok <- run-do-tests

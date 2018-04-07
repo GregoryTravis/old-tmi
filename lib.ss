@@ -577,6 +577,16 @@
             '())
         (cons (map car lists) (invert-listy-matrix (map cdr lists))))))
 
+(define (zip . lysts)
+  (if (any? (map null? lysts))
+      (if (not (all? (map null? lysts)))
+          (err 'uneven-zip-params lysts (map null? lysts))
+          '())
+      (cons (map car lysts)
+            (apply zip (map cdr lysts)))))
+(assert (equal? '((1 3) (2 4)) (zip '(1 2) '(3 4))))
+
+#| ;; Why did I call this zip?
 (define (zip f . lysts)
   ;(shew 'um-zip lysts)
   (if (any? (map null? lysts))
@@ -585,6 +595,7 @@
           '())
       (cons (apply f (map car lysts))
             (apply zip (cons f (map cdr lysts))))))
+|#
 
 ;; maybe stuff, for real
 
@@ -658,10 +669,12 @@
 ;;       (cons (cons a (car dses))
 ;;             (cons-onto-each a (cdr dses)))))
 
+#| ;; Why did I call this zip?
 (define (maybe-zip f . args)
   (if (not (same (map length args)))
       fail
       (maybe-map (applyer f) (invert-listy-matrix args))))
+|#
 
 (define (mabify f)
   (lambda args

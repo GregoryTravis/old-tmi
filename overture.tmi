@@ -25,6 +25,8 @@ all Nil = True
 all x = False
 
 test expected actual = if expected == actual then True else (err (TestFailure expected actual))
+;; TODO get rid of test-rel
+test-rel expected actual = if (rel-equal? expected actual) then True else (err (TestFailure expected actual))
 assert v checks = if (all checks) then v else (err (AssertionFailure v checks))
 
 read-all-chars port = do c <- Command ["read-char", port]
@@ -40,3 +42,5 @@ read-file filename = do port <- Command ["open-input-file", filename]
 
 read-data filename = Command ["native-read-data", filename]
 write-data filename o = Command ["native-write-data", filename, o]
+
+tshew o = Command ["display-newline", (tmi-pretty-print o)]
