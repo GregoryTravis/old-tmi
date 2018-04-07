@@ -166,9 +166,10 @@
 |#
 
 (define no-libs #f)
+(define library-files '("overture.tmi" "rel.tmi" "node.tmi"))
 (define (add-libs s)
   (if no-libs s
-    (string-append (read-file-as-string "overture.tmi") (read-file-as-string "rel.tmi") "\n" s)))
+    (string-append (apply string-append (map read-file-as-string library-files)) "\n" s)))
 
 (define (wrap-file tokens)
   (mtch (last tokens)

@@ -1,0 +1,4 @@
+deref-node k = Node (/. (rec) deref rec k) (/. (rec v) (un-deref rec k v))
+
+read (Node f b) v = f v
+write (Node f b) v new-value = b v new-value

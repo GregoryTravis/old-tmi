@@ -185,8 +185,11 @@ t100-temp = test (rmkey {a: 10} "a") (mkrec Nil) ;; Trick to construct empty rec
 t101 = test {a: 10, b: 30} (un-deref {a: 10, b: 20} "b" 30)
 
 t102 = test [{a: 10, b: 20}, {a: 11, b: 31}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 11) [{a: 11, b: 31}])
-t102 = test [{a: 10, b: 31}, {a: 11, b: 21}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 10) [{a: 11, b: 31}])
-t102 = test [{a: 10, b: 20}, {a: 11, b: 21}, {a: 12, b:32}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 12) [{a: 12, b: 32}])
+t103 = test [{a: 11, b: 21}, {a: 11, b: 21}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 10) [{a: 11, b: 21}])
+t104 = test [{a: 10, b: 20}, {a: 11, b: 21}, {a: 12, b:32}] (un-where [{a: 10, b: 20}, {a: 11, b: 21}] (/. (rec) (deref rec "a") == 12) [{a: 12, b: 32}])
+
+t105 = test 10 (read (deref-node "a") {a: 10, b: 20})
+t106 = test {a: 11, b:20} (write (deref-node "a") {a: 10, b: 20} 11)
 
 run-do-tests = do vd <- t28
                   vd <- t29
