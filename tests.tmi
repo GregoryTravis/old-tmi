@@ -234,10 +234,25 @@ in do db <- read-data "db.json"
       dummy3 <- Return (test-rel odb db)
       Return "done"
 
+t112 = let
+  wn = wherre-node (/. (rec) (deref rec "a") == 10)
+  wn2 = wherre-node (/. (rec) (deref rec "b") == 21)
+  dn = deref-node "c"
+  on = one-node
+  down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
+in do
+  vd <- transform-file (mutation-applier down 4444) "db.json" "db2.json"
+  vd <- transform-file (mutation-applier down 31) "db2.json" "db3.json"
+  db <- read-data "db.json"
+  odb <- read-data "db3.json"
+  dummy <- Return (test-rel db odb)
+  Return "done"
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34
                   vd <- t111
+                  vd <- t112
                   Return "OK"
 
 main = do ok <- run-do-tests

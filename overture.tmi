@@ -44,3 +44,9 @@ read-data filename = Command ["native-read-data", filename]
 write-data filename o = Command ["native-write-data", filename, o]
 
 tshew o = Command ["display-newline", (tmi-pretty-print o)]
+
+;; TODO I use these filename params because 'in' and 'of' can't start an
+;; identifier yet
+transform-file f rfile wfile = do
+  d <- read-data rfile
+  write-data wfile (f d)
