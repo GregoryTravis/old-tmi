@@ -252,6 +252,11 @@ in do
   dummy <- Return (test-rel db odb)
   Return "done"
 
+t113 = test (Just 100) (first-maybe (/. (x) if x == 4 then (Just 100) else Nothing) [3, 4, 5])
+t114 = test Nothing (first-maybe (/. (x) if x == 6 then (Just 100) else Nothing) [3, 4, 5])
+t115 = test 12 (maybe-default (Just 12) 34)
+t116 = test 34 (maybe-default Nothing 34)
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34
