@@ -129,4 +129,5 @@
 
 (define (ffi f . args)
   (let ((name (if (procedure? f) (symbol->string (object-name f)) (symbol->string f))))
-    `(Command ,(consify (cons name args)))))
+    `(Seq (Command ,(consify (cons name args)))
+          ,(lambda (result) `(Return ,(consify result))))))

@@ -3,11 +3,9 @@
   (tcp-listen 5000 4 #t))
 
 (define (web-get-next-request ss)
-  (shew ss)
   (let-values (((bin bout) (tcp-accept ss)))
     (file-stream-buffer-mode bin 'none)
     (file-stream-buffer-mode bout 'none)
-    (shew bin bout)
     (let* ((lines (web-read-request bin)))
       (list bout (web-parse-request lines)))))
 
@@ -25,7 +23,3 @@
   (map (lambda (s) (write-string s bout))
     (list "HTTP/1.1 200 OK\r\n" "Content-Type: text/html\r\n\r\n" s))
   (close-output-port bout))
-
-(define ss (web-create-server))
-(mtch (web-get-next-request ss)
-  (bout url) (web-respond bout (string-append "hey " url)))

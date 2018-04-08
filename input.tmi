@@ -1,1 +1,11 @@
-main = Return (extend {a: 10, b: 20} "c" 30)
+handle (Cons bout (Cons url Nil)) = do
+  vd <- tshew url
+  ffi web-respond bout (string-append "hey " url)
+
+main = do
+  ss <- ffi web-create-server
+  vd <- tshew Listening
+  bah <- ffi web-get-next-request ss
+  vd <- handle bah
+  vd <- ffi tcp-close ss
+  main
