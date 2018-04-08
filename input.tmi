@@ -16,8 +16,7 @@ get-handler url = maybe-default (first-maybe (/. (handler) handler-if-match url 
 
 handle (Cons bout (Cons url Nil)) = do
   vd <- if (not (url == "/quit")) then (tshew url) else Return 0
-  vd <- ((get-handler url) url bout)
-  ;; vd <- if (url == "/favicon.ico") then (send-favicon url bout) else (say-hey url bout)
+  vd <- if (not (url == "/quit")) then ((get-handler url) url bout) else Return 0
   Return (url == "/quit")
 
 main = do
