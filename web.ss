@@ -1,0 +1,31 @@
+(load "lib.ss")
+(define (web-create-server)
+  (tcp-listen 5000 4 #t))
+
+(define (web-get-next-request ss)
+  (shew ss)
+  (let-values (((bin bout) (tcp-accept ss)))
+    (file-stream-buffer-mode bin 'none)
+    (file-stream-buffer-mode bout 'none)
+    (shew bin bout)
+    (let* ((lines (web-read-request bin)))
+      (list bout (web-parse-request lines)))))
+
+(define (web-read-request bin)
+  (let ((line (read-line bin)))
+    (if (equal? line "\r")
+      '()
+      (cons line (web-read-request bin)))))
+
+(define (web-parse-request lines)
+  (nth 1 (string-split (nth 0 lines) " ")))
+(asseq "/" (web-parse-request '("GET / HTTP/1.1\r" "Host: localhost:5000\r")))
+
+(define (web-respond bout s)
+  (map (lambda (s) (write-string s bout))
+    (list "HTTP/1.1 200 OK\r\n" "Content-Type: text/html\r\n\r\n" s))
+  (close-output-port bout))
+
+(define ss (web-create-server))
+(mtch (web-get-next-request ss)
+  (bout url) (web-respond bout (string-append "hey " url)))
