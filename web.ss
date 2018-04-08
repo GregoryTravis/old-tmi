@@ -19,7 +19,12 @@
   (nth 1 (string-split (nth 0 lines) " ")))
 (asseq "/" (web-parse-request '("GET / HTTP/1.1\r" "Host: localhost:5000\r")))
 
-(define (web-respond bout s)
-  (map (lambda (s) (write-string s bout))
-    (list "HTTP/1.1 200 OK\r\n" "Content-Type: text/html\r\n\r\n" s))
+(define (write-thing o port)
+  (if (string? o)
+    (write-string o port)
+    (write-bytes o port)))
+
+(define (web-respond bout o)
+  (map (lambda (o) (write-thing o bout))
+    (list "HTTP/1.1 200 OK\r\n" "Content-Type: text/html\r\n\r\n" o))
   (close-output-port bout))
