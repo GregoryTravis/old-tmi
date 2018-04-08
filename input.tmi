@@ -5,7 +5,7 @@ send-favicon bout = do
   ffi web-respond bout bytes
 
 handle (Cons bout (Cons url Nil)) = do
-  vd <- tshew url
+  vd <- if (not (url == "/quit")) then (tshew url) else Return 0
   vd <- if (url == "/favicon.ico") then (send-favicon bout) else (ffi web-respond bout (string-append "hey " url))
   Return (url == "/quit")
 
