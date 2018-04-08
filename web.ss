@@ -11,7 +11,7 @@
 
 (define (web-read-request bin)
   (let ((line (read-line bin)))
-    (if (equal? line "\r")
+    (if (or (eof-object? line) (equal? line "\r"))
       '()
       (cons line (web-read-request bin)))))
 
