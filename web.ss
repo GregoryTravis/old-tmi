@@ -1,4 +1,6 @@
+(require net/cgi)
 (load "lib.ss")
+
 (define (web-create-server)
   (tcp-listen 5000 4 #t))
 
@@ -15,9 +17,21 @@
       '()
       (cons line (web-read-request bin)))))
 
+(define (parse-cgi cgi-string)
+  (putenv "REQUEST_METHOD" "GET")
+  (putenv "QUERY_STRING" cgi-string)
+  (map (lambda (b) (list (car b) (cdr b))) (get-bindings)))
+
+(define (web-parse-url url)
+  (mtch (string-split url "?")
+    (url) `(,url ())
+    (url cgi-string) `(,url ,(parse-cgi cgi-string))))
+(asseq '("/hey" ()) (web-parse-url "/hey"))
+(asseq '("/hey" ((a "1")(b "2"))) (web-parse-url "/hey?a=1&b=2"))
+
 (define (web-parse-request lines)
-  (nth 1 (string-split (nth 0 lines) " ")))
-(asseq "/" (web-parse-request '("GET / HTTP/1.1\r" "Host: localhost:5000\r")))
+  (web-parse-url (nth 1 (string-split (nth 0 lines) " "))))
+(asseq '("/" ()) (web-parse-request '("GET / HTTP/1.1\r" "Host: localhost:5000\r")))
 
 (define (write-thing o port)
   (if (string? o)
