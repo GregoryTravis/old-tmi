@@ -232,6 +232,8 @@ in do db <- read-data "db.json"
       vd <- write-data "db3.json" (write down mdb 31)
       odb <- read-data "db3.json"
       dummy3 <- Return (test-rel odb db)
+      vd <- ffi delete-file "db2.json"
+      vd <- ffi delete-file "db3.json"
       Return "done"
 
 t112 = let
@@ -245,6 +247,8 @@ in do
   vd <- transform-file (mutation-applier down 31) "db2.json" "db3.json"
   db <- read-data "db.json"
   odb <- read-data "db3.json"
+  vd <- ffi delete-file "db2.json"
+  vd <- ffi delete-file "db3.json"
   dummy <- Return (test-rel db odb)
   Return "done"
 

@@ -126,3 +126,7 @@
           (all? (map (lambda (rec1) (member? rec1 rel0)) rel1))))
     'True
     'False))
+
+(define (ffi f . args)
+  (let ((name (if (procedure? f) (symbol->string (object-name f)) (symbol->string f))))
+    `(Command ,(consify (cons name args)))))
