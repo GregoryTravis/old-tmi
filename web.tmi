@@ -5,7 +5,7 @@ get-handler handlers url = maybe-default (first-maybe (/. (handler) handler-if-m
 handle handlers (Cons bout (Cons (Cons url (Cons params Nil))  Nil)) = do
   vd <- if (not (url == "/quit")) then (tshew url) else Return 0
   vd <- if (not (url == "/quit")) then (tshew params) else Return 0
-  vd <- if (not (url == "/quit")) then ((get-handler handlers url) url bout) else Return 0
+  vd <- if (not (url == "/quit")) then ((get-handler handlers url) url params bout) else Return 0
   Return (url == "/quit")
 
 http-server handlers = do

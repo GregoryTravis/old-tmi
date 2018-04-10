@@ -1,12 +1,12 @@
-send-favicon url bout = do
+send-favicon url params bout = do
   port <- ffi open-input-file "favicon.png"
   bytes <- ffi port->bytes port
   vd <- ffi close-input-port port
   ffi web-respond bout bytes
 
-no-handler-handler url bout = ffi web-respond bout (string-append "No handler for " url)
+no-handler-handler url params bout = ffi web-respond bout (string-append "No handler for " url)
 
-write-handler url bout = ffi web-respond bout (string-append "yesss " url)
+write-handler url params bout = ffi web-respond bout (string-append "yesss " url)
 
 the-handlers = [ (Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler) ]
 

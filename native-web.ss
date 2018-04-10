@@ -20,14 +20,14 @@
 (define (parse-cgi cgi-string)
   (putenv "REQUEST_METHOD" "GET")
   (putenv "QUERY_STRING" cgi-string)
-  (map (lambda (b) (list (car b) (cdr b))) (get-bindings)))
+  (coll-make-hash (get-bindings)))
 
 (define (web-parse-url url)
   (mtch (string-split url "?")
     (url) `(,url ())
     (url cgi-string) `(,url ,(parse-cgi cgi-string))))
 (asseq '("/hey" ()) (web-parse-url "/hey"))
-(asseq '("/hey" ((a "1")(b "2"))) (web-parse-url "/hey?a=1&b=2"))
+(asseq '("/hey" #hash(("a" . "1")("b" . "2"))) (web-parse-url "/hey?a=1&b=2"))
 
 (define (web-parse-request lines)
   (web-parse-url (nth 1 (string-split (nth 0 lines) " "))))
