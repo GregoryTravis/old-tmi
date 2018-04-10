@@ -8,6 +8,11 @@ no-handler-handler url params bout = ffi web-respond bout (string-append "No han
 
 write-handler url params bout = ffi web-respond bout (string-append "yesss " url)
 
-the-handlers = [ (Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler) ]
+add-handler url params bout = let
+   a = string->number (deref params "a")
+   b = string->number (deref params "b")
+in ffi web-respond bout (string-append (number->string (a + b)))
+
+the-handlers = [ (Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler), (Handler "/add" add-handler) ]
 
 main = http-server the-handlers
