@@ -1,0 +1,17 @@
+# send-quit > /dev/null
+# echo '(begin (dload "compile.ss") (main "test-server.tmi"))' >> /tmp/racket-daemon-ctrl
+g
+sleep 1
+pushd web-test-dir > /dev/null
+rm -f actual/*
+curl -s localhost:5000/write?a=123\&b=456 > actual/wout
+curl -s localhost:5000/favicon.ico > actual/fout
+curl -s localhost:5000/db?a=10\&b=20\&c=333 > actual/wrout
+cp ../db.json actual
+
+echo -- done --
+diff -r expected actual
+rm -f actual/*
+
+popd > /dev/null
+git checkout db.json

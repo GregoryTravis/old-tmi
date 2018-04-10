@@ -1,2 +1,2 @@
 #echo "GET /quit HTTP/1.1\r\n" | nc localhost 5000
-curl -s localhost:5000/quit
+curl --max-time 1 -s localhost:5000/quit
