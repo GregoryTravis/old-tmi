@@ -166,7 +166,7 @@
 |#
 
 (define no-libs #f)
-(define library-files '("overture.tmi" "rel.tmi" "node.tmi"))
+(define library-files '("overture.tmi" "rel.tmi" "node.tmi" "web.tmi"))
 (define (add-libs s)
   (if no-libs s
     (string-append (apply string-append (map read-file-as-string library-files)) "\n" s)))

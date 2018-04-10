@@ -8,22 +8,6 @@ no-handler-handler url bout = ffi web-respond bout (string-append "No handler fo
 
 write-handler url bout = ffi web-respond bout (string-append "yesss " url)
 
-handlers = [ (Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler) ]
+the-handlers = [ (Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler) ]
 
-handler-if-match url (Handler hurl handler) = if (url == hurl) then (Just handler) else Nothing
-
-get-handler url = maybe-default (first-maybe (/. (handler) handler-if-match url handler) handlers) no-handler-handler
-
-handle (Cons bout (Cons (Cons url (Cons params Nil))  Nil)) = do
-  vd <- if (not (url == "/quit")) then (tshew url) else Return 0
-  vd <- if (not (url == "/quit")) then (tshew params) else Return 0
-  vd <- if (not (url == "/quit")) then ((get-handler url) url bout) else Return 0
-  Return (url == "/quit")
-
-main = do
-  ss <- ffi web-create-server
-  vd <- tshew Listening
-  bah <- ffi web-get-next-request ss
-  should-quit <- handle bah
-  vd <- ffi tcp-close ss
-  if should-quit then Return Done else main
+main = http-server the-handlers
