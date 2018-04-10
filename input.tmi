@@ -13,6 +13,21 @@ add-handler url params bout = let
    b = string->number (deref params "b")
 in ffi web-respond bout (string-append (number->string (a + b)))
 
-the-handlers = [ (Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler), (Handler "/add" add-handler) ]
+;; One day this will look something like:
+;;   db-handler a b c = (foo/a=a/b=b).c <- c
+db-handler url params bout = let
+   a = string->number (deref params "a")
+   b = string->number (deref params "b")
+   c = string->number (deref params "c")
+   wn = wherre-node (/. (rec) (deref rec "a") == a)
+   wn2 = wherre-node (/. (rec) (deref rec "b") == b)
+   dn = deref-node "c"
+   on = one-node
+   down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
+in do
+  vd <- apply-mutation down c
+  ffi web-respond bout "wrote"
+
+the-handlers = [ (Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler), (Handler "/add" add-handler), (Handler "/db" db-handler) ]
 
 main = http-server the-handlers

@@ -10,3 +10,5 @@ wherre-node pred = Node (/. (rel) wherre rel pred) (/. (rel v) (un-where rel pre
 compose-nodes a b = Node (/. (x) (read a (read b x))) (/. (x new-value) (write b x (write a (read b x) new-value)))
 
 mutation-applier node value = /. (db) (write node db value)
+
+apply-mutation node value = transform-file (mutation-applier node value) "db.json" "db.json"
