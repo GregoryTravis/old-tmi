@@ -1,4 +1,7 @@
-handler-if-match url (Handler hurl handler) = if (url == hurl) then (Just handler) else Nothing
+handler-if-match url (Handler hurl handler) =
+  if (url == hurl)
+  then (Just handler)
+  else Nothing
 
 get-handler handlers url = maybe-default (first-maybe (/. (handler) handler-if-match url handler) handlers) no-handler-handler
 
