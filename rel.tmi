@@ -34,9 +34,8 @@ add-recs a b = if (not (list-intersect? (keys a) (keys b)))
 wherre rel f = filter rel f
 
 proj rel fields = map (/. (rec) proj-rec rec fields) rel
-proj-rec rec fields = entries-to-rec (filter (/. (e) entry-key-in-keys e fields) (rec-to-entries rec))
-
-entry-key-in-keys (Entry k v) keys = member k keys
+proj-rec rec fields = entries-to-rec
+  (filter (/. ((Entry k v)) member k fields) (rec-to-entries rec))
 
 rmkey rec k = if (member k (keys rec)) then (entries-to-rec (rmkey-1 (rec-to-entries rec) k)) else (err (NoSuchKey k rec))
 rmkey-1 (Cons (Entry k v) d) kk = if k == kk then d else (Cons (Entry k v) (rmkey-1 d kk))
