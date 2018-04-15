@@ -64,6 +64,7 @@
 (define op!= (tmi-if-ify (lambda (a b) (not (equal? a b)))))
 ; This isn't used yet except in precedence
 ; (define op$$ $$)
+(define (op$ f a) (f a))
 
 (define native-+ +)
 

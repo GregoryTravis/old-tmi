@@ -283,6 +283,11 @@ t119 = do
   14 <- Return 14
   Return (test [12, (Bar 13)] [a, b])
 
+t120 = let
+    foo a b c = a + b + c
+    bar b = b * 1000
+ in test 6000 (bar $ foo 1 2 3)
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

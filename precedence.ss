@@ -2,7 +2,8 @@
   '(($$)
     (* /)
     (+ -)
-    (< > ==)))
+    (< > ==)
+    ($)))
 
 (define (wrapapp-wrap xs)
   (map (lambda (x)
