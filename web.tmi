@@ -6,13 +6,13 @@ get-handler handlers url = maybe-default
     handlers)
   no-handler-handler
 
-handle handlers (Cons bout (Cons (Cons url (Cons params Nil)) Nil)) = do
-  vd <- if (not (url == "/quit")) then do
-      vd <- (tshew url)
-      vd <- (tshew params)
-      ((get-handler handlers url) url params bout)
-    else Return 0
-  Return (url == "/quit")
+handle handlers (Cons bout (Cons (Cons url (Cons params Nil)) Nil)) =
+  if (not (url == "/quit")) then do
+      ;; vd <- (tshew url)
+      ;; vd <- (tshew params)
+      vd <- ((get-handler handlers url) url params bout)
+      Return False
+    else Return True
 
 test-handlers handlers url params = do
   fake-bout <- ffi open-output-string
