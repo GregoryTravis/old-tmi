@@ -1,6 +1,6 @@
-deref rec k = let find-it (Cons (Entry kk vv) d) = if k == kk then vv else find-it d
-                  find-it Nil = assert Nil [False]
-               in find-it (rec-to-entries rec)
+deref rec k = find-it (rec-to-entries rec)
+  where find-it (Cons (Entry kk vv) d) = if k == kk then vv else find-it d
+        find-it Nil = assert Nil [False]
 
 member a (Cons aa d) = if a == aa then True else (member a d)
 member a Nil = False
@@ -48,7 +48,7 @@ un-deref rec k v = add-recs (rmkey rec k) (mkrec [[k, v]])
 
 pnot p = /. (x) (not (p x))
 
-un-where rel f w = let yes = wherre rel f
+un-where rel f w = let ;; yes = wherre rel f
                        no = wherre rel (pnot f)
                     in (list-append no w)
 
