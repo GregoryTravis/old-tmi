@@ -228,13 +228,13 @@ t111 = let
                  {a: 11, b: 21, c: 33},
                  {a: 11, b: 22, c: 34}]
 in do db <- read-data "db.json"
-      dummy <- Return (test db orig-db)
+      True <- Return (test db orig-db)
       Nil <- write-data "db2.json" (write down db 3100)
       mdb <- read-data "db2.json"
-      dummy2 <- Return (test-rel mdb modified-db)
+      True <- Return (test-rel mdb modified-db)
       Nil <- write-data "db3.json" (write down mdb 31)
       odb <- read-data "db3.json"
-      dummy3 <- Return (test-rel odb db)
+      True <- Return (test-rel odb db)
       Nil <- ffi delete-file "db2.json"
       Nil <- ffi delete-file "db3.json"
       Return True
@@ -252,7 +252,7 @@ in do
   odb <- read-data "db3.json"
   Nil <- ffi delete-file "db2.json"
   Nil <- ffi delete-file "db3.json"
-  dummy <- Return (test-rel db odb)
+  True <- Return (test-rel db odb)
   Return True
 
 t113 = test (Just 100) (first-maybe (/. (x) if x == 4 then (Just 100) else Nothing) [3, 4, 5])
