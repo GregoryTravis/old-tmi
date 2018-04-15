@@ -1,1 +1,2 @@
-main = Return (deref {a: 1, b: 2} "a")
+main = Return (rmkey {a: 1, b: 2} "a")
+;; main = Return (rmkey {a: 1, b: 2} "c")
