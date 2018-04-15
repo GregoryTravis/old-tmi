@@ -257,6 +257,9 @@ t114 = test Nothing (first-maybe (/. (x) if x == 6 then (Just 100) else Nothing)
 t115 = test 12 (maybe-default (Just 12) 34)
 t116 = test 34 (maybe-default Nothing 34)
 
+t117-f = /. ((Foo x)) x + x
+t117 = test 24 (t117-f (Foo 12))
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34

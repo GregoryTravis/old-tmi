@@ -196,12 +196,6 @@
       `(definition (app ((identifier ,(symbol->string casefun-name)) ,pat)) (equals "=") ,exp)
     x x))
 
-;; Handle both 1-arg and 2+-arg lambda arg patterns
-(define (lambda-pat-args e)
-  (mtch e
-    ('app pat) pat
-    pat `(,pat)))
-
 (define (compile-simplify-1 e)
   (mtch e
     ('case exp clauses)
@@ -214,10 +208,10 @@
     ('pdo (('do_assignment pat body) . assignments) exp)
       (begin
         (mtch pat ('identifier . _) #t) ;; Assertion
-        `(app ((constructor "Seq") ,body (lambda-exp ,pat (pdo ,assignments ,exp)))))
-    ('lambda-exp pat body)
+        `(app ((constructor "Seq") ,body (lambda-exp (app (,pat)) (pdo ,assignments ,exp)))))
+    ('lambda-exp ('app pat) body)
       (let ((name (lambda-symgen)))
-        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) (lambda-pat-args pat)))
+        `(let ((definition (app ,(cons `(identifier ,(symbol->string name)) pat))
                 (equals "=")
                 ,body))
               ;(equals "=")

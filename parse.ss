@@ -86,8 +86,6 @@
 
 (define (p2s e)
   (mtch e
-    ('base-exp-seq ('base-exp be))
-      (p2s be)
     ('base-exp-seq ('base-exp be) . d)
       (p2s `(app ,(flatten-base-exp-seq e)))
     ('decls . _)
@@ -133,7 +131,15 @@
     ('constructor . _)
       e
     ('lambda-exp sym pat body)
-      `(lambda-exp ,(p2s pat) ,(p2s body))
+      (begin
+        (let ((spat (p2s pat)))
+          (let ((spat
+              (mtch spat
+                ; Special case for (/. ((Foo x)) ...)
+                ('app (('constructor . _) . _)) `(app (,spat))
+                ('app es) spat
+                x `(app (,x)))))
+            `(lambda-exp ,spat ,(p2s body)))))
     ('phash ('lcb . _) entries ('rcb . _))
       `(hash ,(p2s entries))
     ('phash-entries e ('comma . _) es)

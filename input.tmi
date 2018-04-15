@@ -1,1 +1,2 @@
-main = Return 12
+foo = (/. ((Foo x)) x + x)
+main = Return (foo (Foo 12))
