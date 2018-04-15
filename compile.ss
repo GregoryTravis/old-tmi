@@ -207,7 +207,6 @@
       exp
     ('pdo (('do_assignment pat body) . assignments) exp)
       (begin
-        (mtch pat ('identifier . _) #t) ;; Assertion
         `(app ((constructor "Seq") ,body (lambda-exp (app (,pat)) (pdo ,assignments ,exp)))))
     ('lambda-exp ('app pat) body)
       (let ((name (lambda-symgen)))
