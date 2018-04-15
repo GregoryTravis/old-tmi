@@ -260,11 +260,26 @@ t116 = test 34 (maybe-default Nothing 34)
 t117-f = /. ((Foo x)) x + x
 t117 = test 24 (t117-f (Foo 12))
 
+test-add-handler url params bout = let
+   a = string->number (deref params "a")
+   b = string->number (deref params "b")
+in ffi web-respond bout (string-append (number->string (a + b)))
+the-handlers = [(Handler "/add" test-add-handler)]
+t118 = do 
+  result <- test-handlers the-handlers "/add" {a: "1", b: "20"}
+  ;; We do not yet support escape characters but magically we already
+  ;; support multi-line strings
+  Return (test "HTTP/1.1 200 OK
+Content-Type: text/html
+
+21" result)
+
 run-do-tests = do vd <- t28
                   vd <- t29
                   vd <- t34
                   vd <- t111
                   vd <- t112
+                  vd <- t118
                   Return "OK"
 
 main = do ok <- run-do-tests

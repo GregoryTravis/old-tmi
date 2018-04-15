@@ -4,6 +4,7 @@
 (define (web-create-server)
   (tcp-listen 5000 4 #t))
 
+; => (output-stream (url cgi-params))
 (define (web-get-next-request ss)
   (let-values (((bin bout) (tcp-accept ss)))
     (file-stream-buffer-mode bin 'none)
@@ -31,7 +32,7 @@
 
 (define (web-parse-request lines)
   (web-parse-url (nth 1 (string-split (nth 0 lines) " "))))
-(asseq '("/" ()) (web-parse-request '("GET / HTTP/1.1\r" "Host: localhost:5000\r")))
+(asseq '("/" ()) (web-parse-request '("GET / HTTP/1.1\n" "Host: localhost:5000\n")))
 
 (define (write-thing o port)
   (if (string? o)
@@ -40,5 +41,5 @@
 
 (define (web-respond bout o)
   (map (lambda (o) (write-thing o bout))
-    (list "HTTP/1.1 200 OK\r\n" "Content-Type: text/html\r\n\r\n" o))
+    (list "HTTP/1.1 200 OK\n" "Content-Type: text/html\n\n" o))
   (close-output-port bout))

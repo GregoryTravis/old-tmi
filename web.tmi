@@ -1,14 +1,22 @@
+no-handler-handler url params bout = ffi web-respond bout (string-append "No handler for " url)
+
 get-handler handlers url = maybe-default
   (first-maybe
     (/. ((Handler hurl handler)) if url == hurl then (Just handler) else Nothing)
     handlers)
   no-handler-handler
 
-handle handlers (Cons bout (Cons (Cons url (Cons params Nil))  Nil)) = do
+handle handlers (Cons bout (Cons (Cons url (Cons params Nil)) Nil)) = do
   vd <- if (not (url == "/quit")) then (tshew url) else Return 0
   vd <- if (not (url == "/quit")) then (tshew params) else Return 0
   vd <- if (not (url == "/quit")) then ((get-handler handlers url) url params bout) else Return 0
   Return (url == "/quit")
+
+test-handlers handlers url params = do
+  fake-bout <- ffi open-output-string
+  ;; vd <- handle handlers [fake-bout [url params]]
+  vd <- handle handlers (Cons fake-bout (Cons (Cons url (Cons params Nil)) Nil))
+  ffi get-output-string fake-bout
 
 http-server handlers = do
   ss <- ffi web-create-server
