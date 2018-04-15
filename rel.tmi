@@ -27,8 +27,9 @@ list-intersect? a b = not (unique? (list-append a b))
 
 keys rec = map (/. ((Entry k v)) k) (rec-to-entries rec)
 
-add-recs a b = if (not (list-intersect? (keys a) (keys b))) then (add-recs-1 (rec-to-entries a) (rec-to-entries b)) else (err (RecOverlap a b))
-add-recs-1 es0 es1 = entries-to-rec (list-append es0 es1)
+add-recs a b = if (not (list-intersect? (keys a) (keys b)))
+               then (entries-to-rec (list-append (rec-to-entries a) (rec-to-entries b)))
+               else (err (RecOverlap a b))
 
 wherre rel f = filter rel f
 
