@@ -7,9 +7,11 @@ get-handler handlers url = maybe-default
   no-handler-handler
 
 handle handlers (Cons bout (Cons (Cons url (Cons params Nil)) Nil)) = do
-  ;; vd <- if (not (url == "/quit")) then (tshew url) else Return 0
-  ;; vd <- if (not (url == "/quit")) then (tshew params) else Return 0
-  vd <- if (not (url == "/quit")) then ((get-handler handlers url) url params bout) else Return 0
+  vd <- if (not (url == "/quit")) then do
+      vd <- (tshew url)
+      vd <- (tshew params)
+      ((get-handler handlers url) url params bout)
+    else Return 0
   Return (url == "/quit")
 
 test-handlers handlers url params = do
