@@ -29,6 +29,7 @@
   (cond
     ((eq? o #t) 'True)
     ((eq? o #f) 'False)
+    ((eq? o (void)) 'Nil)
     (#t o)))
 
 (define (ffi-apply f args)

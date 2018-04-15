@@ -8,22 +8,22 @@ get-handler handlers url = maybe-default
 
 handle handlers (Cons bout (Cons (Cons url (Cons params Nil)) Nil)) =
   if (not (url == "/quit")) then do
-      ;; vd <- (tshew url)
-      ;; vd <- (tshew params)
-      vd <- ((get-handler handlers url) url params bout)
+      ;; Nil <- (tshew url)
+      ;; Nil <- (tshew params)
+      Nil <- ((get-handler handlers url) url params bout)
       Return False
     else Return True
 
 test-handlers handlers url params = do
   fake-bout <- ffi open-output-string
-  ;; vd <- handle handlers [fake-bout [url params]]
-  vd <- handle handlers (Cons fake-bout (Cons (Cons url (Cons params Nil)) Nil))
+  ;; Nil <- handle handlers [fake-bout [url params]]
+  False <- handle handlers (Cons fake-bout (Cons (Cons url (Cons params Nil)) Nil))
   ffi get-output-string fake-bout
 
 http-server handlers = do
   ss <- ffi web-create-server
-  vd <- tshew Listening
-  bah <- ffi web-get-next-request ss
-  should-quit <- handle handlers bah
-  vd <- ffi tcp-close ss
+  Nil <- tshew Listening
+  req <- ffi web-get-next-request ss
+  should-quit <- handle handlers req
+  Nil <- ffi tcp-close ss
   if should-quit then Return Done else main

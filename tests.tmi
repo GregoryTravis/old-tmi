@@ -277,6 +277,7 @@ Content-Type: text/html
 t119 = do
   (Foo (Bar a)) <- Return (Foo (Bar 12))
   (Foo b) <- Return (Foo (Bar 13))
+  14 <- Return 14
   Return (test [12, (Bar 13)] [a, b])
 
 run-do-tests = do vd <- t28
