@@ -51,9 +51,8 @@ transform-file f rfile wfile = do
   d <- read-data rfile
   write-data wfile (f d)
 
-first-maybe-1 f (Just x) d = (Just x)
-first-maybe-1 f Nothing d = first-maybe f d
-first-maybe f (Cons a d) = first-maybe-1 f (f a) d
+first-maybe f (Cons a d) = case (f a) of (Just x) => (Just x)
+                                         Nothing => first-maybe f d
 first-maybe f Nil = Nothing
 
 maybe-default (Just x) def = x
