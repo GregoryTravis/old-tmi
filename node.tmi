@@ -1,13 +1,17 @@
 read (Node f b) v = f v
 write (Node f b) v new-value = b v new-value
 
-deref-node k = Node (/. (rec) deref rec k) (/. (rec v) (un-deref rec k v))
+deref-node k = Node (/. (rec) deref rec k)
+                    (/. (rec v) (un-deref rec k v))
 
-one-node = Node (/. (lyst) one lyst) (/. (lyst v) (un-one lyst v))
+one-node = Node (/. (lyst) one lyst)
+                (/. (lyst v) (un-one lyst v))
 
-wherre-node pred = Node (/. (rel) wherre rel pred) (/. (rel v) (un-where rel pred v))
+wherre-node pred = Node (/. (rel) wherre rel pred)
+                        (/. (rel v) (un-where rel pred v))
 
-compose-nodes a b = Node (/. (x) (read a (read b x))) (/. (x new-value) (write b x (write a (read b x) new-value)))
+compose-nodes a b = Node (/. (x) (read a (read b x)))
+                         (/. (x new-value) (write b x (write a (read b x) new-value)))
 
 mutation-applier node value = /. (db) (write node db value)
 
