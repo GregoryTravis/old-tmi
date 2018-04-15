@@ -37,7 +37,7 @@ read-all-chars port = do c <- Command ["read-char", port]
 read-file filename = do port <- Command ["open-input-file", filename]
                         chars <- read-all-chars port
                         s <- Command ["list->string", chars]
-                        vd <- Command ["close-input-port", port]
+                        Nil <- Command ["close-input-port", port]
                         Return s
 
 read-data filename = Command ["native-read-data", filename]
