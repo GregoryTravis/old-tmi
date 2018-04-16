@@ -193,7 +193,7 @@
   (definition (seq exp equals exp))
   (decls (alt (seq definition semicolon decls) definition))
   (parenexp (seq lparen exp rparen))
-  (listexp (seq lsb comma-separated-exp-sequence rsb))
+  (listexp (alt (seq lsb rsb) (seq lsb comma-separated-exp-sequence rsb)))
   (comma-separated-exp-sequence (alt (seq exp comma comma-separated-exp-sequence) exp))
   (lambda-exp (seq lambda parenexp exp))
   (base-exp (alt constructor identifier integer operator parenexp listexp lambda-exp string phash))

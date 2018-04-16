@@ -1,1 +1,1 @@
-main = Return 12
+main = Return [[45], Nil]

@@ -5,6 +5,8 @@
 
 (define (tmi-pp-render o)
   (cond
+    ((eq? o 'Nil)
+      "[]")
     ((hash? o)
       `("{" ,(join-things-list ", "
         (map (lambda (k) `(,(tmi-pp-render (string->symbol k)) ": "

@@ -288,6 +288,8 @@ t120 = let
     bar b = b * 1000
  in test 6000 (bar $ foo 1 2 3)
 
+t121 = test "[45, []]" (tmi-pretty-print [45, []])
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

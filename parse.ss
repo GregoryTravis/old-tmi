@@ -72,6 +72,8 @@
 
 (define (un-cses-1 cses)
   (mtch cses
+    '()
+      '()
     ('comma-separated-exp-sequence ('exp a))
       `(,a)
     ('comma-separated-exp-sequence ('exp e) ('comma . _) rest)
@@ -114,6 +116,8 @@
       `(case_clause ,(p2s pat) ,(p2s exp))
     ('listexp ('lsb . _) cses ('rsb . _))
       (p2s (un-cses cses))
+    ('listexp ('lsb . _) ('rsb . _))
+      (p2s (un-cses '()))
     ('definition pat e body)
       `(definition ,(p2s pat) ,e ,(p2s body))
     ('app os)
