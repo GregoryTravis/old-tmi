@@ -16,6 +16,9 @@
 
 (dload "native-web.ss")
 
+;; Disables all includes and dumps things
+(define debug-compile #f)
+
 ; Returns map from function name to list of alternate funs
 (define (compile-let sem)
   (mtch sem
@@ -222,11 +225,11 @@
   `(driver-main ,main))
 
 (define (compile sem)
-  ;(shew 'sem sem)
+  (if debug-compile (shew 'sem sem) '())
   (let ((simple (compile-simplify sem)))
-    ;(shew 'simple simple)
+    (if debug-compile (shew 'simple simple) '())
     (let ((compiled (compile-let simple)))
-      ;(shew compiled)
+      (if debug-compile (shew compiled) '())
       (wrap-main compiled))))
 
 (define (compile-file filename)

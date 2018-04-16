@@ -165,11 +165,13 @@
 (shew (parsed-unbinarize parsed))
 |#
 
-(define no-libs #f)
+;; Can you guess why I am anding this with #t?
+(define (really-add-libs) (and (not debug-compile) #t))
 (define library-files '("overture.tmi" "rel.tmi" "node.tmi" "web.tmi"))
 (define (add-libs s)
-  (if no-libs s
-    (string-append (apply string-append (map read-file-as-string library-files)) "\n" s)))
+  (if (really-add-libs)
+    (string-append (apply string-append (map read-file-as-string library-files)) "\n" s)
+    s))
 
 (define (wrap-file tokens)
   (mtch (last tokens)

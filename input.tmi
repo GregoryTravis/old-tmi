@@ -1,4 +1,1 @@
-;; main = Return $ (rmkey {a: 1, b: 2} "a")
-foo a b c = a + b + c
-bar b = b * 1000
-main = Return (bar $ foo 1 2 3)
+main = Return 12
