@@ -52,5 +52,5 @@ un-where rel f w = let ;; yes = wherre rel f
                        no = wherre rel (pnot f)
                     in (list-append no w)
 
-one (Cons a Nil) = a
+one [a] = a
 un-one lyst x = [x]
