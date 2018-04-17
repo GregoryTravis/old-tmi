@@ -6,7 +6,7 @@ get-handler handlers url = maybe-default
     handlers)
   no-handler-handler
 
-handle handlers (Cons bout (Cons (Cons url (Cons params [])) [])) =
+handle handlers [bout, [url, params]] =
   if (not (url == "/quit")) then do
       ;; [] <- (tshew url)
       ;; [] <- (tshew params)
@@ -17,7 +17,7 @@ handle handlers (Cons bout (Cons (Cons url (Cons params [])) [])) =
 test-handlers handlers url params = do
   fake-bout <- ffi open-output-string
   ;; [] <- handle handlers [fake-bout [url params]]
-  False <- handle handlers (Cons fake-bout (Cons (Cons url (Cons params [])) []))
+  False <- handle handlers [fake-bout, [url, params]]
   ffi get-output-string fake-bout
 
 http-server handlers = do

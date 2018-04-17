@@ -42,7 +42,7 @@ rmkey rec k = let
     rmkey-1 [] kk = err (NoSuchKey kk)
  in (entries-to-rec (rmkey-1 (rec-to-entries rec) k))
 
-mkrec kvs = entries-to-rec (map (/. ((Cons k (Cons v []))) (Entry k v)) kvs)
+mkrec kvs = entries-to-rec (map (/. ([k, v]) (Entry k v)) kvs)
 
 un-deref rec k v = add-recs (rmkey rec k) (mkrec [[k, v]])
 
