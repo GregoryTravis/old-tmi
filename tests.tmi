@@ -290,6 +290,9 @@ t120 = let
 
 t121 = test "[45, []]" (tmi-pretty-print [45, []])
 
+t122 = let a ** b = (a * b) + 1
+        in test 21 (4 ** 5)
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

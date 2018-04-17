@@ -1,9 +1,26 @@
-(define operator-precedence-levels
-  '(($$)
-    (* /)
-    (+ -)
-    (< > ==)
-    ($)))
+;; The numeric levels only matter relatively; they won't be used in precedence declarations.
+(define operators-precedence
+  '(($$ . 0)
+    (* . 10)
+    (/ . 10)
+    (+ . 20)
+    (- . 20)
+    (< . 30)
+    (> . 30)
+    (== . 30)
+    ($ . 100)))
+(define (get-operator-precedence-levels)
+  (map cdr operators-precedence))
+(define (get-operator-precedence-level op)
+  (let ((p (assoc op operators-precedence)))
+    (if (pair? p)
+      (cdr p)
+      (let* ((first-char-op (string->symbol (list->string (list (car (string->list (symbol->string op)))))))
+             (p (assoc first-char-op operators-precedence)))
+        (assert (pair? p) `(cant-determine-precedence ,op))
+        (cdr p)))))
+(asseq 10 (get-operator-precedence-level '*))
+(asseq 10 (get-operator-precedence-level '**++**))
 
 (define (wrapapp-wrap xs)
   (map (lambda (x)
@@ -28,16 +45,16 @@
 (define (nest-ops levels e)
   (mtch levels
     '() e
-    (ops . opses) (nest-ops opses (nest-ops-1 ops e))))
+    (level . levels) (nest-ops levels (nest-ops-1 level e))))
 
-(define (nest-ops-1 ops e)
+(define (nest-ops-1 level e)
   (mtch e
     (a)
       e
     (a ('operator op . opd) b . rest)
-      (if (member (string->symbol op) ops)
-        (nest-ops-1 ops `((binop ,a (operator ,op . ,opd) ,b) . ,rest))
-        `(,a (operator ,op . ,opd) . ,(nest-ops-1 ops`(,b . ,rest))))))
+      (if (eq? level (get-operator-precedence-level (string->symbol op)))
+        (nest-ops-1 level `((binop ,a (operator ,op . ,opd) ,b) . ,rest))
+        `(,a (operator ,op . ,opd) . ,(nest-ops-1 level `(,b . ,rest))))))
 ;(tracefun nest-ops-1)
 
 (define (un-wrapapp-wrap e)
@@ -56,5 +73,6 @@
 ;(tracefun un-wrapapp-wrap)
 
 (define (precedence xs)
-  (mtch (nest-ops operator-precedence-levels (add-$$ (wrapapp-wrap xs)))
-    (b) (un-wrapapp-wrap b)))
+  (let ((levels (unique (sort (get-operator-precedence-levels) <))))
+    (mtch (nest-ops levels (add-$$ (wrapapp-wrap xs)))
+      (b) (un-wrapapp-wrap b))))
