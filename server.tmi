@@ -1,7 +1,7 @@
 send-favicon url params bout = do
   port <- ffi open-input-file "favicon.png"
   bytes <- ffi port->bytes port
-  Nil <- ffi close-input-port port
+  [] <- ffi close-input-port port
   ffi web-respond bout bytes
 
 write-handler url params bout = ffi web-respond bout (string-append "yesss " url)
@@ -23,7 +23,7 @@ db-handler url params bout = let
    on = one-node
    down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
 in do
-  Nil <- apply-mutation down c
+  [] <- apply-mutation down c
   ffi web-respond bout "wrote"
 
 the-handlers = [(Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler),

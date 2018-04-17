@@ -71,10 +71,10 @@ t23 = test 30 (nth 2 [10, 20, 30])
 ;; Naked constructors
 id x = x
 dub x = [x, x]
-t24 = test Nil (nth 0 (dub Nil))
-t25 = test Nil (nth 1 (dub Nil))
-t26 x = case x of (Nil a b) => a + b
-t27 = test 3 (t26 (Nil 1 2))
+t24 = test [] (nth 0 (dub []))
+t25 = test [] (nth 1 (dub []))
+t26 x = case x of ([] a b) => a + b
+t27 = test 3 (t26 ([] 1 2))
 
 ;; Commands and do
 t28 = do port <- Command ["open-input-string", "abc"]
@@ -99,7 +99,7 @@ t34 = do s <- read-data "test-files/read-data-test-file"
 
 t35 = test True (all [True])
 t36 = test True (all [True, True])
-;; t37 = test True (all Nil))
+;; t37 = test True (all []))
 t38 = test False (all [False])
 t39 = test False (all [False, True])
 
@@ -115,19 +115,19 @@ t56 = test True (member 3 [1, 2, 3])
 t57 = test True (member 1 [1])
 t58 = test False (member 1 [2])
 t59 = test False (member 1 [2, 3, 4])
-t60 = test False (member 1 Nil)
+t60 = test False (member 1 [])
 t61 = test [1, 2, 3, 4] (list-append [1, 2] [3, 4])
 t62 = test [1, 2, 3] (list-append [1, 2] [3])
-t63 = test [1, 2] (list-append [1, 2] Nil)
+t63 = test [1, 2] (list-append [1, 2] [])
 t64 = test [1, 2, 3] (list-append [1] [2, 3])
-t65 = test [2, 3] (list-append Nil [2, 3])
-t66 = test Nil (list-append Nil Nil)
+t65 = test [2, 3] (list-append [] [2, 3])
+t66 = test [] (list-append [] [])
 t67 = [(test True (and True True)),
        (test False (and True False)),
        (test False (and False True)),
        (test False (and False False))]
 t68 = [(test False (not True)), (test True (not False))]
-t69 = [(test True (unique? Nil)),
+t69 = [(test True (unique? [])),
        (test True (unique? [1])),
        (test True (unique? [1, 2, 3])),
        (test False (unique? [1, 1])),
@@ -141,9 +141,9 @@ t73 = test True (list-intersect? [1, 2, 3] [2, 3])
 t74 = test True (list-intersect? [1, 2, 3] [2, 3, 4])
 t75 = test False (list-intersect? [1, 2] [3, 4])
 t76 = test False (list-intersect? [1] [3])
-t77 = test False (list-intersect? [1] Nil)
-t78 = test False (list-intersect? Nil [3])
-t79 = test False (list-intersect? Nil Nil)
+t77 = test False (list-intersect? [1] [])
+t78 = test False (list-intersect? [] [3])
+t79 = test False (list-intersect? [] [])
 t80 = test ["b", "a"] (keys {a: 10, b: 20})
 t81 = test {a: 10, b: 20, c: 30} (add-recs {a: 10} {b: 20, c: 30})
 t82 = test {a: 10, b: 20, c: 30} (add-recs {a: 10, b: 20} {c: 30})
@@ -169,7 +169,7 @@ t88 = test [{b: 20, c: 30}, {b: 21, c: 31}] (proj [{a: 10, b: 20, c: 30}, {a: 10
 t89 = test [{a: 10}, {a: 10}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] ["a"])
 t90 = test [{b: 20}, {b: 21}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] ["b"])
 t91 = test [{c: 30}, {c: 31}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] ["c"])
-;; t92 = test [{}, {}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] Nil)
+;; t92 = test [{}, {}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] [])
 t93 = test [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] (proj [{a: 10, b: 20, c: 30}, {a: 10, b: 21, c: 31}] ["a", "b", "c"])
 
 t94 = test {b: 20, c: 30} (rmkey {a: 10, b: 20, c: 30} "a")
@@ -179,8 +179,8 @@ t97 = test {b: 20} (rmkey {a: 10, b: 20} "a")
 
 t98 = test {a: 10} (mkrec [["a", 10]])
 t99 = test {a: 10, b: 20} (mkrec [["a", 10], ["b", 20]])
-;; t100 = test {} (mkrec Nil)
-t100-temp = test (rmkey {a: 10} "a") (mkrec Nil) ;; Trick to construct empty rec
+;; t100 = test {} (mkrec [])
+t100-temp = test (rmkey {a: 10} "a") (mkrec []) ;; Trick to construct empty rec
 
 t101 = test {a: 10, b: 30} (un-deref {a: 10, b: 20} "b" 30)
 
@@ -229,14 +229,14 @@ t111 = let
                  {a: 11, b: 22, c: 34}]
 in do db <- read-data "db.json"
       True <- Return (test db orig-db)
-      Nil <- write-data "db2.json" (write down db 3100)
+      [] <- write-data "db2.json" (write down db 3100)
       mdb <- read-data "db2.json"
       True <- Return (test-rel mdb modified-db)
-      Nil <- write-data "db3.json" (write down mdb 31)
+      [] <- write-data "db3.json" (write down mdb 31)
       odb <- read-data "db3.json"
       True <- Return (test-rel odb db)
-      Nil <- ffi delete-file "db2.json"
-      Nil <- ffi delete-file "db3.json"
+      [] <- ffi delete-file "db2.json"
+      [] <- ffi delete-file "db3.json"
       Return True
 
 t112 = let
@@ -246,12 +246,12 @@ t112 = let
   on = one-node
   down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
 in do
-  Nil <- transform-file (mutation-applier down 4444) "db.json" "db2.json"
-  Nil <- transform-file (mutation-applier down 31) "db2.json" "db3.json"
+  [] <- transform-file (mutation-applier down 4444) "db.json" "db2.json"
+  [] <- transform-file (mutation-applier down 31) "db2.json" "db3.json"
   db <- read-data "db.json"
   odb <- read-data "db3.json"
-  Nil <- ffi delete-file "db2.json"
-  Nil <- ffi delete-file "db3.json"
+  [] <- ffi delete-file "db2.json"
+  [] <- ffi delete-file "db3.json"
   True <- Return (test-rel db odb)
   Return True
 

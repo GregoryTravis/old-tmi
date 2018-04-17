@@ -1,12 +1,12 @@
 deref rec k = find-it (rec-to-entries rec)
   where find-it (Cons (Entry kk vv) d) = if k == kk then vv else find-it d
-        find-it Nil = assert Nil [False]
+        find-it [] = assert [] [False]
 
 member a (Cons aa d) = if a == aa then True else (member a d)
-member a Nil = False
+member a [] = False
 
 list-append (Cons a d) lyst = (Cons a (list-append d lyst))
-list-append Nil lyst = lyst
+list-append [] lyst = lyst
 
 not True = False
 not False = True
@@ -17,10 +17,10 @@ and False True = False
 and False False = False
 
 filter (Cons a d) f = if (f a) then (Cons a (filter d f)) else (filter d f)
-filter Nil f = Nil
+filter [] f = []
 
 unique? (Cons a d) = and (not (member a d)) (unique? d)
-unique? Nil = True
+unique? [] = True
 
 ;; Does not check if a or b is non-unique.
 list-intersect? a b = not (unique? (list-append a b))
@@ -39,10 +39,10 @@ proj-rec rec fields = entries-to-rec
 
 rmkey rec k = let
     rmkey-1 (Cons (Entry k v) d) kk = if k == kk then d else (Cons (Entry k v) (rmkey-1 d kk))
-    rmkey-1 Nil kk = err (NoSuchKey kk)
+    rmkey-1 [] kk = err (NoSuchKey kk)
  in (entries-to-rec (rmkey-1 (rec-to-entries rec) k))
 
-mkrec kvs = entries-to-rec (map (/. ((Cons k (Cons v Nil))) (Entry k v)) kvs)
+mkrec kvs = entries-to-rec (map (/. ((Cons k (Cons v []))) (Entry k v)) kvs)
 
 un-deref rec k v = add-recs (rmkey rec k) (mkrec [[k, v]])
 

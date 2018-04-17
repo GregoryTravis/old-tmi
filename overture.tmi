@@ -3,25 +3,25 @@
 fact 0 = 1
 fact n = n * fact (n - 1)
 
-map f Nil = Nil
+map f [] = []
 map f (Cons a d) = Cons (f a) (map f d)
 
 nth 0 (Cons a d) = a
 nth n (Cons a d) = nth (n - 1) d
 
-insertion-sort Nil = Nil
+insertion-sort [] = []
 insertion-sort (Cons a d) = insert-into a (insertion-sort d)
-insert-into x Nil = [x]
+insert-into x [] = [x]
 insert-into x (Cons a d) = if (x < a) then (Cons x (Cons a d)) else (Cons a (insert-into x d))
 
-filter p Nil = Nil
+filter p [] = []
 filter p (Cons a d) = if (p a) then (Cons a (filter p d)) else (filter p d)
 
 (int a) + (int b) = native-+ a b
 (string a) + (string b) = string-append a b
 
 all (Cons True d) = all d
-all Nil = True
+all [] = True
 all x = False
 
 test expected actual = if expected == actual then True else (err (TestFailure expected actual))
@@ -31,13 +31,13 @@ assert v checks = if (all checks) then v else (err (AssertionFailure v checks))
 
 read-all-chars port = do c <- Command ["read-char", port]
                          is-eof <- Command ["eof-object?", c]
-                         if is-eof then (Return Nil) else do tail <- read-all-chars port 
-                                                             Return (Cons c tail)
+                         if is-eof then (Return []) else do tail <- read-all-chars port 
+                                                            Return (Cons c tail)
 
 read-file filename = do port <- Command ["open-input-file", filename]
                         chars <- read-all-chars port
                         s <- Command ["list->string", chars]
-                        Nil <- Command ["close-input-port", port]
+                        [] <- Command ["close-input-port", port]
                         Return s
 
 read-data filename = Command ["native-read-data", filename]
@@ -53,7 +53,7 @@ transform-file f rfile wfile = do
 
 first-maybe f (Cons a d) = case (f a) of (Just x) => (Just x)
                                          Nothing => first-maybe f d
-first-maybe f Nil = Nothing
+first-maybe f [] = Nothing
 
 maybe-default (Just x) def = x
 maybe-default Nothing def = def
