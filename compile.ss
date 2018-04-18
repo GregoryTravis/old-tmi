@@ -216,6 +216,10 @@
       (let ((param `(identifier ,(symbol->string (pm-symgen)))))
         (compile-simplify
           `(lambda-exp (app (,param)) (binop ,param ,op ,e))))
+    ('right-section e op)
+      (let ((param `(identifier ,(symbol->string (pm-symgen)))))
+        (compile-simplify
+          `(lambda-exp (app (,param)) (binop ,e ,op ,param))))
     x x))
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
