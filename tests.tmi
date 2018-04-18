@@ -3,6 +3,7 @@ foo (Bar a) = a
 wut a = /. (b) a + b
 
 t00 = test [2, 4, 6] (map double [1, 2, 3])
+t00-1 = test [] (map double [])
 t01 = test 3628800 (fact 10)
 t02 = test 45 (foo (Bar 45))
 t03 = test (foo (Bar (Both 43 44))) (Both 43 44)
