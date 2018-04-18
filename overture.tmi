@@ -1,5 +1,10 @@
 ;; TMI oerture
 
+tmi-foldr f z [] = z
+tmi-foldr f z (Cons x xs) = f x (tmi-foldr f z xs)
+tmi-foldl f z [] = z
+tmi-foldl f z (Cons x xs) = tmi-foldl f (f z x) xs
+
 fact 0 = 1
 fact n = n * fact (n - 1)
 

@@ -85,6 +85,9 @@
                `(set! ,f (trace-wrap ,tracer ',f ,f)))
              funs)))
 
+(define (tracefun-wrap name f)
+  (trace-wrap plain-ol-tracer name f))
+
 (define-macro (hook-with hookist . funs)
   (cons 'begin
         (map (lambda (f)

@@ -54,13 +54,7 @@
 (define trace-def-enabled #f)
 (define (trace-def name src)
   (if trace-def-enabled
-    (let ((targs (pm-symgen))
-          (retval-s (pm-symgen)))
-      `(lambda ,targs
-         (shew (cons '+ (cons ',name ,targs)))
-         (let ((,retval-s (apply ,src ,targs)))
-           (shew (list '- (cons ',name ,targs) ,retval-s))
-           ,retval-s)))
+    `(tracefun-wrap ',name ,src)
     src))
 
 (define (compile-multilambda name ml)
