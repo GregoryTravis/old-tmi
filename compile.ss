@@ -54,7 +54,7 @@
 (define trace-def-enabled #f)
 (define (trace-def name src)
   (if trace-def-enabled
-    `(tracefun-wrap ',name ,src)
+    `(procedure-rename (tracefun-wrap ',(string->symbol name) ,src) ',(string->symbol name))
     src))
 
 (define (compile-multilambda name ml)
