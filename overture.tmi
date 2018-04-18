@@ -8,7 +8,8 @@ tmi-foldl f z (Cons x xs) = tmi-foldl f (f z x) xs
 fact 0 = 1
 fact n = n * fact (n - 1)
 
-map f l = tmi-foldr (/. (a d) Cons (f a) d) [] l
+map f [] = []
+map f (Cons a d) = Cons (f a) (map f d)
 
 nth 0 (Cons a d) = a
 nth n (Cons a d) = nth (n - 1) d
