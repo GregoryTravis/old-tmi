@@ -1,2 +1,3 @@
-main = Return (map (2 +) [2, 3, 4])
-;; main = Return (1 + 2)
+tttt = let foo = (+)
+        in foo 3 40
+main = Return tttt

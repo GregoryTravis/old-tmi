@@ -220,6 +220,11 @@
       (let ((param `(identifier ,(symbol->string (pm-symgen)))))
         (compile-simplify
           `(lambda-exp (app (,param)) (binop ,e ,op ,param))))
+    ('both-section op)
+      (let ((lparam `(identifier ,(symbol->string (pm-symgen))))
+            (rparam `(identifier ,(symbol->string (pm-symgen)))))
+        (compile-simplify
+          `(lambda-exp (app (,lparam ,rparam)) (binop ,lparam ,op ,rparam))))
     x x))
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
