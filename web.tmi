@@ -7,7 +7,7 @@ get-handler handlers url = maybe-default
   no-handler-handler
 
 handle handlers [bout, [url, params]] =
-  if (not (url == "/quit")) then do
+  if (url != "/quit") then do
       ;; [] <- (tshew url)
       ;; [] <- (tshew params)
       [] <- ((get-handler handlers url) url params bout)
