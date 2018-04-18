@@ -293,6 +293,25 @@ t121 = test "[45, []]" (tmi-pretty-print [45, []])
 t122 = let a ** b = (a * b) + 1
         in test 21 (4 ** 5)
 
+t123 = test True (3 > 2)
+t124 = test False (3 < 2)
+t125 = test False (2 < 2)
+t126 = test True (2 < 3)
+t127 = test False (2 > 3)
+t128 = test False (2 > 2)
+
+t129 = test True (3 >= 2)
+t130 = test False (3 <= 2)
+t131 = test True (2 <= 2)
+t132 = test True (2 <= 3)
+t133 = test False (2 >= 3)
+t134 = test True (2 >= 2)
+
+t135 = test True ([1, 2] == [1, 2])
+t136 = test False ([1, 2] == [1, 3])
+t137 = test True ([1, 2] != [1, 3])
+t138 = test False ([1, 2] != [1, 2])
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

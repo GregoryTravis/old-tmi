@@ -8,6 +8,7 @@
     (< . 30)
     (> . 30)
     (== . 30)
+    (!= . 30)
     ($ . 100)))
 (define (get-operator-precedence-levels)
   (map cdr operators-precedence))

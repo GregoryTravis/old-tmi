@@ -17,7 +17,18 @@ insert-into x (Cons a d) = if (x < a) then (Cons x (Cons a d)) else (Cons a (ins
 filter p [] = []
 filter p (Cons a d) = if (p a) then (Cons a (filter p d)) else (filter p d)
 
-(int a) + (int b) = native-+ a b
+(int a) + (int b) = native+ a b
+(int a) - (int b) = native- a b
+(int a) * (int b) = native* a b
+(int a) / (int b) = native/ a b
+
+a == b = native== a b
+a != b = native!= a b
+(int a) < (int b) = native< a b
+(int a) > (int b) = native> a b
+(int a) <= (int b) = native<= a b
+(int a) >= (int b) = native>= a b
+
 (string a) + (string b) = string-append a b
 
 all (Cons True d) = all d

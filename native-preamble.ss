@@ -54,19 +54,19 @@
   (lambda (a b) (if (op a b) 'True 'False)))
 
 ;; Only for native scheme operators used without overloading; eventually most of these will disappear
-(define op* *)
-(define op/ /)
-(define op+ +)
-(define op- -)
-(define op< (tmi-if-ify <))
-(define op> (tmi-if-ify >))
-(define op== (tmi-if-ify equal?))
-(define op!= (tmi-if-ify (lambda (a b) (not (equal? a b)))))
+(define native+ +)
+(define native- -)
+(define native* *)
+(define native/ /)
+(define native< (tmi-if-ify <))
+(define native> (tmi-if-ify >))
+(define native<= (tmi-if-ify <=))
+(define native>= (tmi-if-ify >=))
+(define native== (tmi-if-ify equal?))
+(define native!= (tmi-if-ify (lambda (a b) (not (equal? a b)))))
 ; This isn't used yet except in precedence
-; (define op$$ $$)
+; (define native$$ $$)
 (define (op$ f a) (f a))
-
-(define native-+ +)
 
 (define (coll-make-hash pairs)
   (assert (unique? (map car pairs)))
