@@ -329,6 +329,10 @@ t143 = test 43 (let foo = (+)
 t144 = Return {a: 1, b:[2, 3,
   4], c: /. (x) x + x, d: /.
     (y) y * y}
+t145 = let
+    foo a = /. (b) a + b
+    vrr = (foo 1) 20
+  in test 21 vrr
 
 run-do-tests = do True <- t28
                   True <- t29
