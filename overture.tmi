@@ -45,15 +45,15 @@ test expected actual = if expected == actual then True else (err (TestFailure ex
 test-rel expected actual = if rel-equal? expected actual then True else err (TestFailure expected actual)
 assert v checks = if all checks then v else err (AssertionFailure v checks)
 
-read-all-chars port = do c <- Command ["read-char", port]
-                         is-eof <- Command ["eof-object?", c]
+read-all-chars port = do c <- ffi read-char port
+                         is-eof <- ffi eof-object? c
                          if is-eof then (Return []) else do tail <- read-all-chars port 
                                                             Return (Cons c tail)
 
-read-file filename = do port <- Command ["open-input-file", filename]
+read-file filename = do port <- ffi open-input-file filename
                         chars <- read-all-chars port
                         s <- Command ["list->string", chars]
-                        [] <- Command ["close-input-port", port]
+                        [] <- ffi close-input-port port
                         Return s
 
 read-data filename = Command ["native-read-data", filename]
