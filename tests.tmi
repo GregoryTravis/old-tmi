@@ -325,6 +325,10 @@ t141 = test [4, 5, 6] (map (+ 2) [2, 3, 4])
 t142 = test [4, 5, 6] (map (2 +) [2, 3, 4])
 t143 = test 43 (let foo = (+)
                  in foo 3 40)
+;; Syntax fun
+t144 = Return {a: 1, b:[2, 3,
+  4], c: /. (x) x + x, d: /.
+    (y) y * y}
 
 run-do-tests = do True <- t28
                   True <- t29
