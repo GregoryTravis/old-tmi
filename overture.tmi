@@ -17,10 +17,10 @@ nth n (Cons a d) = nth (n - 1) d
 insertion-sort [] = []
 insertion-sort (Cons a d) = insert-into a (insertion-sort d)
 insert-into x [] = [x]
-insert-into x (Cons a d) = if (x < a) then (Cons x (Cons a d)) else (Cons a (insert-into x d))
+insert-into x (Cons a d) = if x < a then Cons x (Cons a d) else Cons a (insert-into x d)
 
 filter p [] = []
-filter p (Cons a d) = if (p a) then (Cons a (filter p d)) else (filter p d)
+filter p (Cons a d) = if p a then Cons a (filter p d) else filter p d
 
 (int a) + (int b) = native+ a b
 (int a) - (int b) = native- a b
@@ -42,7 +42,7 @@ all x = False
 
 test expected actual = if expected == actual then True else (err (TestFailure expected actual))
 ;; TODO get rid of test-rel
-test-rel expected actual = if (rel-equal? expected actual) then True else (err (TestFailure expected actual))
+test-rel expected actual = if rel-equal? expected actual then True else err (TestFailure expected actual)
 assert v checks = if (all checks) then v else (err (AssertionFailure v checks))
 
 read-all-chars port = do c <- Command ["read-char", port]
