@@ -26,7 +26,7 @@ in do
   [] <- apply-mutation down c
   ffi web-respond bout "wrote"
 
-the-handlers = [(Handler "/favicon.ico" send-favicon), (Handler "/write" write-handler),
-  (Handler "/add" add-handler), (Handler "/db" db-handler)]
+the-handlers = [Handler "/favicon.ico" send-favicon, Handler "/write" write-handler,
+  Handler "/add" add-handler, Handler "/db" db-handler]
 
 main = http-server the-handlers
