@@ -52,12 +52,12 @@ read-all-chars port = do c <- ffi read-char port
 
 read-file filename = do port <- ffi open-input-file filename
                         chars <- read-all-chars port
-                        s <- Command ["list->string", chars]
+                        s <- ffi list->string chars
                         [] <- ffi close-input-port port
                         Return s
 
-read-data filename = Command ["native-read-data", filename]
-write-data filename o = Command ["native-write-data", filename, o]
+read-data filename = ffi native-read-data filename
+write-data filename o = ffi native-write-data filename o
 
 tshew o = ffi display-newline (tmi-pretty-print o)
 

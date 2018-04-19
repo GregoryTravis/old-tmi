@@ -77,7 +77,7 @@ t25 = test [] (nth 1 (dub []))
 t26 x = case x of [] a b => a + b
 t27 = test 3 (t26 ([] 1 2))
 
-;; Commands and do
+;; Commands, ffi, and do
 t28 = do port <- Command ["open-input-string", "abc"]
          chars <- read-all-chars port
          s <- Command ["list->string", chars]

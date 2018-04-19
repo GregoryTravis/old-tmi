@@ -103,7 +103,7 @@
 
 ;; Only handles a list of records
 (define (json->tmi json)
-  (consify-1 (map string-hash-keys (map ->hash-equal json))))
+  (map string-hash-keys (map ->hash-equal json)))
 ;; Only handles a list of records
 (define (tmi->json o)
   (map symbol-hash-keys o))
@@ -131,5 +131,5 @@
 
 (define (ffi f . args)
   (let ((name (if (procedure? f) (symbol->string (object-name f)) (symbol->string f))))
-    `(Seq (Command ,(consify (cons name args)))
+    `(Seq (Command (Cons ,name ,(map native-unconsify args)))
           ,(lambda (result) `(Return ,(consify result))))))
