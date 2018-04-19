@@ -15,8 +15,9 @@ proj-rec rec fields = entries-to-rec
   (filter (/. ((Entry k v)) member k fields) (rec-to-entries rec))
 
 rmkey rec k = let
-    rmkey-1 (Cons (Entry k v) d) kk = if k == kk then d else Cons (Entry k v) (rmkey-1 d kk)
-    rmkey-1 [] kk = err (NoSuchKey kk)
+    rmkey-1 x kk = case x of
+      (Cons (Entry k v) d) => if k == kk then d else Cons (Entry k v) (rmkey-1 d kk)
+      [] => err (NoSuchKey kk)
  in entries-to-rec (rmkey-1 (rec-to-entries rec) k)
 
 mkrec kvs = entries-to-rec (map (/. ([k, v]) Entry k v) kvs)
