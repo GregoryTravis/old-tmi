@@ -54,11 +54,11 @@ t16 = a * b + c
              c = 7
 t17 = test [6, 27, 27, 27, 27] [t12, t13, t14, t15, t16]
 
-t18 a = case a of (Boo a) => a + 100
-                  (Foo b) => b + 1000
+t18 a = case a of Boo a => a + 100
+                  Foo b => b + 1000
 t19 a = case a of
-          (Boo a) => a + 100
-          (Foo b) => b + 1000
+          Boo a => a + 100
+          Foo b => b + 1000
 t20 = let roo (Boo a) = a + 100
           roo (Foo b) = b + 1000
        in
@@ -74,7 +74,7 @@ id x = x
 dub x = [x, x]
 t24 = test [] (nth 0 (dub []))
 t25 = test [] (nth 1 (dub []))
-t26 x = case x of ([] a b) => a + b
+t26 x = case x of [] a b => a + b
 t27 = test 3 (t26 ([] 1 2))
 
 ;; Commands and do
@@ -90,6 +90,7 @@ t30 = test [3, "asdfzxcv"] [1 + 2, "asdf" + "zxcv"]
 
 ;; Just for parsing
 t31 = Return { a: { c: let r = 5 in r + r }, b: 13 }
+t31-1 = Return {a:{c:let r = 5 in r + r},b:13}
 
 ;; Fragile
 t32 = test "{b: 13, a: {c: 10}}" (tmi-pretty-print { a: { c: let r = 5 in r + r }, b: 13 })
@@ -205,7 +206,7 @@ t109 = test [[{b: 21, a: 11}, {b: 22, a: 12}], [{b: 21, a: 11}, {b: 22, a: 10}]]
                  on = one-node
               in let own = compose-nodes on wn
                   in let down = compose-nodes dn own
-                      in [(write own rel {a: 12, b: 22}), (write down rel 22)])
+                      in [write own rel {a: 12, b: 22}, write down rel 22])
 
 ;; Actually a test for test-rel which should go away
 t110 = test-rel [{a: 10}, {a: 11}] [{a: 11}, {a: 10}]
@@ -268,7 +269,7 @@ test-add-handler url params bout = let
    a = string->number (deref params "a")
    b = string->number (deref params "b")
 in ffi web-respond bout (string-append (number->string (a + b)))
-the-handlers = [(Handler "/add" test-add-handler)]
+the-handlers = [Handler "/add" test-add-handler]
 t118 = do 
   result <- test-handlers the-handlers "/add" {a: "1", b: "20"}
   ;; We do not yet support escape characters but magically we already
