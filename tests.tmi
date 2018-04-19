@@ -280,8 +280,8 @@ Content-Type: text/html
 21" result)
 
 t119 = do
-  (Foo (Bar a)) <- Return (Foo (Bar 12))
-  (Foo b) <- Return (Foo (Bar 13))
+  Foo (Bar a) <- Return (Foo (Bar 12))
+  Foo b <- Return (Foo (Bar 13))
   14 <- Return 14
   Return (test [12, (Bar 13)] [a, b])
 
@@ -292,7 +292,7 @@ t120 = let
 
 t121 = test "[45, []]" (tmi-pretty-print [45, []])
 
-t122 = let a ** b = (a * b) + 1
+t122 = let a ** b = a * b + 1
         in test 21 (4 ** 5)
 
 t123 = test True (3 > 2)
