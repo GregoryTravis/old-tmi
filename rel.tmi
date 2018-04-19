@@ -4,9 +4,9 @@ deref rec k = find-it (rec-to-entries rec)
 
 keys rec = map (/. ((Entry k v)) k) (rec-to-entries rec)
 
-add-recs a b = if (not (list-intersect? (keys a) (keys b)))
-               then (entries-to-rec (list-append (rec-to-entries a) (rec-to-entries b)))
-               else (err (RecOverlap a b))
+add-recs a b = if not (list-intersect? (keys a) (keys b))
+               then entries-to-rec (list-append (rec-to-entries a) (rec-to-entries b))
+               else err (RecOverlap a b)
 
 wherre rel f = filter rel f
 
@@ -15,19 +15,19 @@ proj-rec rec fields = entries-to-rec
   (filter (/. ((Entry k v)) member k fields) (rec-to-entries rec))
 
 rmkey rec k = let
-    rmkey-1 (Cons (Entry k v) d) kk = if k == kk then d else (Cons (Entry k v) (rmkey-1 d kk))
+    rmkey-1 (Cons (Entry k v) d) kk = if k == kk then d else Cons (Entry k v) (rmkey-1 d kk)
     rmkey-1 [] kk = err (NoSuchKey kk)
- in (entries-to-rec (rmkey-1 (rec-to-entries rec) k))
+ in entries-to-rec (rmkey-1 (rec-to-entries rec) k)
 
-mkrec kvs = entries-to-rec (map (/. ([k, v]) (Entry k v)) kvs)
+mkrec kvs = entries-to-rec (map (/. ([k, v]) Entry k v) kvs)
 
 un-deref rec k v = add-recs (rmkey rec k) (mkrec [[k, v]])
 
-pnot p = /. (x) (not (p x))
+pnot p = /. (x) not (p x)
 
 un-where rel f w = let ;; yes = wherre rel f
                        no = wherre rel (pnot f)
-                    in (list-append no w)
+                    in list-append no w
 
 one [a] = a
 un-one lyst x = [x]

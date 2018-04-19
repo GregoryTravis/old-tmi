@@ -43,7 +43,7 @@ all x = False
 test expected actual = if expected == actual then True else (err (TestFailure expected actual))
 ;; TODO get rid of test-rel
 test-rel expected actual = if rel-equal? expected actual then True else err (TestFailure expected actual)
-assert v checks = if (all checks) then v else (err (AssertionFailure v checks))
+assert v checks = if all checks then v else err (AssertionFailure v checks)
 
 read-all-chars port = do c <- Command ["read-char", port]
                          is-eof <- Command ["eof-object?", c]
@@ -67,17 +67,17 @@ transform-file f rfile wfile = do
   d <- read-data rfile
   write-data wfile (f d)
 
-first-maybe f (Cons a d) = case (f a) of (Just x) => (Just x)
+first-maybe f (Cons a d) = case (f a) of Just x => Just x
                                          Nothing => first-maybe f d
 first-maybe f [] = Nothing
 
 maybe-default (Just x) def = x
 maybe-default Nothing def = def
 
-member a (Cons aa d) = if a == aa then True else (member a d)
+member a (Cons aa d) = if a == aa then True else member a d
 member a [] = False
 
-list-append (Cons a d) lyst = (Cons a (list-append d lyst))
+list-append (Cons a d) lyst = Cons a (list-append d lyst)
 list-append [] lyst = lyst
 
 not True = False
@@ -88,7 +88,7 @@ and True False = False
 and False True = False
 and False False = False
 
-filter (Cons a d) f = if (f a) then (Cons a (filter d f)) else (filter d f)
+filter (Cons a d) f = if f a then Cons a (filter d f) else filter d f
 filter [] f = []
 
 unique? (Cons a d) = and (not (member a d)) (unique? d)
