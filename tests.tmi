@@ -82,6 +82,10 @@ t28 = do port <- Command ["open-input-string", "abc"]
          chars <- read-all-chars port
          s <- Command ["list->string", chars]
          Return (test "abc" s)
+t28-1 = do port <- ffi open-input-string "abc"
+           chars <- read-all-chars port
+           s <- ffi list->string chars
+           Return (test "abc" s)
 
 t29 = do s <- read-file "test-files/read-test-file"
          Return (test "asdf" s)
