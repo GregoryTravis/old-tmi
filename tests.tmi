@@ -357,7 +357,13 @@ t148 = let
                             (Bar a) => a * a
   in test [20, 400] [tttt (Foo 10), uuuu (Bar 20)]
 
+;; Syntax
 t149 = test {} {}
+
+;; Syntax
+t150 = let tttt = do
+             Return True
+        in tttt
 
 run-do-tests = do True <- t28
                   True <- t29
@@ -366,6 +372,7 @@ run-do-tests = do True <- t28
                   True <- t112
                   True <- t118
                   True <- t147
+                  True <- t150
                   Return "OK"
 
 main = do ok <- run-do-tests

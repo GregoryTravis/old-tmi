@@ -110,6 +110,8 @@
       `(if ,(p2s b) ,(p2s t) ,(p2s e))
     ('pdo ('do_keyword . _) ('p-lcb . _) assignments ('semicolon . _) exp ('p-rcb . _))
       `(pdo ,(map p2s (flatten-do-assignments assignments)) ,(p2s exp))
+    ('pdo ('do_keyword . _) ('p-lcb . _) exp ('p-rcb . _))
+      `(pdo () ,(p2s exp))
     ('do_assignment pat ('larrow . _) body)
       `(do_assignment ,(p2s pat) ,(p2s body))
     ('exp x)
