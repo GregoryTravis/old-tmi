@@ -158,6 +158,8 @@
             `(lambda-exp ,spat ,(p2s body)))))
     ('phash ('lcb . _) entries ('rcb . _))
       `(hash ,(p2s entries))
+    ('phash ('lcb . _) ('rcb . _))
+      `(hash ())
     ('phash-entries e ('comma . _) es)
       `(,(p2s e) . ,(p2s es))
     ('phash-entries e)

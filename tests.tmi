@@ -357,6 +357,8 @@ t148 = let
                             (Bar a) => a * a
   in test [20, 400] [tttt (Foo 10), uuuu (Bar 20)]
 
+t149 = test {} {}
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

@@ -207,7 +207,7 @@
   (case_clauses (alt (seq case_clause semicolon case_clauses) case_clause))
   (case_clause (seq exp rdbl_arrow exp))
   (pif (seq if_keyword exp then_keyword exp else_keyword exp))
-  (phash (seq lcb phash-entries rcb))
+  (phash (alt (seq lcb rcb) (seq lcb phash-entries rcb)))
   (phash-entries (alt (seq phash-entry comma phash-entries) phash-entry))
   (phash-entry (seq identifier colon exp))
 ))
