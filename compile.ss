@@ -170,7 +170,9 @@
     ('app es)
       (map compile-exp es)
     ('binop a ('operator op . _) b)
-      `(,(string->symbol (string-append "op" op)) ,(compile-exp a) ,(compile-exp b))
+      (if (is-short-circuit op)
+        `(,(string->symbol (string-append "op" op)) ,(compile-thunk (compile-exp a)) ,(compile-thunk (compile-exp b)))
+        `(,(string->symbol (string-append "op" op)) ,(compile-exp a) ,(compile-exp b)))
     ('if b t e)
       `(if (tmi-if ,(compile-exp b)) ,(compile-exp t) ,(compile-exp e))
     ('let . _)
@@ -181,6 +183,12 @@
       (compile-hash-literal entries)
     ))
 ;(tracefun compile-exp)
+
+(define (compile-thunk ce)
+  `(lambda () ,ce))
+
+(define (is-short-circuit op)
+  (or (equal? op "&&") (equal? op "||")))
 
 (define (strip-quotes s)
   (assert (eq? (string-ref s 0) #\"))

@@ -34,6 +34,8 @@ a != b = native!= a b
 (int a) <= (int b) = native<= a b
 (int a) >= (int b) = native>= a b
 
+a ^^ b = native^^ a b
+
 (string a) + (string b) = string-append a b
 
 all (Cons True d) = all d

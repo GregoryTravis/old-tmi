@@ -365,6 +365,19 @@ t150 = let tttt = do
              Return True
         in tttt
 
+t151 = test True (True && True)
+t152 = test False (False && True)
+t153 = test False (True && False)
+t154 = test False (False && False)
+t155 = test True (True || True)
+t156 = test True (False || True)
+t157 = test True (True || False)
+t158 = test False (False || False)
+t159 = test False (True ^^ True)
+t160 = test True (False ^^ True)
+t161 = test True (True ^^ False)
+t162 = test False (False ^^ False)
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

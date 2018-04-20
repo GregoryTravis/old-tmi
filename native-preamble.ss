@@ -64,9 +64,16 @@
 (define native>= (tmi-if-ify >=))
 (define native== (tmi-if-ify equal?))
 (define native!= (tmi-if-ify (lambda (a b) (not (equal? a b)))))
+(define native^^ (tmi-if-ify (lambda (a b) (xor (tmi-if a) (tmi-if b)))))
 ; This isn't used yet except in precedence
 ; (define native$$ $$)
 (define (op$ f a) (f a))
+
+; Short-circuiting operators
+(define op&&
+  (tmi-if-ify (lambda (at bt) (and (tmi-if (at)) (tmi-if (bt))))))
+(define op\|\|
+  (tmi-if-ify (lambda (at bt) (or (tmi-if (at)) (tmi-if (bt))))))
 
 (define (coll-make-hash pairs)
   (assert (unique? (map car pairs)))
