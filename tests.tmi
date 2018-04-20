@@ -35,6 +35,7 @@ foo5 a = let b =
 t11 = test [36, 36, 36, 36, 36, 36] [foo0 3, foo1 3, foo2 3, foo3 3, foo4 3, foo5 3]
 
 t12 = a * a + a where a = 2
+
 ;; Layout tests
 t13 = a * b + c where a = 2
                       b = 10
