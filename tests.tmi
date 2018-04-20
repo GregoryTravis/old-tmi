@@ -341,12 +341,22 @@ t146 = let foo a = if a == 10 then Ten else if a == 11 then Eleven else if a == 
             test Twelve (foo 12),
             test What (foo 13)]
 
+t147 = let
+    foo a = if a == 10 then do [] <- Return [] 
+                               Return Ten
+                       else do [] <- Return []
+                               Return What
+  in do res <- (foo 10)
+        res2 <- (foo 11)
+        Return (and (test Ten res) (test What res2))
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
                   True <- t111
                   True <- t112
                   True <- t118
+                  True <- t147
                   Return "OK"
 
 main = do ok <- run-do-tests
