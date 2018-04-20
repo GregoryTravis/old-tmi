@@ -335,6 +335,12 @@ t145 = let
     vrr = (foo 1) 20
   in test 21 vrr
 
+t146 = let foo a = if a == 10 then Ten else if a == 11 then Eleven else if a == 12 then Twelve else What
+        in [test Ten (foo 10),
+            test Eleven (foo 11),
+            test Twelve (foo 12),
+            test What (foo 13)]
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
