@@ -392,6 +392,10 @@ t166 = [
      Foo 2
        ]
 
+;; Syntax -- '_' valid identifier
+t167 = let foo _ x = [x]
+        in test [34] (foo 12 34)
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
