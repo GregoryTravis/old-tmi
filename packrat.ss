@@ -167,7 +167,7 @@
 
 ;; Can you guess why I am anding this with #t?
 (define (really-add-libs) (and (not debug-compile) #t))
-(define library-files '("overture.tmi" "rel.tmi" "node.tmi" "web.tmi" "cgi.tmi"))
+(define library-files '("overture.tmi" "rel.tmi" "node.tmi" "web.tmi" "cgi.tmi" "html.tmi"))
 (define (add-libs s)
   (if (really-add-libs)
     (string-append (apply string-append (map read-file-as-string library-files)) "\n" s)

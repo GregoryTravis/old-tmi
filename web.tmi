@@ -1,9 +1,5 @@
 no-handler-handler url params bout = ffi web-respond bout (string-append "No handler for " url)
 
-retval-handler handler = /. (url params bout) do
-  val <- handler params
-  ffi web-respond bout (tmi-pretty-print val)
-
 get-handler handlers url = maybe-default
   (first-maybe
     (/. ((Handler hurl handler)) if url == hurl then Just handler else Nothing)

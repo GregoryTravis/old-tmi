@@ -215,48 +215,48 @@ t110 = test-rel [{a: 10}, {a: 11}] [{a: 11}, {a: 10}]
 ;; Woo-hoo.  Read a file, change a cell, write, read again,
 ;; revert the cell, write.
 t111 = let
-  wn = wherre-node (/. (rec) (deref rec "a") == 10)
-  wn2 = wherre-node (/. (rec) (deref rec "b") == 21)
-  dn = deref-node "c"
-  on = one-node
-  down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
-  orig-db = [{a: 10, b: 20, c: 30},
-             {a: 10, b: 21, c: 31},
-             {a: 11, b: 20, c: 32},
-             {a: 11, b: 21, c: 33},
-             {a: 11, b: 22, c: 34}]
-  modified-db = [{a: 10, b: 20, c: 30},
-                 {a: 10, b: 21, c: 3100},
-                 {a: 11, b: 20, c: 32},
-                 {a: 11, b: 21, c: 33},
-                 {a: 11, b: 22, c: 34}]
-in do db <- read-data "db.json"
-      True <- Return (test db orig-db)
-      [] <- write-data "db2.json" (write down db 3100)
-      mdb <- read-data "db2.json"
-      True <- Return (test-rel mdb modified-db)
-      [] <- write-data "db3.json" (write down mdb 31)
-      odb <- read-data "db3.json"
-      True <- Return (test-rel odb db)
-      [] <- ffi delete-file "db2.json"
-      [] <- ffi delete-file "db3.json"
-      Return True
+    wn = wherre-node (/. (rec) (deref rec "a") == 10)
+    wn2 = wherre-node (/. (rec) (deref rec "b") == 21)
+    dn = deref-node "c"
+    on = one-node
+    down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
+    orig-db = [{a: 10, b: 20, c: 30},
+               {a: 10, b: 21, c: 31},
+               {a: 11, b: 20, c: 32},
+               {a: 11, b: 21, c: 33},
+               {a: 11, b: 22, c: 34}]
+    modified-db = [{a: 10, b: 20, c: 30},
+                   {a: 10, b: 21, c: 3100},
+                   {a: 11, b: 20, c: 32},
+                   {a: 11, b: 21, c: 33},
+                   {a: 11, b: 22, c: 34}]
+  in do db <- read-data "db.json"
+        True <- Return (test db orig-db)
+        [] <- write-data "db2.json" (write down db 3100)
+        mdb <- read-data "db2.json"
+        True <- Return (test-rel mdb modified-db)
+        [] <- write-data "db3.json" (write down mdb 31)
+        odb <- read-data "db3.json"
+        True <- Return (test-rel odb db)
+        [] <- ffi delete-file "db2.json"
+        [] <- ffi delete-file "db3.json"
+        Return True
 
 t112 = let
-  wn = wherre-node (/. (rec) (deref rec "a") == 10)
-  wn2 = wherre-node (/. (rec) (deref rec "b") == 21)
-  dn = deref-node "c"
-  on = one-node
-  down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
-in do
-  [] <- transform-file (mutation-applier down 4444) "db.json" "db2.json"
-  [] <- transform-file (mutation-applier down 31) "db2.json" "db3.json"
-  db <- read-data "db.json"
-  odb <- read-data "db3.json"
-  [] <- ffi delete-file "db2.json"
-  [] <- ffi delete-file "db3.json"
-  True <- Return (test-rel db odb)
-  Return True
+    wn = wherre-node (/. (rec) (deref rec "a") == 10)
+    wn2 = wherre-node (/. (rec) (deref rec "b") == 21)
+    dn = deref-node "c"
+    on = one-node
+    down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
+  in do
+    [] <- transform-file (mutation-applier down 4444) "db.json" "db2.json"
+    [] <- transform-file (mutation-applier down 31) "db2.json" "db3.json"
+    db <- read-data "db.json"
+    odb <- read-data "db3.json"
+    [] <- ffi delete-file "db2.json"
+    [] <- ffi delete-file "db3.json"
+    True <- Return (test-rel db odb)
+    Return True
 
 t113 = test (Just 100) (first-maybe (/. (x) if x == 4 then (Just 100) else Nothing) [3, 4, 5])
 t114 = test Nothing (first-maybe (/. (x) if x == 6 then (Just 100) else Nothing) [3, 4, 5])
@@ -267,9 +267,9 @@ t117-f = /. ((Foo x)) x + x
 t117 = test 24 (t117-f (Foo 12))
 
 test-add-handler url params bout = let
-   a = string->number (deref params "a")
-   b = string->number (deref params "b")
-in ffi web-respond bout (string-append (number->string (a + b)))
+     a = string->number (deref params "a")
+     b = string->number (deref params "b")
+  in ffi web-respond bout (string-append (number->string (a + b)))
 the-handlers = [Handler "/add" test-add-handler]
 t118 = do 
   result <- test-handlers the-handlers "/add" {a: "1", b: "20"}
@@ -398,6 +398,27 @@ t167 = let foo _ x = [x]
 
 t168 = test False (! True)
 t169 = test True (! False)
+
+t170 = test [1, 2, 3] (flatten-completely [[1], [2], [3]])
+t170-1 = test [1, 2, 3] (flatten-completely [[[1]], [2], [3]])
+t171 = test [1, 2, 3] (flatten-completely [[1], [2, [3]]])
+t172 = test [1, 2, 3] (flatten-completely [[1], [2, 3]])
+t173 = test [1, 2, 3] (flatten-completely [1, [2, 3]])
+t174 = test [1, 2, 3] (flatten-completely [[1], 2, 3])
+t175 = test [1, 2, 3] (flatten-completely [1, 2, 3])
+t176 = test [1] (flatten-completely [1])
+t177 = test [] (flatten-completely [])
+t177-1 = test [] (flatten-completely [[]])
+t177-2 = test [] (flatten-completely [[], [[]]])
+
+;; I guess I just think these should be equivalent, ok pal?
+t178 = let strings-append-l ss = tmi-foldl (+) "" ss
+           strings-append-r ss = tmi-foldr (+) "" ss
+        in test [True, True] [test "abc" (strings-append-l ["a", "b", "c"]), 
+                              test "abc" (strings-append-r ["a", "b", "c"])]
+
+t180 = test "1" (to-string 1)
+t180 = test "a" (to-string "a")
 
 run-do-tests = do True <- t28
                   True <- t29

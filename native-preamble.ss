@@ -141,3 +141,8 @@
   (let ((name (if (procedure? f) (symbol->string (object-name f)) (symbol->string f))))
     `(Seq (Command (Cons ,name ,(map native-unconsify args)))
           ,(lambda (result) `(Return ,(consify result))))))
+
+(define (native->tmi f)
+  (lambda args (consify (apply f (map native-unconsify args)))))
+
+(define tmi-sort (native->tmi sort))

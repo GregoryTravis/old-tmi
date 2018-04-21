@@ -1,4 +1,9 @@
 db-filename = "db.json"
+
+retval-handler handler = /. (url params bout) do
+  val <- handler params
+  ffi web-respond bout (tmi-pretty-print val)
+
 show-db params = do
   db <- read-data db-filename
-  Return db
+  Return (strings-append (map to-string (flatten-completely (html-rel-table db))))

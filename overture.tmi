@@ -37,6 +37,7 @@ a != b = native!= a b
 a ^^ b = native^^ a b
 
 (string a) + (string b) = string-append a b
+strings-append ss = tmi-foldr (+) "" ss
 
 all (Cons True d) = all d
 all [] = True
@@ -93,3 +94,13 @@ unique? [] = True
 
 ;; Does not check if a or b is non-unique.
 list-intersect? a b = not (unique? (list-append a b))
+
+to-string (string a) = a
+to-string (int i) = number->string i
+
+;;flatten-completely (Cons (Cons a d) dd) = Cons (flatten-completely a) (flatten-completely (list-append d dd))
+flatten-completely (Cons (Cons a d) dd) = (list-append (flatten-completely (Cons a d)) (flatten-completely dd))
+flatten-completely (Cons [] dd) = (flatten-completely dd)
+flatten-completely (Cons a d) = Cons a (flatten-completely d)
+flatten-completely [] = []
+flatten-completely x = x
