@@ -1,0 +1,3 @@
+the-handlers = [Handler "/show-db" (retval-handler show-db)]
+
+main = http-server the-handlers

@@ -1,0 +1,4 @@
+db-filename = "db.json"
+show-db params = do
+  db <- read-data db-filename
+  Return db
