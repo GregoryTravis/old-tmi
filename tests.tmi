@@ -374,6 +374,9 @@ t160 = test True (False ^^ True)
 t161 = test True (True ^^ False)
 t162 = test False (False ^^ False)
 
+;; Don't need space around ;;
+t163 = test 1 1;;hi
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
