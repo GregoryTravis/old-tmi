@@ -85,15 +85,10 @@ list-append [] lyst = lyst
 not True = False
 not False = True
 
-and True True = True
-and True False = False
-and False True = False
-and False False = False
-
 filter (Cons a d) f = if f a then Cons a (filter d f) else filter d f
 filter [] f = []
 
-unique? (Cons a d) = and (not (member a d)) (unique? d)
+unique? (Cons a d) = (not (member a d)) && (unique? d)
 unique? [] = True
 
 ;; Does not check if a or b is non-unique.

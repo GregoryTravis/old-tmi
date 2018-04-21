@@ -129,10 +129,6 @@ t63 = test [1, 2] (list-append [1, 2] [])
 t64 = test [1, 2, 3] (list-append [1] [2, 3])
 t65 = test [2, 3] (list-append [] [2, 3])
 t66 = test [] (list-append [] [])
-t67 = [(test True (and True True)),
-       (test False (and True False)),
-       (test False (and False True)),
-       (test False (and False False))]
 t68 = [(test False (not True)), (test True (not False))]
 t69 = [(test True (unique? [])),
        (test True (unique? [1])),
@@ -348,7 +344,7 @@ t147 = let
                                Return What
   in do res <- (foo 10)
         res2 <- (foo 11)
-        Return (and (test Ten res) (test What res2))
+        Return ((test Ten res) && (test What res2))
 
 t148 = let
     tttt x = case x of (Foo a) => a + a

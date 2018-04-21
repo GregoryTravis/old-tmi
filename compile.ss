@@ -168,7 +168,7 @@
     ('app (e))
       (compile-exp e)
     ('app es)
-      (map compile-exp es)
+      (no-bad-funs (map compile-exp es))
     ('binop a ('operator op . _) b)
       (if (is-short-circuit op)
         `(,(string->symbol (string-append "op" op)) ,(compile-thunk (compile-exp a)) ,(compile-thunk (compile-exp b)))
@@ -189,6 +189,14 @@
 
 (define (is-short-circuit op)
   (or (equal? op "&&") (equal? op "||")))
+
+;; All racket functions are available to be called directly from TMI; it's only
+;; care and discipline that makes this work, thus it is wrong.  Most of the time
+;; this isn't too bad, but for and/or it's terrible, since all TMI booleans are
+;; true in Racket.  So just don't allow these.
+(define (no-bad-funs app)
+  (assert (not (or (eq? (car app) 'or) (eq? (car app) 'and))))
+  app)
 
 (define (strip-quotes s)
   (assert (eq? (string-ref s 0) #\"))
