@@ -89,6 +89,7 @@
     (make-immutable-hash (map (lambda (e) (mtch e (k . v) `(,k . ,(->hash-equal v)))) (hash->list o)))
     (mtch o
       (a . d) (map ->hash-equal o)
+      '() 'Nil
       x x)))
 
 ;; Change symbol keys to strings
@@ -97,7 +98,8 @@
     (make-immutable-hash 
       (map (lambda (k) (cons (symbol->string k) (string-hash-keys (hash-ref h k)))) (hash-keys h)))
     (mtch h
-      (a . d) (map string-hash-keys o)
+      (a . d) (map string-hash-keys h)
+      '() 'Nil
       x x)))
 
 ;; Change string keys to symbols
@@ -106,19 +108,42 @@
     (make-immutable-hash 
       (map (lambda (k) (cons (string->symbol k) (symbol-hash-keys (hash-ref h k)))) (hash-keys h)))
     (mtch h
-      (a . d) (map symbol-hash-keys o)
+      (a . d) (map symbol-hash-keys h)
       x x)))
 
 ;; Only handles a list of records
 (define (json->tmi json)
-  (map string-hash-keys (map ->hash-equal json)))
+  (string-hash-keys (->hash-equal json)))
 ;; Only handles a list of records
 (define (tmi->json o)
   (map symbol-hash-keys o))
 
+(define (scheme->tmi o)
+  (if (hash? o)
+    (make-immutable-hash
+      (map (lambda (k) (cons (->string k) (scheme->tmi (hash-ref o k)))) (hash-keys o)))
+    (mtch o
+      (a . d)
+        `(Cons ,(scheme->tmi a) ,(scheme->tmi d))
+      '()
+        'Nil
+      x x)))
+(define (tmi->scheme o)
+  (if (hash? o)
+    (make-immutable-hash
+      (map (lambda (k) (cons k (tmi->scheme (hash-ref o k)))) (hash-keys o)))
+    (mtch o
+      ('Cons a d)
+        `(,(tmi->scheme a) . ,(tmi->scheme d))
+      'Nil
+        '()
+      x x)))
+(tracefun tmi->scheme scheme->tmi)
+
 (define (native-read-data filename)
   (call-with-input-file* filename
-    (lambda (in) (json->tmi (read-json in)))))
+    (lambda (in) (scheme->tmi (read-json in)))))
+(tracefun scheme->tmi json->tmi)
 
 (define (native-write-data filename data)
   (call-with-output-file* filename #:exists 'replace
@@ -139,7 +164,7 @@
 
 (define (ffi f . args)
   (let ((name (if (procedure? f) (symbol->string (object-name f)) (symbol->string f))))
-    `(Seq (Command (Cons ,name ,(map native-unconsify args)))
+    `(Seq (Command (Cons ,name ,(tmi->scheme args)))
           ,(lambda (result) `(Return ,(consify result))))))
 
 (define (native->tmi f)

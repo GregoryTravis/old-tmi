@@ -4,6 +4,7 @@ tag name = /. (attributes contents) ["<", name, " ", (render-attributes attribut
 table = tag "table"
 tr = tag "tr"
 td = tag "td"
+p2 = tag "p2"
 
 derefs rec ks = map (/. (k) (deref rec k)) ks
 derefses rel ks = map (/. (rec) derefs rec ks) rel
@@ -13,3 +14,6 @@ html-row os = tr {} (map (/. (o) td {} o) os)
 html-rel-table [] = table {border: 1} (tr {} (td {} "empty"))
 html-rel-table rel = let ks = tmi-sort (keys (nth 0 rel)) string<?
   in table {border: 1} (map html-row (list-append [ks] (derefses rel ks)))
+
+html-named-rel name rel = [p2 {} name, html-rel-table rel]
+html-db-tables db = map (/. (k) html-named-rel k (deref db k)) (keys db)

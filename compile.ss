@@ -51,7 +51,7 @@
 
 (define pm-symgen (tagged-symbol-generator-generator 'pm))
 
-(define trace-def-enabled #f)
+(define trace-def-enabled #t)
 (define (trace-def name src)
   (if trace-def-enabled
     `(procedure-rename (tracefun-wrap ',(string->symbol name) ,src) ',(string->symbol name))
