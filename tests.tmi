@@ -382,6 +382,16 @@ t164 = let foo x = Return $ 1 + 2 + x
         in do s <- foo 3
               Return (test 6 s)
 
+;; Syntax
+t165 = [
+         Foo 1,
+         Foo 2
+       ]
+t166 = [
+     Foo 1,
+     Foo 2
+       ]
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
