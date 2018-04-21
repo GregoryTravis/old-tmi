@@ -1,0 +1,9 @@
+kill %
+./start-racket-daemon &
+g
+sleep 3
+t
+sleep 5
+./web-test
+git push
+sd
