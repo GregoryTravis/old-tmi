@@ -176,6 +176,8 @@
       (if (is-short-circuit op)
         `(,(string->symbol (string-append "op" op)) ,(compile-thunk (compile-exp a)) ,(compile-thunk (compile-exp b)))
         `(,(string->symbol (string-append "op" op)) ,(compile-exp a) ,(compile-exp b)))
+    ('unop ('unary-operator op . _) e)
+      `(,(string->symbol (string-append "op" op)) ,(compile-exp e))
     ('if b t e)
       `(if (tmi-if ,(compile-exp b)) ,(compile-exp t) ,(compile-exp e))
     ('let . _)

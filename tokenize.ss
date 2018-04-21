@@ -24,6 +24,7 @@
   (semicolon ";")
   (equals "=(?=\\s)")
   (lambda "/\\.(?=\\s)")
+  (unary-operator "!(?!=)") ;; "!(?!=)|~"
   (operator "[=<>+/\\-_!@$%^&|*?]+")
   (lparen "[\\(]")
   (rparen "[\\)]")

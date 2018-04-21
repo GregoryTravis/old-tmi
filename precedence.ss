@@ -76,7 +76,19 @@
       `(binop ,(un-wrapapp-wrap a) ,op ,(un-wrapapp-wrap b))))
 ;(tracefun un-wrapapp-wrap)
 
+(define (combine-unary xs)
+  (mtch xs
+    (('unary-operator . d) e . dd)
+      `((unop (unary-operator . ,d) ,e) . ,(combine-unary dd))
+    (('unary-operator . d))
+      (err 'trailing-unary-operator)
+    (a . d)
+      `(,a . ,(combine-unary d))
+    '()
+      '()))
+;(tracefun combine-unary)
+
 (define (precedence xs)
   (let ((levels (unique (sort (get-operator-precedence-levels) <))))
-    (mtch (nest-ops levels (add-$$ (wrapapp-wrap xs)))
+    (mtch (nest-ops levels (add-$$ (wrapapp-wrap (combine-unary xs))))
       (b) (un-wrapapp-wrap b))))

@@ -396,6 +396,9 @@ t166 = [
 t167 = let foo _ x = [x]
         in test [34] (foo 12 34)
 
+t168 = test False (! True)
+t169 = test True (! False)
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

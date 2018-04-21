@@ -23,6 +23,8 @@
           (rec e)
         ('binop a op b)
           `(binop ,(rec a) ,(rec op) ,(rec b))
+        ('unop op e)
+          `(unop ,(rec op) ,(rec e))
         ('left-section op e)
           `(left-section ,(rec op) ,(rec e))
         ('right-section e op)
@@ -49,6 +51,7 @@
         ('constructor s . _) e
         ('identifier s . _) e
         ('operator s . _) e
+        ('unary-operator s . _) e
         ))))
 ;(tracefun general-recurser-s)
 
@@ -143,6 +146,8 @@
     ('string . _)
       e
     ('operator . _)
+      e
+    ('unary-operator . _)
       e
     ('parenexp l e r)
       (p2s e)

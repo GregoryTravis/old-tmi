@@ -51,7 +51,7 @@
 (define t-string? string?)
 
 (define (tmi-if-ify op)
-  (lambda (a b) (if (op a b) 'True 'False)))
+  (lambda args (if (apply op args) 'True 'False)))
 
 ;; Only for native scheme operators used without overloading; eventually most of these will disappear
 (define native+ +)
@@ -68,6 +68,7 @@
 ; This isn't used yet except in precedence
 ; (define native$$ $$)
 (define (op$ f a) (f a))
+(define op! (tmi-if-ify (lambda (b) (not (tmi-if b)))))
 
 ; Short-circuiting operators
 (define op&&
