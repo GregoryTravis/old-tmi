@@ -377,6 +377,11 @@ t162 = test False (False ^^ False)
 ;; Don't need space around ;;
 t163 = test 1 1;;hi
 
+;; $ with a constructor
+t164 = let foo x = Return $ 1 + 2 + x
+        in do s <- foo 3
+              Return (test 6 s)
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
@@ -385,6 +390,7 @@ run-do-tests = do True <- t28
                   True <- t118
                   True <- t147
                   True <- t150
+                  True <- t164
                   Return "OK"
 
 main = do ok <- run-do-tests
