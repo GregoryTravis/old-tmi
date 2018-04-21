@@ -1,0 +1,15 @@
+render-attributes attributes = map (/. (k) [k, "=", (deref attributes k)]) (keys attributes)
+
+tag name = /. (attributes contents) ["<", name, " ", (render-attributes attributes), ">", contents, "</", name, ">"]
+table = tag "table"
+tr = tag "tr"
+td = tag "td"
+
+derefs rec ks = map (/. (k) (deref rec k)) ks
+derefses rel ks = map (/. (rec) derefs rec ks) rel
+
+;;html-rec-row keys = /. (rec) tr {} (map (/. (v) (td {} v)) (map (/. (k) deref rec k) keys))
+html-row os = tr {} (map (/. (o) td {} o) os)
+html-rel-table [] = table {border: 1} (tr {} (td {} "empty"))
+html-rel-table rel = let ks = tmi-sort (keys (nth 0 rel)) string<?
+  in table {border: 1} (map html-row (list-append [ks] (derefses rel ks)))
