@@ -89,7 +89,7 @@
               ,(compile-multilambda-1 name args the-rest)
               (car ,vresult))))
    ; End of the list; nothing has matched, so crash
-   '() `(raise `(pattern-match-failure ,,(cons 'cons name)))))
+   '() `(error "pattern match failure" ',name)))
 
 ; omg I hate myself, these 1s are there because my mtch macro
 ; is not hygienic
