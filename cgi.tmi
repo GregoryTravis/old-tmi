@@ -1,4 +1,4 @@
-db-filename = "db.json"
+db-filename = "old.json"
 
 retval-handler handler = /. (url params bout) do
   val <- handler params
