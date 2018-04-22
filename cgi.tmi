@@ -6,4 +6,4 @@ retval-handler handler = /. (url params bout) do
 
 show-db params = do
   db <- read-data db-filename
-  Return (strings-append (map to-string (flatten-completely (html-rel-table db))))
+  Return (strings-append (map to-string (flatten-completely (html-db-tables db))))
