@@ -5,6 +5,7 @@ table = tag "table"
 tr = tag "tr"
 td = tag "td"
 p2 = tag "p2"
+anchor = tag "a"
 
 derefs rec ks = map (/. (k) (deref rec k)) ks
 derefses rel ks = map (/. (rec) derefs rec ks) rel

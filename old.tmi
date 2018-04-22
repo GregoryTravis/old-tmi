@@ -1,4 +1,10 @@
-main-handler params = Return "asdf"
+encode-call f args = tmi-uri-encode (tmi-pretty-print [f, args])
+
+make-call f args = ["/?call=", (encode-call (object-name f) args)]
+
+barf a b = a + b
+
+main-handler params = Return (stuff-to-string ["asdf ", anchor {href: (make-call barf [1, 2])} "yo"])
 
 the-handlers = [Handler "/show-db" (retval-handler show-db), Handler "/" (retval-handler main-handler)]
 

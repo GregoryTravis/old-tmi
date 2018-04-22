@@ -1,16 +1,25 @@
 (require net/cgi)
+(require net/uri-codec)
 (load "lib.ss")
 
 (define all-opened-listeners '())
 (define (add-opened-listener listener)
   (set! all-opened-listeners (cons listener all-opened-listeners)))
 (define (close-all-opened-listeners)
-  (map tcp-close all-opened-listeners)
+  (map
+    (lambda (listener)
+      (shew 'closing listener)
+      (with-handlers ((exn:fail:network? (lambda (exn) (shew 'closy exn))))
+        (tcp-close listener)))
+    all-opened-listeners)
   (set! all-opened-listeners '()))
 
 (define (web-create-server)
+  (shew 'opened all-opened-listeners)
   (close-all-opened-listeners)
-  (tcp-listen 5000 4 #t))
+  (let ((listener (tcp-listen 5000 4 #t)))
+    (add-opened-listener listener)
+    listener))
 
 ; => (output-stream (url cgi-params))
 (define (web-get-next-request ss)
@@ -51,3 +60,14 @@
   (map (lambda (o) (write-thing o bout))
     (list "HTTP/1.1 200 OK\n" "Content-Type: text/html\n\n" o))
   (close-output-port bout))
+
+#|
+(define (hash-to-assoc hash)
+  (map (lambda (k) (cons k (hash-ref hash k))) (hash-keys hash)))
+
+(define (web-encode-params rec)
+  (alist->form-urlencoded (hash-to-assoc rec)))
+(define web-encode-params (native->tmi web-encode-params))
+|#
+
+(define tmi-uri-encode (native->tmi uri-encode))
