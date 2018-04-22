@@ -1,7 +1,15 @@
 (require net/cgi)
 (load "lib.ss")
 
+(define all-opened-listeners '())
+(define (add-opened-listener listener)
+  (set! all-opened-listeners (cons listener all-opened-listeners)))
+(define (close-all-opened-listeners)
+  (map tcp-close all-opened-listeners)
+  (set! all-opened-listeners '()))
+
 (define (web-create-server)
+  (close-all-opened-listeners)
   (tcp-listen 5000 4 #t))
 
 ; => (output-stream (url cgi-params))
