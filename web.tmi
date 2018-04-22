@@ -23,6 +23,7 @@ test-handlers handlers url params = do
 http-server handlers = do
   ss <- ffi web-create-server
   [] <- tshew Listening
+  [] <- ffi flush-output (tmi-apply current-output-port [])
   req <- ffi web-get-next-request ss
   should-quit <- handle handlers req
   [] <- ffi tcp-close ss

@@ -1,3 +1,5 @@
-the-handlers = [Handler "/show-db" (retval-handler show-db)]
+main-handler params = Return "asdf"
+
+the-handlers = [Handler "/show-db" (retval-handler show-db), Handler "/" (retval-handler main-handler)]
 
 main = http-server the-handlers

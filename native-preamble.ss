@@ -150,3 +150,4 @@
   (lambda args (scheme->tmi (apply f (map tmi->scheme args)))))
 
 (define tmi-sort (native->tmi sort))
+(define tmi-apply (native->tmi apply))
