@@ -1,5 +1,5 @@
 send-quit > /dev/null
-echo '(begin (dload "compile.ss") (main "server.tmi"))' >> /tmp/racket-daemon-ctrl
+echo '(begin (dload "compile.ss") (main "server.tmi"))' | (nc localhost 5001) & ncpid=$!
 
 sleep 1
 pushd web-test-dir > /dev/null
@@ -15,3 +15,5 @@ rm -f actual/*
 
 popd > /dev/null
 git checkout db.json
+
+kill $ncpid
