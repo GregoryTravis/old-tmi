@@ -44,12 +44,18 @@
 
 (define (reload-if-changed)
   (let ((files (hash-keys dloaded-files)))
-    (shew 'checking files)
-    (map dload files)
-    ;(sleep .1)
-))
+    ;(shew 'checking files)
+    (map dload files)))
+
+(define (start-background-reloader)
+  (letrec ((loop (lambda ()
+      (reload-if-changed)
+      (sleep .1)
+      (loop))))
+    (thread loop)))
 
 (define (daemon)
+  (start-background-reloader)
   (letrec ((loop (lambda ()
     (let ((ss (tcp-listen 5001 4 #t)))
       ;(shew 'Listening)
