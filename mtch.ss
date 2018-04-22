@@ -9,6 +9,7 @@
       (char? o)
       (number? o)
       (null? o)
+      (void? o)
       (eq? #t o)
       (eq? #f o)))
 
