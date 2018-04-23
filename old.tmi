@@ -4,7 +4,13 @@ make-call f args = ["/?call=", (encode-call (object-name f) args)]
 
 barf a b = a + b
 
-main-handler params = Return (stuff-to-string ["asdf ", anchor {href: (make-call barf [1, 2])} "yo"])
+default-req params = if params == {} then {call: ["web-main", [23]]} else params
+
+process-params params = let call = deref (default-req params) "call"
+  in (tmi-pretty-print call)
+
+;;main-handler params = Return (stuff-to-string ["asdf ", (tmi-pretty-print params), anchor {href: (make-call barf [1, 2])} "yo"])
+main-handler params = Return (process-params params)
 
 the-handlers = [Handler "/show-db" (retval-handler show-db), Handler "/" (retval-handler main-handler)]
 

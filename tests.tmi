@@ -414,7 +414,9 @@ t178 = let strings-append-l ss = tmi-foldl (+) "" ss
                               test "abc" (strings-append-r ["a", "b", "c"])]
 
 t180 = test "1" (to-string 1)
-t180 = test "a" (to-string "a")
+t181 = test "a" (to-string "a")
+
+t182 = test True ({} == {})
 
 run-do-tests = do True <- t28
                   True <- t29

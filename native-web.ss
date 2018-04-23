@@ -8,14 +8,15 @@
 (define (close-all-opened-listeners)
   (map
     (lambda (listener)
-      (shew 'closing listener)
-      (with-handlers ((exn:fail:network? (lambda (exn) (shew 'closy exn))))
+      ;(shew 'closing listener)
+      (with-handlers ((exn:fail:network? (lambda (exn) '()))
+                      (exn? (lambda (exn) (shew 'closy exn))))
         (tcp-close listener)))
     all-opened-listeners)
   (set! all-opened-listeners '()))
 
 (define (web-create-server)
-  (shew 'opened all-opened-listeners)
+  ;(shew 'opened all-opened-listeners)
   (close-all-opened-listeners)
   (let ((listener (tcp-listen 5000 4 #t)))
     (add-opened-listener listener)
@@ -28,6 +29,7 @@
     (file-stream-buffer-mode bout 'none)
     (let* ((lines (web-read-request bin)))
       (list bout (web-parse-request lines)))))
+;(tracefun web-get-next-request)
 
 (define (web-read-request bin)
   (let ((line (read-line bin)))
@@ -42,14 +44,15 @@
 
 (define (web-parse-url url)
   (mtch (string-split url "?")
-    (url) `(,url ())
+    (url) `(,url ,(make-immutable-hash '()))
     (url cgi-string) `(,url ,(parse-cgi cgi-string))))
-(asseq '("/hey" ()) (web-parse-url "/hey"))
+(asseq `("/hey" ,(make-immutable-hash '())) (web-parse-url "/hey"))
 (asseq '("/hey" #hash(("a" . "1")("b" . "2"))) (web-parse-url "/hey?a=1&b=2"))
+;(tracefun web-parse-url)
 
 (define (web-parse-request lines)
   (web-parse-url (nth 1 (string-split (nth 0 lines) " "))))
-(asseq '("/" ()) (web-parse-request '("GET / HTTP/1.1\n" "Host: localhost:5000\n")))
+(asseq `("/" ,(make-immutable-hash '())) (web-parse-request '("GET / HTTP/1.1\n" "Host: localhost:5000\n")))
 
 (define (write-thing o port)
   (if (string? o)

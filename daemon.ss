@@ -47,12 +47,27 @@
     ;(shew 'checking files)
     (map dload files)))
 
+; => #t | (error)
+(define (sandbox-run thunk out)
+  (with-handlers ([(lambda (exn) #t) (lambda (exn) `(,exn))])
+    (parameterize ((current-output-port out))
+      (let ((result (thunk)))
+        (if (not (void? result))
+          (display result)
+          '())
+        #t))))
+
 (define (start-background-reloader)
   (letrec ((loop (lambda ()
       (reload-if-changed)
       (sleep .1)
       (loop))))
     (thread loop)))
+
+(define (silence-errors exn-type thunk)
+    (with-handlers ([exn-type (lambda (exn) '())]
+                    [exn? (lambda (exn) (shew 'ERR exn))])
+      (thunk)))
 
 (define (daemon)
   (start-background-reloader)
@@ -65,12 +80,26 @@
         (let ((input (read-objects-port bin)))
           ;(shew 'read input)
           (let ((all `(begin . ,input)))
-            (parameterize ((current-output-port bout))
-              (let ((result (execute all)))
-                (if (not (void? result))
-                  (display result)
-                  '())))
-            (close-output-port bout)
-            (tcp-close ss)
+            (mtch
+              (sandbox-run
+                (lambda ()
+                  (execute all)
+                  (close-output-port bout)
+                  (tcp-close ss))
+                bout)
+              #t
+                '()
+              (error)
+                (if (not (exn:fail:network? error))
+                  (shew 'ERROR error)
+                  '()))
+            (silence-errors exn:fail:network? (lambda () (close-output-port bout)))
+            (silence-errors exn:fail:network? (lambda () (tcp-close ss)))
+            #|
+            (with-handlers ([(lambda (exn) #t) (lambda (exn) (shew 'ERR exn))])
+              (close-output-port bout))
+            (with-handlers ([(lambda (exn) #t) (lambda (exn) (shew 'ERR exn))])
+              (tcp-close ss))
+              |#
             (loop))))))))
     (loop)))
