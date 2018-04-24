@@ -1,15 +1,17 @@
-encode-call f args = tmi-uri-encode (tmi-pretty-print [f, args])
+encode-call f args = tmi-uri-encode (native-write-data-string [f, args])
 
-make-call f args = ["/?call=", (encode-call (object-name f) args)]
+make-call f args = ["/?call=", (encode-call (tmi-object-name f) args)]
 
 barf a b = stuff-to-string [a + b, "baff"]
 
-default-req params = if params == {} then {call: ["web-main", [23]]} else params
+default-call = native-write-data-string ["web-main", [23]]
+default-req params = if params == {} then {call: default-call} else params
 
 process-params params = let call = deref (default-req params) "call"
-  in case call of
-    ["web-main", n] => web-main n
-    x => ["???", x]
+  in case (native-read-data-string call) of
+    ["web-main", [n]] => web-main n
+    [f, args] => Hey f args
+    x => Whoa
 
 web-main n = stuff-to-string ["heyo", n, anchor {href: (make-call barf [1, 2])} "yo"]
 

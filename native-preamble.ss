@@ -159,3 +159,6 @@
 
 (define tmi-sort (native->tmi sort))
 (define tmi-apply (native->tmi apply))
+
+(define (tmi-object-name o)
+  (symbol->string (object-name o)))
