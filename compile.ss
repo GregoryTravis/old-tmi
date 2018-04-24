@@ -128,6 +128,13 @@
       `(if (equal? ,target1 ,(string->number value))
          ,body1
          #f)
+    ('string value . _)
+      `(begin
+      (shew 'GOO ',target1 ',(strip-quotes value))
+      (if (equal? ,target1 ,(strip-quotes value))
+         ,body1
+         #f)
+         )
     ('constructor value . _)
       `(if (equal? ,target1 (quote ,(string->symbol value)))
          ,body1
