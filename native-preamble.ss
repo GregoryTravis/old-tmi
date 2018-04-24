@@ -129,6 +129,14 @@
   (call-with-output-file* filename #:exists 'replace
     (lambda (out) (write-json (tmi->scheme data) out))))
 
+(define (native-read-data-string s)
+    (scheme->tmi (read-json (open-input-string s))))
+
+(define (native-write-data-string data)
+  (let ((out (open-output-string)))
+    (write-json (tmi->scheme data) out)
+    (get-output-string out)))
+
 (define (display-newline o)
   (display o)
   (display "\n"))
