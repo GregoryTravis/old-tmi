@@ -130,7 +130,6 @@
          #f)
     ('string value . _)
       `(begin
-      (shew 'GOO ',target1 ',(strip-quotes value))
       (if (equal? ,target1 ,(strip-quotes value))
          ,body1
          #f)

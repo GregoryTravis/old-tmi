@@ -418,6 +418,10 @@ t181 = test "a" (to-string "a")
 
 t182 = test True ({} == {})
 
+t183 = let foo "a" = Aye
+           foo x = Just x
+        in test [Aye, Just 12] [foo "a", foo 12]
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
