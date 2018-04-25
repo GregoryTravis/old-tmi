@@ -23,9 +23,27 @@
 (define (compile-let sem)
   (mtch sem
     ('let bindings exp)
-      `(letrec
-        ,(map compile-multilambda-group (group-as-multilambdas bindings))
-        ,(compile-exp exp))))
+      (let ((multilambdas (group-as-multilambdas bindings)))
+        `(letrec
+          ,(append
+             `((tmi-lookup-tlf-by-name ,(build-eval multilambdas)))
+             (map compile-multilambda-group multilambdas))
+          ,(compile-exp exp)))))
+
+; Generates a lookup function that will return foo given "foo", and excludes "main" because
+; it runs during definition of main so main is not defined yet
+(define (build-eval multilambdas)
+  (let ((names (map
+    (lambda (ml)
+      (mtch ml
+        (('fun name) . defs)
+          name))
+    (grep (lambda (ml) (mtch ml (('fun . _) . _) #t x #f)) multilambdas))))
+    `(lambda (name-string)
+       (let ((thunk
+         (cdr (assoc name-string
+            (list . ,(map (lambda (name) `(cons ,name (lambda () ,(string->symbol name)))) (rember "main" names)))))))
+         (thunk)))))
 
 (define case-symgen (tagged-symbol-generator-generator 'case))
 
@@ -263,7 +281,7 @@
   (let ((simple (compile-simplify sem)))
     (if debug-compile (shew 'simple simple) '())
     (let ((compiled (compile-let simple)))
-      (if debug-compile (shew compiled) '())
+      (if debug-compile (shew 'compiled compiled) '())
       (wrap-main compiled))))
 
 (define (compile-file filename)

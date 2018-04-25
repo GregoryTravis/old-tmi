@@ -1,5 +1,4 @@
-tttt = [
-     (Foo 1),
-     (Foo 2)
-       ]
-main = Return tttt
+foo (Foo a) = [a]
+foo (Bar x) = [x, x]
+baz y = Boo y
+main = Return [foo (Foo 3), foo (Bar 12), baz 6, (tmi-lookup-tlf-by-name "foo") (Bar 50)]

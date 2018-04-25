@@ -1179,3 +1179,9 @@
       (cons (apply-and-descend f (car e)) (apply-and-descend f (cdr e)))
       e)))
 |#
+
+; hoho
+(define (rember a lyst)
+  (mtch lyst
+    (aa . dd) (if (equal? a aa) dd (cons aa (rember a dd)))
+    '() '()))
