@@ -428,6 +428,12 @@ t185 = test [[], 1, 2] (native-read-data-string "[[],1,2]")
 bobobobo a = a + a
 t186 = test bobobobo (tmi-lookup-tlf-by-name "bobobobo")
 
+t187 = let foo a = a + a
+           bar (procedure p) = Proc p
+           bar x = Nope
+  in [test (Proc foo) (bar foo),
+      test Nope (bar 12)]
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

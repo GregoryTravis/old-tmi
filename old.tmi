@@ -7,10 +7,13 @@ barf a b = stuff-to-string [a + b, "baff"]
 default-call = native-write-data-string ["web-main", [23]]
 default-req params = if params == {} then {call: default-call} else params
 
+function-registry = { barf: barf }
+
 process-params params = let call = deref (default-req params) "call"
   in case (native-read-data-string call) of
     ["web-main", [n]] => web-main n
-    [f, args] => Hey f args
+    [f, args] => stuff-to-string [(Hey (Boo 5) f (deref function-registry f) args)]
+    ;; [f, args] => Hey f (tmi-lookup-tlf-by-name f) args
     x => Whoa
 
 web-main n = stuff-to-string ["heyo", n, anchor {href: (make-call barf [1, 2])} "yo"]

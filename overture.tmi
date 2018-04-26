@@ -97,6 +97,7 @@ list-intersect? a b = not (unique? (list-append a b))
 
 to-string (string a) = a
 to-string (int i) = number->string i
+to-string x = tmi-pretty-print x
 
 ;;flatten-completely (Cons (Cons a d) dd) = Cons (flatten-completely a) (flatten-completely (list-append d dd))
 flatten-completely (Cons (Cons a d) dd) = (list-append (flatten-completely (Cons a d)) (flatten-completely dd))

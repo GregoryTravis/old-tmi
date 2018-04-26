@@ -27,6 +27,7 @@
 
 (define t-int? integer?)
 (define t-string? string?)
+(define t-procedure? procedure?)
 
 (define (tmi-if-ify op)
   (lambda args (if (apply op args) 'True 'False)))
@@ -162,3 +163,11 @@
 
 (define (tmi-object-name o)
   (symbol->string (object-name o)))
+
+(define (tmi-type o)
+  (cond
+    ((integer? o) 'Integer)
+    ((string? o) 'String)
+    ((procedure? o) 'Procedure)
+    ((pair? o) (car o))
+    (#t (err 'cant-get-type o))))
