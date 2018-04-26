@@ -26,4 +26,3 @@
   ;(shew 'ooo1 (flatten (tmi-pp-render o)))
   ;(shew 'ooo2 (apply string-append (flatten (tmi-pp-render o))))
   (apply string-append (flatten (tmi-pp-render o))))
-(tracefun tmi-pretty-print tmi-pp-render)
