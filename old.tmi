@@ -12,7 +12,7 @@ function-registry = { barf: barf }
 process-params params = let call = deref (default-req params) "call"
   in case (native-read-data-string call) of
     ["web-main", [n]] => web-main n
-    [f, args] => stuff-to-string [(Hey (Boo 5) f (deref function-registry f) args)]
+    [f, args] => stuff-to-string [(Hey (Boo 5) f (deref function-registry f) (tmi-apply (deref function-registry f) args) args)]
     ;; [f, args] => Hey f (tmi-lookup-tlf-by-name f) args
     x => Whoa
 
