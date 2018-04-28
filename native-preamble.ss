@@ -156,10 +156,21 @@
         ,(lambda (result) `(Return ,result))))
 
 (define (native->tmi f)
-  (lambda args (scheme->tmi (apply f (map tmi->scheme args)))))
+  (lambda args
+    (let* ((sargs (map tmi->scheme args))
+           (sv (apply f sargs))
+           (v (scheme->tmi sv)))
+     v)))
 
 (define tmi-sort (native->tmi sort))
-(define tmi-apply (native->tmi apply))
+(define native-apply (native->tmi apply))
+
+;; Unconsify one level, since compiled tmi funs take a scheme list.
+;; If the args list is empty, f is a CAF, so just return it.
+(define (tmi-apply f args)
+  (if (eq? args 'Nil)
+    f
+    (apply f (unconsify args))))
 
 (define (tmi-object-name o)
   (symbol->string (object-name o)))
