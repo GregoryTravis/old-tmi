@@ -1,4 +1,4 @@
-render-attributes attributes = map (/. (k) [k, "=", (deref attributes k)]) (keys attributes)
+render-attributes attributes = join-list (map (/. (k) [k, "=", (deref attributes k)]) (keys attributes)) " "
 
 tag name = /. (attributes contents) ["<", name, " ", (render-attributes attributes), ">", contents, "</", name, ">"]
 table = tag "table"
@@ -6,6 +6,9 @@ tr = tag "tr"
 td = tag "td"
 p2 = tag "p2"
 anchor = tag "a"
+form = tag "form"
+input = tag "input"
+br = tag "br"
 
 derefs rec ks = map (/. (k) (deref rec k)) ks
 derefses rel ks = map (/. (rec) derefs rec ks) rel
@@ -19,6 +22,11 @@ html-rel-table rel = let ks = tmi-sort (keys (nth 0 rel)) string<?
 html-named-rel name rel = [p2 {} name, html-rel-table rel]
 html-db-tables db = map (/. (k) html-named-rel k (deref db k)) (keys db)
 
+render-form target table pk pkv k v =
+  strings-append (map to-string (flatten-completely (form {target: target} [k, input {type: "text", name: k, value: v} "", br {} "", pk, input {type: "text", name: pk, value: pkv} "", br {} ""])))
+
+form-rcv values = Return 123
+
 cell-editor table-name pk pkv k = let
     dn2 = deref-node "card"
     wn = wherre-node (/. (rec) (deref rec pk) == pkv)
@@ -29,7 +37,8 @@ cell-editor table-name pk pkv k = let
          in do
  db <- read-data "old.json"
  v <- Return (read down db)
- Return ["hoo", pk, pkv, k, v, down]
+ ;;Return ["hoo", pk, pkv, k, v, down]
+ Return (render-form form-rcv "card" pk pkv k v)
 
 ;; cell-editor table-name pk pkv k = Return ["asdfasdfasdf", 4, deref-node "card"]
 

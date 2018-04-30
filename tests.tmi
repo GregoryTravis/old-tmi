@@ -434,6 +434,11 @@ t187 = let foo a = a + a
   in [test (Proc foo) (bar foo),
       test Nope (bar 12)]
 
+t188 = test [] (join-list [] "a")
+t189 = test [0] (join-list [0] "a")
+t190 = test [0, "a", 1] (join-list [0, 1] "a")
+t191 = test [0, "a", 1, "a", 2] (join-list [0, 1, 2] "a")
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

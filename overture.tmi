@@ -105,3 +105,7 @@ flatten-completely (Cons [] dd) = (flatten-completely dd)
 flatten-completely (Cons a d) = Cons a (flatten-completely d)
 flatten-completely [] = []
 flatten-completely x = x
+
+join-list (Cons a []) glue = Cons a []
+join-list (Cons a d) glue = Cons a (Cons glue (join-list d glue))
+join-list Nil glue = Nil
