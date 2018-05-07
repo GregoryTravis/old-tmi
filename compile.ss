@@ -84,7 +84,7 @@
      (compile-exp body)
     _
       (let ((args (pm-symgen)))
-        (let ((failer `(lambda () (error "pattern match failure" (cons ',(string->symbol name) ,args)))))
+        (let ((failer `(error "pattern match failure" (cons ',(string->symbol name) ,args))))
           (trace-def name `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml failer)))))))
 
 (define (cm-args-pat e)
@@ -108,7 +108,7 @@
               ,(compile-multilambda-1 name args the-rest failer)
               (car ,vresult))))
     ; End of the list; nothing has matched, so crash
-    '() `(,failer)))
+    '() failer))
 
 ; omg I hate myself, these 1s are there because my mtch macro
 ; is not hygienic
