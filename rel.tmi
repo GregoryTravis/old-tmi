@@ -1,6 +1,6 @@
 deref rec k = find-it (rec-to-entries rec)
   where find-it (Cons (Entry kk vv) d) = if k == kk then vv else find-it d
-        find-it [] = assert [] [False]
+        find-it [] = assert (NoSuchKey k rec) [False]
 
 keys rec = map (/. ((Entry k v)) k) (rec-to-entries rec)
 

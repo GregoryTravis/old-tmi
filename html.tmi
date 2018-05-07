@@ -9,6 +9,8 @@ anchor = tag "a"
 form = tag "form"
 input = tag "input"
 br = tag "br"
+submit = input {type: "submit", value: "Submit"} ""
+hidden k v = input {type: "hidden", name: k, value: v} ""
 
 derefs rec ks = map (/. (k) (deref rec k)) ks
 derefses rel ks = map (/. (rec) derefs rec ks) rel
@@ -22,10 +24,16 @@ html-rel-table rel = let ks = tmi-sort (keys (nth 0 rel)) string<?
 html-named-rel name rel = [p2 {} name, html-rel-table rel]
 html-db-tables db = map (/. (k) html-named-rel k (deref db k)) (keys db)
 
-render-form target table pk pkv k v =
-  strings-append (map to-string (flatten-completely (form {target: target} [k, input {type: "text", name: k, value: v} "", br {} "", pk, input {type: "text", name: pk, value: pkv} "", br {} ""])))
-
-form-rcv values = Return 123
+render-form action table pk pkv k v =
+  strings-append (map to-string (flatten-completely
+    (form {action: action}
+      [k, input {type: "text", name: k, value: v} "",
+       br {} "",
+       pk, input {type: "text", name: pk, value: pkv} "",
+       br {} "",
+       hidden "pk" pk,
+       hidden "k" k,
+       submit])))
 
 cell-editor table-name pk pkv k = let
     dn2 = deref-node "card"
@@ -37,8 +45,26 @@ cell-editor table-name pk pkv k = let
          in do
  db <- read-data "old.json"
  v <- Return (read down db)
- ;;Return ["hoo", pk, pkv, k, v, down]
- Return (render-form form-rcv "card" pk pkv k v)
+ Return (render-form "/receive-form" "card" pk pkv k v)
+
+receive-form-handler params = let
+    k = deref params "k"
+    pk = deref params "pk"
+ in let 
+      nv = to-int (deref params k)
+      pkv = to-int (deref params pk)
+ in let 
+      dn2 = deref-node "card"
+      wn = wherre-node (/. (rec) (deref rec pk) == pkv)
+      dn = deref-node k
+      on = one-node
+   in let own = compose-nodes on (compose-nodes wn dn2)
+       in let down = compose-nodes dn own
+           in do
+  db <- read-data "old.json"
+  ndb <- Return (write down db nv)
+  [] <- write-data "old.json" ndb
+  Return Ok
 
 ;; cell-editor table-name pk pkv k = Return ["asdfasdfasdf", 4, deref-node "card"]
 
