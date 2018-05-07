@@ -1,4 +1,4 @@
-foo (Foo a) = [a]
-foo (Bar x) = [x, x]
-baz y = Boo y
-main = Return [foo (Foo 3), foo (Bar 12), baz 6, (tmi-lookup-tlf-by-name "foo") (Bar 50)]
+baz (Baz z) = z * 2
+bar (Bar y) = baz (Baz y y)
+foo (Foo x) = bar (Bar x)
+main = Return (foo (Foo 7))

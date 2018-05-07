@@ -84,7 +84,8 @@
      (compile-exp body)
     _
       (let ((args (pm-symgen)))
-        (trace-def name `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml))))))
+        (let ((failer `(lambda () (error "pattern match failure" (cons ',(string->symbol name) ,args)))))
+          (trace-def name `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml failer)))))))
 
 (define (cm-args-pat e)
   (mtch e
@@ -94,7 +95,7 @@
       '()
     ('binop lpat ('operator . _) rpat)
       `(,lpat ,rpat)))
-(define (compile-multilambda-1 name args ml)
+(define (compile-multilambda-1 name args ml failer)
   (mtch ml
     (('definition
       dpat
@@ -104,10 +105,10 @@
      (let ((vresult (pm-symgen)))
        `(let ((,vresult ,(compile-app-pattern args (cm-args-pat dpat) `(list ,(compile-exp body) 'hhh))))
           (if (eq? ,vresult #f)
-              ,(compile-multilambda-1 name args the-rest)
+              ,(compile-multilambda-1 name args the-rest failer)
               (car ,vresult))))
-   ; End of the list; nothing has matched, so crash
-   '() `(error "pattern match failure" ',name)))
+    ; End of the list; nothing has matched, so crash
+    '() `(,failer)))
 
 ; omg I hate myself, these 1s are there because my mtch macro
 ; is not hygienic
