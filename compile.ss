@@ -169,6 +169,7 @@
                                        `(cons ',(string->symbol i) ,(compile-exp e))))
                  entries))))
 
+#|
 ;; Ugly
 (define (find-rowcol e)
   (mtch e
@@ -178,17 +179,43 @@
       (find-rowcol a)
     x '(?? ??)))
 ;(tracefun find-rowcol)
+|#
+
+(define (get-src-extent src)
+  (let ((tokens (find-tokens src)))
+    (if (> (length tokens) 0)
+      (mtch (list (car tokens) (last tokens))
+        ((typea sa (rowa cola)) (typeb sb (rowb colb)))
+          `((,rowa ,cola) (,rowb ,colb))
+        x '())
+      '())))
+
+(define (find-tokens src)
+  (mtch src
+    ((type s (row col)) . d)
+      (if (and (integer? row) (integer? col))
+        (cons (car src) (find-tokens (cdr src)))
+        (append (find-tokens (car src)) (find-tokens (cdr src))))
+    (a . d)
+      (append (find-tokens a) (find-tokens d))
+    x '()))
+;(tracefun get-src-extent find-tokens)
 
 (define stack-trace-push-pop-enabled #f)
 (define (stack-trace-push-pop src compiled)
   (if stack-trace-push-pop-enabled
-    (let ((rowcol (find-rowcol src))
-          (result-v (pm-symgen)))
-      `(begin
-         (shew (list 'push ',rowcol))
-         (let ((,result-v ,compiled))
-           (shew (list 'pop ',rowcol ,result-v))
-           ,result-v)))
+    (mtch src
+      ('app es)
+        (mtch (get-src-extent src)
+          (start end)
+            (let ((result-v (pm-symgen)))
+              `(begin
+                 (shew (list 'push '(,start ,end) ',src))
+                 (let ((,result-v ,compiled))
+                   (shew (list 'pop '(,start ,end) ,result-v))
+                   ,result-v)))
+          x compiled)
+      x compiled)
     compiled))
 
 (define (compile-exp e)
