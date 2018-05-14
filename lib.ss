@@ -141,6 +141,14 @@
       lyst
       (nth-tail (1- n) (cdr lyst))))
 
+(define (first-n n lyst)
+  (if (= n 0)
+    '()
+    (cons (car lyst) (first-n (1- n) (cdr lyst)))))
+
+(define (nth-range s e lyst)
+  (first-n (- e s) (nth-tail s lyst)))
+
 (define (scoop-by n lyst)
   (if (null? lyst)
       '()

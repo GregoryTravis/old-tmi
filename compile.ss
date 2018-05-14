@@ -181,6 +181,11 @@
 ;(tracefun find-rowcol)
 |#
 
+(define (err-display-src-extent src-lines start end)
+  (mtch `(,start ,end)
+    ((srow scol) (erow ecol))
+      (nth-range srow (1+ erow) src-lines)))
+
 (define (get-src-extent src)
   (let ((tokens (find-tokens src)))
     (if (> (length tokens) 0)
@@ -211,9 +216,11 @@
           ;(let ((src-text (tokens->src (find-tokens src))))
             (let ((result-v (pm-symgen)))
               `(begin
-                 (shew (list 'push '(,start ,end) ',src))
+                 ;(shew (list 'push '(,start ,end) ',src))
+                 (set! tmi-stack (cons '(,start ,end) tmi-stack))
                  (let ((,result-v ,compiled))
-                   (shew (list 'pop '(,start ,end) ,result-v))
+                   ;(shew (list 'pop '(,start ,end) ,result-v))
+                   (set! tmi-stack (cdr tmi-stack))
                    ,result-v)));)
           x compiled)
       x compiled)
@@ -325,21 +332,35 @@
     x x))
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
-(define (wrap-main main)
-  `(driver-main ,main))
+(define (show-tmi-stack-trace stack combined-src)
+  (let ((src-lines (string-split combined-src "\n")))
+    (map (lambda (frame)
+      (mtch frame
+        ((srow scol) (erow ecol))
+          (begin
+            (display (++ "** " (->string erow) ":\n"))
+            (map (lambda (line) (display (++ line "\n")))
+              (nth-range srow (1+ erow) src-lines)))))
+      stack)))
+(define (wrap-main main combined-src)
+  `(let ;; ((err-display-src (lambda (start end) (err-display-src-extent ',(string-split combined-src "\n") start end))))
+       ((tmi-stack '()))
+     (with-handlers ((exn?
+         (lambda (e) (show-tmi-stack-trace tmi-stack ,combined-src) (raise e))))
+       (driver-main ,main))))
 
-(define (compile sem)
+(define (compile sem combined-src)
   (if debug-compile (shew 'sem sem) '())
   (let ((simple (compile-simplify sem)))
     (if debug-compile (shew 'simple simple) '())
     (let ((compiled (compile-let simple)))
       (if debug-compile (shew 'compiled compiled) '())
-      (wrap-main compiled))))
+      (wrap-main compiled combined-src))))
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from
   (mtch (parse-file filename)
-    (sem combined-src) (compile sem)))
+    (sem combined-src) (compile sem combined-src)))
 
 (define (run-compiled c)
   ;(shew c)
