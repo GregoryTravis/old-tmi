@@ -223,7 +223,9 @@
   (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
 
 (define (parse-file filename)
-  (parse-tokens (tokenize-top (add-libs (read-file-as-string filename))) filename))
+  (let ((combined-src (add-libs (read-file-as-string filename))))
+    `(,(parse-tokens (tokenize-top combined-src) filename)
+      ,combined-src)))
 
 (define (parse-tokens-maybe tokens filename)
   (parsed-unbinarize (top-parse (preprocess-top (wrap-file tokens)))))
@@ -231,7 +233,7 @@
 (define (parse-tokens tokens filename)
   (let ((parsed (parse-tokens-maybe tokens filename)))
     (mtch parsed
-      (S parsed) (list (parse-postprocess parsed))
+      (S parsed) (parse-postprocess parsed)
       #f (parse-tlfs-separately tokens filename))))
 
 (define (parse-tlfs-separately tokens filename)

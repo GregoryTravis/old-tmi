@@ -201,19 +201,20 @@
     x '()))
 ;(tracefun get-src-extent find-tokens)
 
-(define stack-trace-push-pop-enabled #f)
+(define stack-trace-push-pop-enabled #t)
 (define (stack-trace-push-pop src compiled)
   (if stack-trace-push-pop-enabled
     (mtch src
       ('app es)
         (mtch (get-src-extent src)
           (start end)
+          ;(let ((src-text (tokens->src (find-tokens src))))
             (let ((result-v (pm-symgen)))
               `(begin
                  (shew (list 'push '(,start ,end) ',src))
                  (let ((,result-v ,compiled))
                    (shew (list 'pop '(,start ,end) ,result-v))
-                   ,result-v)))
+                   ,result-v)));)
           x compiled)
       x compiled)
     compiled))
@@ -338,7 +339,7 @@
 (define (compile-file filename)
   ; Not sure where this extra list comes from
   (mtch (parse-file filename)
-    (sem) (compile sem)))
+    (sem combined-src) (compile sem)))
 
 (define (run-compiled c)
   ;(shew c)
