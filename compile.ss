@@ -209,21 +209,18 @@
 (define stack-trace-push-pop-enabled #t)
 (define (stack-trace-push-pop src compiled)
   (if stack-trace-push-pop-enabled
-    (mtch src
-      ('app es)
-        (mtch (get-src-extent src)
-          (start end)
-          ;(let ((src-text (tokens->src (find-tokens src))))
-            (let ((result-v (pm-symgen)))
-              `(begin
-                 ;(shew (list 'push '(,start ,end) ',src))
-                 (set! tmi-stack (cons '(,start ,end) tmi-stack))
-                 (let ((,result-v ,compiled))
-                   ;(shew (list 'pop '(,start ,end) ,result-v))
-                   (set! tmi-stack (cdr tmi-stack))
-                   ,result-v)));)
-          x compiled)
-      x compiled)
+      (mtch (get-src-extent src)
+        (start end)
+        ;(let ((src-text (tokens->src (find-tokens src))))
+          (let ((result-v (pm-symgen)))
+            `(begin
+               ;(shew (list 'push '(,start ,end) ',src))
+               (set! tmi-stack (cons '(,start ,end) tmi-stack))
+               (let ((,result-v ,compiled))
+                 ;(shew (list 'pop '(,start ,end) ,result-v))
+                 (set! tmi-stack (cdr tmi-stack))
+                 ,result-v)));)
+        x compiled)
     compiled))
 
 (define (compile-exp e)

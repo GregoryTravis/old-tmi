@@ -1,4 +1,4 @@
-baz (Baz z) = z * 2
+baz (Baz z) = z * 2 * uu
 bar (Bar y) = baz (Baz y)
 foo (Foo x) = bar (Bar x)
-main = Return (foop (Foo 7))
+main = Return (foo (Foo 7))
