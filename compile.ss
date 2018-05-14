@@ -367,7 +367,9 @@
 
 ;(assert (eq? (vector-length (current-command-line-arguments)) 1))
 (define (main filename)
-  (display (tmi-pretty-print (run-compiled (compile-file filename))))
-  (display "\n"))
+  (with-handlers ((exn? (lambda (e) (shew 'gosh e))))
+    (begin
+      (display (tmi-pretty-print (run-compiled (compile-file filename))))
+      (display "\n"))))
 ;(hook-with timing-hook main)
 ;(main)
