@@ -83,8 +83,15 @@
       body))
      (compile-exp body)
     _
-      (let ((args (pm-symgen)))
-        (let ((failer `(error "pattern match failure" (cons ',(string->symbol name) ,args))))
+      (let ((args (pm-symgen))
+            (src-extent (get-src-extent ml)))
+        (let ((failer
+            `(begin
+               (display "WTF: ")
+               (display (cons ',(string->symbol name) ,args))
+               (display "\n")
+               (show-tmi-src ',src-extent combined-src-gooogoo)
+               (error "pattern match failure" gooogoo ',src-extent (cons ',(string->symbol name) ,args)))))
           (trace-def name `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml failer)))))))
 
 (define (cm-args-pat e)
@@ -168,23 +175,6 @@
      (list . ,(map (lambda (e) (mtch e ('hash-entry ('identifier i . _) e)
                                        `(cons ',(string->symbol i) ,(compile-exp e))))
                  entries))))
-
-#|
-;; Ugly
-(define (find-rowcol e)
-  (mtch e
-    (type s (row col))
-      `(,row ,col)
-    (a . d)
-      (find-rowcol a)
-    x '(?? ??)))
-;(tracefun find-rowcol)
-|#
-
-(define (err-display-src-extent src-lines start end)
-  (mtch `(,start ,end)
-    ((srow scol) (erow ecol))
-      (nth-range srow (1+ erow) src-lines)))
 
 (define (get-src-extent src)
   (let ((tokens (find-tokens src)))
@@ -329,6 +319,14 @@
     x x))
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
+(define (show-tmi-src extent combined-src)
+  (let ((src-lines (string-split combined-src "\n")))
+    (mtch extent
+      ((srow scol) (erow ecol))
+        (begin
+          (display (++ "** " (->string erow) ":\n"))
+          (map (lambda (line) (display (++ line "\n")))
+            (nth-range srow (1+ erow) src-lines))))))
 (define (show-tmi-stack-trace stack combined-src)
   (let ((src-lines (string-split combined-src "\n")))
     (map (lambda (frame)
@@ -340,8 +338,9 @@
               (nth-range srow (1+ erow) src-lines)))))
       stack)))
 (define (wrap-main main combined-src)
-  `(let ;; ((err-display-src (lambda (start end) (err-display-src-extent ',(string-split combined-src "\n") start end))))
-       ((tmi-stack '()))
+  `(let ((tmi-stack '())
+         (gooogoo '(2 3 4))
+         (combined-src-gooogoo ,combined-src))
      (with-handlers ((exn?
          (lambda (e) (show-tmi-stack-trace tmi-stack ,combined-src) (raise e))))
        (driver-main ,main))))
