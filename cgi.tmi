@@ -3,3 +3,7 @@ stuff-to-string stuff = (strings-append (map to-string (flatten-completely stuff
 retval-handler handler = /. (url params bout) do
   val <- handler params
   ffi web-respond bout (tmi-pretty-print val)
+
+stringval-handler handler = /. (url params bout) do
+  s <- handler params
+  ffi web-respond bout s

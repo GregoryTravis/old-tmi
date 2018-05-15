@@ -97,7 +97,6 @@ list-intersect? a b = not (unique? (list-append a b))
 
 to-string (string a) = a
 to-string (int i) = number->string i
-to-string x = tmi-pretty-print x
 to-int (string a) = string->number a
 to-int (int i) = i
 

@@ -1,4 +1,4 @@
-render-attributes attributes = join-list (map (/. (k) [k, "=", (deref attributes k)]) (keys attributes)) " "
+render-attributes attributes = join-list (map (/. (k) [k, "=", "\"", (deref attributes k), "\""]) (keys attributes)) " "
 
 tag name = /. (attributes contents) ["<", name, " ", (render-attributes attributes), ">", contents, "</", name, ">"]
 table = tag "table"
