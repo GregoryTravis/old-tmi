@@ -99,16 +99,33 @@
   (mtch c
     #\n #\newline
     #\\ #\\
-    #\t #\tab
-    x x))
+    #\t #\tab))
 (define (string-unescape s)
   (list->string (string-unescape-list (string->list s))))
 (define (string-unescape-list sl)
   (mtch sl
+    (#\\ #\" . d)
+      `(#\" . ,(string-unescape-list d))
     (#\\ ec . d)
       `(,(escape-char ec) . ,(string-unescape-list d))
     (a . d)
       `(,a . ,(string-unescape-list d))
+    '()
+      '()))
+(define (string-escape s)
+  (list->string (string-escape-list (string->list s))))
+(define (string-escape-list sl)
+  (mtch sl
+    (#\\ . d)
+      `(#\\ #\\ . ,(string-escape-list d))
+    (#\newline . d)
+      `(#\\ #\n . ,(string-escape-list d))
+    (#\tab . d)
+      `(#\\ #\t . ,(string-escape-list d))
+    (#\" . d)
+      `(#\\ #\" . ,(string-escape-list d))
+    (a . d)
+      `(,a . ,(string-escape-list d))
     '()
       '()))
 
