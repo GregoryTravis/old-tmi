@@ -95,6 +95,23 @@
     (un-cses-1 e)))
 ;(tracefun un-cses)
 
+(define (escape-char c)
+  (mtch c
+    #\n #\newline
+    #\\ #\\
+    #\t #\tab
+    x x))
+(define (string-unescape s)
+  (list->string (string-unescape-list (string->list s))))
+(define (string-unescape-list sl)
+  (mtch sl
+    (#\\ ec . d)
+      `(,(escape-char ec) . ,(string-unescape-list d))
+    (a . d)
+      `(,a . ,(string-unescape-list d))
+    '()
+      '()))
+
 (define (p2s e)
   (mtch e
     ('base-exp-seq ('base-exp be) . d)
@@ -143,8 +160,8 @@
       e
     ('integer . _)
       e
-    ('string . _)
-      e
+    ('string s rc)
+      `(string ,(string-unescape s) ,rc)
     ('operator . _)
       e
     ('unary-operator . _)

@@ -34,13 +34,12 @@
   (p-rcb "-\\}")
   (lcb "\\{")
   (rcb "\\}")
-  (string "\"[^\"]*\"")
+  (string "\"((\\\\\")|[^\"])*\"")
 ))
 
 (define combined-pattern
   (pregexp
-    (let ((names (map car token-res))
-          (res (map cadr token-res)))
+    (let ((res (map cadr token-res)))
       (string-join
         (map (lambda (re) (string-append "^(" re ")")) res)
         "|"))))

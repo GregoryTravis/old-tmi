@@ -442,6 +442,8 @@ t191 = test [0, "a", 1, "a", 2] (join-list [0, 1, 2] "a")
 t192 = test 1 (to-int "1")
 t193 = test 1 (to-int 1)
 
+t194 = test ("sdf\"f" + "f\"\"f") "sdf\"ff\"\"f"
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

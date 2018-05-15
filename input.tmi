@@ -1,4 +1,3 @@
-baz (Baz z) = z * 2 * uu
-bar (Bar y) = baz (Baz y)
-foo (Foo x) = bar (Bar x)
-main = Return (foo (Foo 7))
+vart = "sdf\"ff\"\"f"
+;; vart = "\""
+main = Return [vart, string-length vart]
