@@ -450,6 +450,8 @@ t198 = test 1 (string-length "\n")
 t199 = test 1 (string-length "\t")
 t200 = test 1 (string-length "\\")
 
+t201 = test "(Rot 7)" (tmi-pretty-print (Rot 7))
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
