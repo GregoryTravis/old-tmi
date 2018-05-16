@@ -20,13 +20,16 @@
 (define debug-compile #f)
 
 ; Returns map from function name to list of alternate funs
+(define generate-tlf-lookup #f)
 (define (compile-let sem)
   (mtch sem
     ('let bindings exp)
       (let ((multilambdas (group-as-multilambdas bindings)))
         `(letrec
           ,(append
-             `((tmi-lookup-tlf-by-name ,(build-eval multilambdas)))
+             (if generate-tlf-lookup
+               `((tmi-lookup-tlf-by-name ,(build-eval multilambdas)))
+               '())
              (map compile-multilambda-group multilambdas))
           ,(compile-exp exp)))))
 
