@@ -360,11 +360,16 @@
   (mtch (parse-file filename)
     (sem combined-src) (compile sem combined-src)))
 
+(define (compile-scheme-compiled c)
+  (eval `(lambda () ,c)))
+(define (execute-compiled-scheme o)
+  (o))
 (define (run-compiled c)
-  ;(shew c)
-  (eval c))
+  (execute-compiled-scheme (compile-scheme-compiled c)))
+  ;;;(shew c)
+  ;;(eval c))
 
-;(hook-with timing-hook parse-file compile run-compiled)
+;(hook-with timing-hook parse-file compile run-compiled timing-hook execute-compiled-scheme compile-scheme-compiled)
 
 ;(assert (eq? (vector-length (current-command-line-arguments)) 1))
 (define (main filename)
