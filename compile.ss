@@ -118,8 +118,8 @@
      (let ((vresult (pm-symgen)))
        `(let ((,vresult
            ,(if use-interpreted-pattern-matching
-              (compile-app-pattern args (cm-args-pat dpat) `(list ,(compile-exp body) 'hhh))
-              (compile-int-app-pattern args (cm-args-pat dpat) body))))
+              (compile-int-app-pattern args (cm-args-pat dpat) body)
+              (compile-app-pattern args (cm-args-pat dpat) `(list ,(compile-exp body) 'hhh)))))
           (if (eq? ,vresult #f)
               ,(compile-multilambda-1 name args the-rest failer)
               (car ,vresult))))
