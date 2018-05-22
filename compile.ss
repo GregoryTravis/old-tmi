@@ -19,6 +19,9 @@
 ;; Disables all includes and dumps things
 (define debug-compile #f)
 
+;; Interpreted is faster
+(define use-interpreted-pattern-matching #t)
+
 ; Returns map from function name to list of alternate funs
 (define generate-tlf-lookup #f)
 (define (compile-let sem)
@@ -113,12 +116,99 @@
       body)
      . the-rest)
      (let ((vresult (pm-symgen)))
-       `(let ((,vresult ,(compile-app-pattern args (cm-args-pat dpat) `(list ,(compile-exp body) 'hhh))))
+       `(let ((,vresult
+           ,(if use-interpreted-pattern-matching
+              (compile-app-pattern args (cm-args-pat dpat) `(list ,(compile-exp body) 'hhh))
+              (compile-int-app-pattern args (cm-args-pat dpat) body))))
           (if (eq? ,vresult #f)
               ,(compile-multilambda-1 name args the-rest failer)
               (car ,vresult))))
     ; End of the list; nothing has matched, so crash
     '() failer))
+
+(define (compile-int-app-pattern args1 dpat1 body1)
+  (let ((bvar (pm-symgen)))
+    `(let ((,bvar (tmi-match-app-pattern ,args1 ',dpat1)))
+       (if (eq? ,bvar #f)
+         #f
+         (list (apply ,(compile-body-with-lambda dpat1 body1) ,bvar))))))
+;(tracefun compile-body-with-lambda compile-int-app-pattern)
+
+(define (compile-body-with-lambda pat body)
+  `(lambda ,(tmi-gather-vars-app-pattern pat) ,(compile-exp body)))
+
+(define (tmi-gather-vars-app-pattern pat1)
+  (mtch pat1
+    (a . d)
+      (let ((a-bindings (tmi-gather-vars-pattern a)))
+        (if (eq? a-bindings #f)
+          #f
+          (let ((d-bindings (tmi-gather-vars-app-pattern d)))
+            (if (eq? d-bindings #f)
+              #f
+              (append a-bindings d-bindings)))))
+    '()
+      '()))
+
+(define (tmi-gather-vars-pattern pat1)
+  (mtch pat1
+    ('identifier name . _)
+      `(,(string->symbol name))
+    ('integer value . _)
+       '()
+    ('string value . _)
+      '()
+    ('constructor value . _)
+       '()
+    ('app (('constructor . cd) . ad))
+      (tmi-gather-vars-app-pattern `((constructor . ,cd) . ,ad))
+    ('app (('identifier s . cd) ('identifier vars . vs)))
+      `(,(string->symbol vars))))
+      ;(tmi-gather-vars-app-pattern `((identifier . ,cd) ,var))))
+;(tracefun tmi-gather-vars-app-pattern tmi-gather-vars-pattern compile-body-with-lambda)
+
+(define (tmi-match-app-pattern args1 pat1)
+  (mtch pat1
+    (a . d)
+      (if (pair? args1)
+        (let ((a-bindings (tmi-match-pattern (car args1) a)))
+          (if (eq? a-bindings #f)
+            #f
+            (let ((d-bindings (tmi-match-app-pattern (cdr args1) d)))
+              (if (eq? d-bindings #f)
+                #f
+                (append a-bindings d-bindings)))))
+        #f)
+    '()
+      (if (null? args1)
+        '()
+        #f)))
+
+(define (tmi-match-pattern target1 pat1)
+  (mtch pat1
+    ('identifier name . _)
+      `(,target1)
+    ('integer value . _)
+      (if (equal? target1 (string->number value))
+         '()
+         #f)
+    ('string value . _)
+      (if (equal? target1 (strip-quotes value))
+        '()
+        #f)
+    ('constructor value . _)
+      (if (equal? target1 (string->symbol value))
+         '()
+         #f)
+    ('app (('constructor . cd) . ad))
+      (tmi-match-app-pattern target1 `((constructor . ,cd) . ,ad))
+    ('app (('identifier s . cd) var))
+      (let ((predicate (eval (string->symbol (++ "t-" (string->symbol s) "?")))))
+        (if (predicate target1)
+          `(,target1)
+          #f))))
+      ;(tmi-match-app-pattern target1 `((identifier . ,cd) ,var))))
+;(tracefun tmi-match-pattern tmi-match-app-pattern)
 
 ; omg I hate myself, these 1s are there because my mtch macro
 ; is not hygienic
@@ -365,9 +455,8 @@
 (define (execute-compiled-scheme o)
   (o))
 (define (run-compiled c)
+  ;(shew c)
   (execute-compiled-scheme (compile-scheme-compiled c)))
-  ;;;(shew c)
-  ;;(eval c))
 
 ;(hook-with timing-hook parse-file compile run-compiled timing-hook execute-compiled-scheme compile-scheme-compiled)
 

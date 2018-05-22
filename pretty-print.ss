@@ -19,7 +19,7 @@
           ('Cons a d)
             `("[" ,(join-things-list ", " (map tmi-pp-render (unconsify o))) "]")
           (ctor . args)
-            `("(" ,(apply string-append (join-things-list " " (map tmi-pp-render o))) ")")))))
+            `("(" ,(join-things-list " " (map tmi-pp-render o)) ")")))))
 
 (define (tmi-pretty-print o) 
   ;(shew 'ooo0 (tmi-pp-render o))
