@@ -319,20 +319,22 @@
     x '()))
 ;(tracefun get-src-extent find-tokens)
 
+(define tmi-stack '())
+(define (call-with-stacky thunk start end)
+  ;(shew (list 'push '(,start ,end) ',src))
+  (set! tmi-stack (cons (list start end) tmi-stack))
+  (let ((result (thunk)))
+    ;(shew (list 'pop '(,start ,end) ,result-v))
+    (set! tmi-stack (cdr tmi-stack))
+    result))
+
 (define (stack-trace-push-pop src compiled)
   (if stack-trace-push-pop-enabled
-      (mtch (get-src-extent src)
-        (start end)
-        ;(let ((src-text (tokens->src (find-tokens src))))
-          (let ((result-v (pm-symgen)))
-            `(begin
-               ;(shew (list 'push '(,start ,end) ',src))
-               (set! tmi-stack (cons '(,start ,end) tmi-stack))
-               (let ((,result-v ,compiled))
-                 ;(shew (list 'pop '(,start ,end) ,result-v))
-                 (set! tmi-stack (cdr tmi-stack))
-                 ,result-v)));)
-        x compiled)
+    (mtch (get-src-extent src)
+      (start end)
+        `(call-with-stacky (lambda () ,compiled) ',start ',end)
+      x
+        compiled)
     compiled))
 
 (define (compile-exp e)
@@ -485,13 +487,14 @@
   (o))
 (define (run-compiled c)
   ;(shew c)
+  (set! tmi-stack '())
   (execute-compiled-scheme (compile-scheme-compiled c)))
 
-;(hook-with timing-hook parse-file compile run-compiled timing-hook execute-compiled-scheme compile-scheme-compiled)
+(hook-with timing-hook parse-file compile run-compiled timing-hook execute-compiled-scheme compile-scheme-compiled)
 
 ;(assert (eq? (vector-length (current-command-line-arguments)) 1))
 (define (main filename)
-  (with-handlers ((exn? (lambda (e) (shew 'gosh e))))
+  (with-handlers ((exn? (lambda (e) ((error-display-handler) "asdf" e))))
     (begin
       (display (tmi-pretty-print (run-compiled (compile-file filename))))
       (display "\n"))))
