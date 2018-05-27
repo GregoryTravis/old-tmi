@@ -22,6 +22,8 @@
 ;; Interpreted is faster
 (define use-interpreted-pattern-matching #t)
 
+(define stack-trace-push-pop-enabled #t)
+
 ; Returns map from function name to list of alternate funs
 (define generate-tlf-lookup #f)
 (define (compile-let sem)
@@ -98,7 +100,11 @@
                (display "\n")
                (show-tmi-src ',src-extent combined-src-gooogoo)
                (error "pattern match failure" gooogoo ',src-extent (cons ',(string->symbol name) ,args)))))
-          (trace-def name `(lambda ,args ,(compile-multilambda-1 `(,name ,args) args ml failer)))))))
+          (trace-def name `(lambda ,args
+            ,(if use-interpreted-pattern-matching
+               (compile-int-multilambda-1 `(,name ,args) args ml failer)
+               (compile-multilambda-1 `(,name ,args) args ml failer))
+          ))))))
 
 (define (cm-args-pat e)
   (mtch e
@@ -108,6 +114,30 @@
       '()
     ('binop lpat ('operator . _) rpat)
       `(,lpat ,rpat)))
+
+(define (compile-int-multilambda-1 name args ml failure)
+  `(int-ml-apply
+     (list .
+       ,(map (lambda (def)
+          (mtch def
+            ('definition dpat (equals . d) body)
+              `(list ',(cm-args-pat dpat)
+                     ,(compile-body-with-lambda (cm-args-pat dpat) body))))
+          ml))
+     ,args
+     (lambda () ,failure)))
+
+(define (int-ml-apply defs args failure)
+  (mtch defs
+    ((pat body) . rest)
+      (mtch (tmi-match-app-pattern args pat)
+        #f
+          (int-ml-apply rest args failure)
+        bindings
+          (apply body bindings))
+    '()
+      (failure)))
+
 (define (compile-multilambda-1 name args ml failer)
   (mtch ml
     (('definition
@@ -289,7 +319,6 @@
     x '()))
 ;(tracefun get-src-extent find-tokens)
 
-(define stack-trace-push-pop-enabled #t)
 (define (stack-trace-push-pop src compiled)
   (if stack-trace-push-pop-enabled
       (mtch (get-src-extent src)
