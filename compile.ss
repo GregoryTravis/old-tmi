@@ -94,12 +94,7 @@
       (let ((args (pm-symgen))
             (src-extent (get-src-extent ml)))
         (let ((failer
-            `(begin
-               (display "WTF: ")
-               (display (cons ',(string->symbol name) ,args))
-               (display "\n")
-               (show-tmi-src ',src-extent combined-src-gooogoo)
-               (error "pattern match failure" gooogoo ',src-extent (cons ',(string->symbol name) ,args)))))
+              `(show-pattern-match-failure ',(string->symbol name) ,args ',src-extent combined-src-gooogoo)))
           (trace-def name `(lambda ,args
             ,(if use-interpreted-pattern-matching
                (compile-int-multilambda-1 `(,name ,args) args ml failer)
@@ -321,10 +316,10 @@
 
 (define tmi-stack '())
 (define (call-with-stacky thunk start end)
-  ;(shew (list 'push '(,start ,end) ',src))
   (set! tmi-stack (cons (list start end) tmi-stack))
+  ;(shew 'push (list start end) (length tmi-stack))
   (let ((result (thunk)))
-    ;(shew (list 'pop '(,start ,end) ,result-v))
+    ;(shew 'pop (list start end) (length tmi-stack))
     (set! tmi-stack (cdr tmi-stack))
     result))
 
@@ -442,6 +437,13 @@
     x x))
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
+(define (show-pattern-match-failure name args src-extent combined-src-gooogoo)
+  (display "WTF: ")
+  (display (cons name args))
+  (display "\n")
+  (show-tmi-src src-extent combined-src-gooogoo)
+  (raise 'pattern-match-failure))
+  ;(error "pattern match failure" src-extent (cons name args)))
 (define (show-tmi-src extent combined-src)
   (let ((src-lines (string-split combined-src "\n")))
     (mtch extent
@@ -461,11 +463,9 @@
               (nth-range srow (1+ erow) src-lines)))))
       stack)))
 (define (wrap-main main combined-src)
-  `(let ((tmi-stack '())
-         (gooogoo '(2 3 4))
-         (combined-src-gooogoo ,combined-src))
-     (with-handlers ((exn?
-         (lambda (e) (show-tmi-stack-trace tmi-stack ,combined-src) (raise e))))
+  `(let ((combined-src-gooogoo ,combined-src))
+     (with-handlers (((lambda (e) (or (exn? e) (eq? e 'pattern-match-failure)))
+         (lambda (e) (shew e) (show-tmi-stack-trace tmi-stack ,combined-src) (raise e))))
        (driver-main ,main))))
 
 (define (compile sem combined-src)
@@ -490,11 +490,12 @@
   (set! tmi-stack '())
   (execute-compiled-scheme (compile-scheme-compiled c)))
 
-(hook-with timing-hook parse-file compile run-compiled timing-hook execute-compiled-scheme compile-scheme-compiled)
+;(hook-with timing-hook parse-file compile run-compiled timing-hook execute-compiled-scheme compile-scheme-compiled)
 
 ;(assert (eq? (vector-length (current-command-line-arguments)) 1))
 (define (main filename)
-  (with-handlers ((exn? (lambda (e) ((error-display-handler) "asdf" e))))
+  (with-handlers (((lambda (e) (eq? e 'pattern-match-failure)) (lambda (e) (void)))
+                  (exn? (lambda (e) (shew 'gosh e))))
     (begin
       (display (tmi-pretty-print (run-compiled (compile-file filename))))
       (display "\n"))))
