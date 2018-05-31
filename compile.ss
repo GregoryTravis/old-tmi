@@ -22,7 +22,8 @@
 ;; Interpreted is faster
 (define use-interpreted-pattern-matching #t)
 
-(define stack-trace-push-pop-enabled #t)
+(define stack-trace-push-pop-enabled-funs #t)
+(define stack-trace-push-pop-enabled-exps #f)
 
 ; Returns map from function name to list of alternate funs
 (define generate-tlf-lookup #f)
@@ -111,16 +112,17 @@
       `(,lpat ,rpat)))
 
 (define (compile-int-multilambda-1 name args ml failure)
-  `(int-ml-apply
-     (list .
-       ,(map (lambda (def)
-          (mtch def
-            ('definition dpat (equals . d) body)
-              `(list ',(cm-args-pat dpat)
-                     ,(compile-body-with-lambda (cm-args-pat dpat) body))))
-          ml))
-     ,args
-     (lambda () ,failure)))
+ (stack-trace-push-pop stack-trace-push-pop-enabled-funs ml
+   `(int-ml-apply
+      (list .
+        ,(map (lambda (def)
+           (mtch def
+             ('definition dpat (equals . d) body)
+               `(list ',(cm-args-pat dpat)
+                      ,(compile-body-with-lambda (cm-args-pat dpat) body))))
+           ml))
+      ,args
+      (lambda () ,failure))))
 
 (define (int-ml-apply defs args failure)
   (mtch defs
@@ -323,8 +325,8 @@
     (set! tmi-stack (cdr tmi-stack))
     result))
 
-(define (stack-trace-push-pop src compiled)
-  (if stack-trace-push-pop-enabled
+(define (stack-trace-push-pop enabled src compiled)
+  (if enabled
     (mtch (get-src-extent src)
       (start end)
         `(call-with-stacky (lambda () ,compiled) ',start ',end)
@@ -333,7 +335,7 @@
     compiled))
 
 (define (compile-exp e)
-  (stack-trace-push-pop e
+  (stack-trace-push-pop stack-trace-push-pop-enabled-exps e
     (mtch e
       ('identifier name . d)
         (string->symbol name)
