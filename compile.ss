@@ -26,17 +26,12 @@
 (define stack-trace-push-pop-enabled-exps #f)
 
 ; Returns map from function name to list of alternate funs
-(define generate-tlf-lookup #f)
 (define (compile-let sem)
   (mtch sem
     ('let bindings exp)
       (let ((multilambdas (group-as-multilambdas bindings)))
         `(letrec
-          ,(append
-             (if generate-tlf-lookup
-               `((tmi-lookup-tlf-by-name ,(build-eval multilambdas)))
-               '())
-             (map compile-multilambda-group multilambdas))
+          ,(map compile-multilambda-group multilambdas)
           ,(compile-exp exp)))))
 
 ; Generates a lookup function that will return foo given "foo", and excludes "main" because
