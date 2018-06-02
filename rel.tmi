@@ -5,7 +5,7 @@ deref rec k = find-it (rec-to-entries rec)
 keys rec = map (/. ((Entry k v)) k) (rec-to-entries rec)
 
 add-recs a b = if not (list-intersect? (keys a) (keys b))
-               then entries-to-rec (list-append (rec-to-entries a) (rec-to-entries b))
+               then entries-to-rec ((rec-to-entries a) + (rec-to-entries b))
                else err (RecOverlap a b)
 
 wherre rel f = filter rel f
@@ -27,7 +27,7 @@ pnot p = /. (x) not (p x)
 
 un-where rel f w = let ;; yes = wherre rel f
                        no = wherre rel (pnot f)
-                    in list-append no w
+                    in no + w
 
 one [a] = a
 un-one lyst x = [x]
