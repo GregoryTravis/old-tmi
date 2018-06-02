@@ -30,6 +30,10 @@
   (safe-run (lambda () (eval e))))
 
 (define dloaded-files (make-hash))
+
+(define (reset-dloaded-files)
+  (set! dloaded-files (make-hash)))
+
 (define (dload filename)
   (let ((now (current-seconds))
         (mtime (file-or-directory-modify-seconds filename)))
@@ -45,6 +49,11 @@
 (define (reload-if-changed)
   (let ((files (hash-keys dloaded-files)))
     ;(shew 'checking files)
+    (map dload files)))
+
+(define (daemon-reload-all)
+  (let ((files (hash-keys dloaded-files)))
+    (reset-dloaded-files)
     (map dload files)))
 
 ; => #t | (error)

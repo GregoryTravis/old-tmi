@@ -1,0 +1,2 @@
+send-quit > /dev/null
+echo '(begin (daemon-reload-all))' | nc localhost 5001
