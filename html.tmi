@@ -44,8 +44,8 @@ cell-editor table-name pk pkv k = let
      in let down = compose-nodes dn own
          in do
  db <- read-data "old.json"
- v <- Return (read down db)
- Return (render-form "/receive-form" "card" pk pkv k v)
+ v <- Return $ read down db
+ Return $ render-form "/receive-form" "card" pk pkv k v
 
 receive-form-handler params = let
     k = deref params "k"
@@ -62,7 +62,7 @@ receive-form-handler params = let
        in let down = compose-nodes dn own
            in do
   db <- read-data "old.json"
-  ndb <- Return (write down db nv)
+  ndb <- Return $ write down db nv
   [] <- write-data "old.json" ndb
   Return Ok
 

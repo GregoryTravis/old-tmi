@@ -51,7 +51,7 @@ assert v checks = if all checks then v else err (AssertionFailure v checks)
 read-all-chars port = do c <- ffi read-char port
                          is-eof <- ffi eof-object? c
                          if is-eof then (Return []) else do tail <- read-all-chars port 
-                                                            Return (Cons c tail)
+                                                            Return $ Cons c tail
 
 read-file filename = do port <- ffi open-input-file filename
                         chars <- read-all-chars port

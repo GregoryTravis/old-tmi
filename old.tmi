@@ -2,29 +2,29 @@ db-filename = "old.json"
 
 show-db params = do
   db <- read-data db-filename
-  Return (strings-append (map to-string (flatten-completely (html-db-tables db))))
+  Return $ strings-append (map to-string (flatten-completely (html-db-tables db)))
 
 show-table table-name pk = do
   db <- read-data db-filename
-  Return (strings-append (map to-string
-    (flatten-completely (html-editable-rel-table table-name (deref db table-name) pk))))
+  Return $ strings-append (map to-string
+    (flatten-completely (html-editable-rel-table table-name (deref db table-name) pk)))
 
 encode-call f args = tmi-uri-encode (native-write-data-string [f, args])
 
 make-call f args = ["/?call=", (encode-call (tmi-object-name f) args)]
 
-barf a b = Return (stuff-to-string [a + b])
+barf a b = Return $ stuff-to-string [a + b]
 
-web-main = Return (stuff-to-string ["main: ", anchor {href: (make-call barf [1, 2])} "1 + 2", " ",
+web-main = Return $ stuff-to-string ["main: ", anchor {href: (make-call barf [1, 2])} "1 + 2", " ",
   anchor {href: make-call show-table ["card", "card_id"]} "card", " ",
-  anchor {href: (make-call show-db [[]])} "show-db"])
+  anchor {href: (make-call show-db [[]])} "show-db"]
 
 default-call = native-write-data-string ["web-main", []]
 default-req params = if params == {} then {call: default-call} else params
 
 show-table params table = do
   db <- read-data db-filename
-  Return (strings-append (map to-string (flatten-completely (html-rel-table (deref db table)))))
+  Return $ strings-append (map to-string (flatten-completely (html-rel-table (deref db table))))
 
 function-registry = {
     barf: barf,
