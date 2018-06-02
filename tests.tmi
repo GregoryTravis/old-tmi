@@ -458,6 +458,9 @@ t203 = let
   bar b = b + b
 in test True (foo 12 == bar 12)
 
+;; $
+t204 = let p = Return $ Foo 10 in test (Return (Foo 10)) p
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34
