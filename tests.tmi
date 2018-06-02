@@ -82,10 +82,10 @@ t27 = test 3 (t26 ([] 1 2))
 t28 = do port <- ffi open-input-string "abc"
          chars <- read-all-chars port
          s <- ffi list->string chars
-         Return (test "abc" s)
+         Return $ test "abc" s
 
 t29 = do s <- read-file "test-files/read-test-file"
-         Return (test "asdf" s)
+         Return $ test "asdf" s
 
 t30 = test [3, "asdfzxcv"] [1 + 2, "asdf" + "zxcv"]
 
@@ -98,7 +98,7 @@ t32 = test "{b: 13, a: {c: 10}}" (tmi-pretty-print { a: { c: let r = 5 in r + r 
 t33 = test "[4, 5]" (tmi-pretty-print [4, 5])
 
 t34 = do s <- read-data "test-files/read-data-test-file"
-         Return (test [{a: {c: 10}, b: 13}, {h: 56}] s)
+         Return $ test [{a: {c: 10}, b: 13}, {h: 56}] s
 
 t35 = test True (all [True])
 t36 = test True (all [True, True])
@@ -227,13 +227,13 @@ t111 = let
                    {a: 11, b: 21, c: 33},
                    {a: 11, b: 22, c: 34}]
   in do db <- read-data "db.json"
-        True <- Return (test db orig-db)
+        True <- Return $ test db orig-db
         [] <- write-data "db2.json" (write down db 3100)
         mdb <- read-data "db2.json"
-        True <- Return (test-rel mdb modified-db)
+        True <- Return $ test-rel mdb modified-db
         [] <- write-data "db3.json" (write down mdb 31)
         odb <- read-data "db3.json"
-        True <- Return (test-rel odb db)
+        True <- Return $ test-rel odb db
         [] <- ffi delete-file "db2.json"
         [] <- ffi delete-file "db3.json"
         Return True
@@ -251,7 +251,7 @@ t112 = let
     odb <- read-data "db3.json"
     [] <- ffi delete-file "db2.json"
     [] <- ffi delete-file "db3.json"
-    True <- Return (test-rel db odb)
+    True <- Return $ test-rel db odb
     Return True
 
 t113 = test (Just 100) (first-maybe (/. (x) if x == 4 then (Just 100) else Nothing) [3, 4, 5])
@@ -271,16 +271,16 @@ t118 = do
   result <- test-handlers the-handlers "/add" {a: "1", b: "20"}
   ;; We do not yet support escape characters but magically we already
   ;; support multi-line strings
-  Return (test "HTTP/1.1 200 OK
+  Return $ test "HTTP/1.1 200 OK
 Content-Type: text/html
 
-21" result)
+21" result
 
 t119 = do
-  Foo (Bar a) <- Return (Foo (Bar 12))
-  Foo b <- Return (Foo (Bar 13))
+  Foo (Bar a) <- Return $ Foo (Bar 12)
+  Foo b <- Return $ Foo (Bar 13)
   14 <- Return 14
-  Return (test [12, (Bar 13)] [a, b])
+  Return $ test [12, (Bar 13)] [a, b]
 
 t120 = let
     foo a b c = a + b + c
@@ -340,7 +340,7 @@ t147 = let
                                Return What
   in do res <- (foo 10)
         res2 <- (foo 11)
-        Return ((test Ten res) && (test What res2))
+        Return $ (test Ten res) && (test What res2)
 
 t148 = let
     tttt x = case x of (Foo a) => a + a
