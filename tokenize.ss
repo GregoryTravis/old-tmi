@@ -16,7 +16,7 @@
   (then_keyword "then")
   (else_keyword "else")
   (integer "[0-9]+")
-  (constructor "[A-Z][a-zA-Z0-9_]+")
+  (constructor "[A-Z][a-zA-Z0-9_]*")
   (identifier "[a-zA-Z0-9_][a-zA-Z0-9_=<>+/\\-_!@$%^&|*?]*")
   (comma ",")
   (comment ";;")
