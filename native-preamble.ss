@@ -47,7 +47,7 @@
 ; This isn't used yet except in precedence
 ; (define native$$ $$)
 (define (op$ f a) (f a))
-(define op! (tmi-if-ify (lambda (b) (not (tmi-if b)))))
+;(define op! (tmi-if-ify (lambda (b) (not (tmi-if b)))))
 
 ; Short-circuiting operators
 (define op&&

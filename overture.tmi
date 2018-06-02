@@ -39,6 +39,9 @@ a ^^ b = native^^ a b
 (string a) + (string b) = string-append a b
 strings-append ss = tmi-foldr (+) "" ss
 
+! True = False
+! False = True
+
 all (Cons True d) = all d
 all [] = True
 all x = False

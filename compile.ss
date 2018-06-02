@@ -60,7 +60,9 @@
         ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
           `(fun ,name)
         ('definition ('binop lpat ('operator op . _) rpat) ('equals . _) body)
-          `(binop ,op)))
+          `(binop ,op)
+        ('definition ('unop ('unary-operator op . _) pat) ('equals . _) body)
+          `(unop ,op)))
     bindings))
 
 ; Takes ("name" def def def), returns scheme letrec (name val) form
@@ -69,6 +71,8 @@
     (('fun name) . defs)
       `(,(string->symbol name) ,(compile-multilambda name defs))
     (('binop name) . defs)
+      `(,(string->symbol (++ "op" name)) ,(compile-multilambda name defs))
+    (('unop name) . defs)
       `(,(string->symbol (++ "op" name)) ,(compile-multilambda name defs))))
 
 (define pm-symgen (tagged-symbol-generator-generator 'pm))
@@ -104,7 +108,9 @@
     ('identifier . d)
       '()
     ('binop lpat ('operator . _) rpat)
-      `(,lpat ,rpat)))
+      `(,lpat ,rpat)
+    ('unop ('unary-operator . _) pat)
+      `(,pat)))
 
 (define (compile-int-multilambda-1 name args ml failure)
  (stack-trace-push-pop stack-trace-push-pop-enabled-funs ml
