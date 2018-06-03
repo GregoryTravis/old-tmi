@@ -59,8 +59,6 @@
           `(fun ,name)
         ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
           `(fun ,name)
-        ('definition ('binop lpat ('operator op . _) rpat) ('equals . _) body)
-          `(binop ,op)
         ('definition ('unop ('unary-operator op . _) pat) ('equals . _) body)
           `(unop ,op)))
     bindings))
@@ -70,8 +68,6 @@
   (mtch ml
     (('fun name) . defs)
       `(,(string->symbol name) ,(compile-multilambda name defs))
-    (('binop name) . defs)
-      `(,(string->symbol (++ "op" name)) ,(compile-multilambda name defs))
     (('unop name) . defs)
       `(,(string->symbol (++ "op" name)) ,(compile-multilambda name defs))))
 
@@ -107,8 +103,6 @@
       pat
     ('identifier . d)
       '()
-    ('binop lpat ('operator . _) rpat)
-      `(,lpat ,rpat)
     ('unop ('unary-operator . _) pat)
       `(,pat)))
 
@@ -351,9 +345,6 @@
       ('app ((identifier "op$" . _) ('constructor name . d) e))
         (let ((args (pm-symgen)))
           `((lambda ,args (cons (quote ,(string->symbol name)) ,args)) ,(compile-exp e)))
-      ('binop ('constructor name . d) (operator "$" . _) e)
-        (let ((args (pm-symgen)))
-          `((lambda ,args (cons (quote ,(string->symbol name)) ,args)) ,(compile-exp e)))
       ;; (('constructor name . d) . cton-args)
       ;;  (let ((args (pm-symgen)))
       ;;    `((lambda ,args (cons (quote ,(string->symbol name)) ,args)) . ,(map compile-exp cton-args)))
@@ -366,10 +357,6 @@
         (compile-exp e)
       ('app es)
         (no-bad-funs (map compile-exp es))
-      ('binop a ('operator op . _) b)
-        (if (is-short-circuit op)
-          `(,(string->symbol (string-append "op" op)) ,(compile-thunk (compile-exp a)) ,(compile-thunk (compile-exp b)))
-          `(,(string->symbol (string-append "op" op)) ,(compile-exp a) ,(compile-exp b)))
       ('unop ('unary-operator op . _) e)
         `(,(string->symbol (string-append "op" op)) ,(compile-exp e))
       ('if b t e)
@@ -418,7 +405,7 @@
           ,(map (lambda (cc) (case-clause->definition casefun-name cc)) clauses)
           (app ((identifier ,(symbol->string casefun-name)) ,exp))))
     ('pdo '() exp)
-      exp
+      (compile-simplify exp)
     ('pdo (('do_assignment pat body) . assignments) exp)
       (begin
         `(app ((constructor "Seq") ,body (lambda-exp (app (,pat)) (pdo ,assignments ,exp)))))
@@ -446,9 +433,12 @@
       `(app ((identifier "op&&") ,(compile-src-thunk l) ,(compile-src-thunk r)))
     ('binop l ('operator "||" . _) r)
       `(app ((identifier "op||") ,(compile-src-thunk l) ,(compile-src-thunk r)))
+    ('binop ('constructor name . d) ('operator "$" . _) e)
+      (compile-simplify `(app ((constructor ,name . ,d) ,e)))
     ('binop l ('operator op . _) r)
       `(app ((identifier ,(++ "op" op)) ,l ,r))
     x x))
+;(tracefun compile-simplify-1)
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
 (define (show-pattern-match-failure name args src-extent combined-src-gooogoo)
