@@ -1,1 +1,1 @@
-main = Return $ [! True, ! False]
+main = Return $ 4 + 5

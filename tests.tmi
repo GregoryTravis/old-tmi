@@ -461,6 +461,10 @@ in test True (foo 12 == bar 12)
 ;; $
 t204 = let p = Return $ Foo 10 in test (Return (Foo 10)) p
 
+;; Syntax: $ followed by binop exp
+t205 = let foo = Return $ 4 + 5
+  in test (Return $ 4 + 5)  foo
+
 run-do-tests = do True <- t28
                   True <- t29
                   True <- t34

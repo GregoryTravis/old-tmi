@@ -348,6 +348,9 @@
         `',(string->symbol name)
       ('app (('constructor name . d) . cton-args))
         `(cons (quote ,(string->symbol name)) (list . ,(map compile-exp cton-args)))
+      ('app ((identifier "op$" . _) ('constructor name . d) e))
+        (let ((args (pm-symgen)))
+          `((lambda ,args (cons (quote ,(string->symbol name)) ,args)) ,(compile-exp e)))
       ('binop ('constructor name . d) (operator "$" . _) e)
         (let ((args (pm-symgen)))
           `((lambda ,args (cons (quote ,(string->symbol name)) ,args)) ,(compile-exp e)))
@@ -382,6 +385,8 @@
 
 (define (compile-thunk ce)
   `(lambda () ,ce))
+(define (compile-src-thunk ce)
+  `(lambda-exp (app ()) ,ce))
 
 (define (is-short-circuit op)
   (or (equal? op "&&") (equal? op "||")))
@@ -437,6 +442,12 @@
             (rparam `(identifier ,(symbol->string (pm-symgen)))))
         (compile-simplify
           `(lambda-exp (app (,lparam ,rparam)) (binop ,lparam ,op ,rparam))))
+    ('binop l ('operator "&&" . _) r)
+      `(app ((identifier "op&&") ,(compile-src-thunk l) ,(compile-src-thunk r)))
+    ('binop l ('operator "||" . _) r)
+      `(app ((identifier "op||") ,(compile-src-thunk l) ,(compile-src-thunk r)))
+    ('binop l ('operator op . _) r)
+      `(app ((identifier ,(++ "op" op)) ,l ,r))
     x x))
 (define (compile-simplify e) (general-recurser-s compile-simplify-1 id e))
 
