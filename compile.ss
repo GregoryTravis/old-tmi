@@ -34,21 +34,6 @@
           ,(map compile-multilambda-group multilambdas)
           ,(compile-exp exp)))))
 
-; Generates a lookup function that will return foo given "foo", and excludes "main" because
-; it runs during definition of main so main is not defined yet
-(define (build-eval multilambdas)
-  (let ((names (map
-    (lambda (ml)
-      (mtch ml
-        (('fun name) . defs)
-          name))
-    (grep (lambda (ml) (mtch ml (('fun . _) . _) #t x #f)) multilambdas))))
-    `(lambda (name-string)
-       (let ((thunk
-         (cdr (assoc name-string
-            (list . ,(map (lambda (name) `(cons ,name (lambda () ,(string->symbol name)))) (rember "main" names)))))))
-         (thunk)))))
-
 (define case-symgen (tagged-symbol-generator-generator 'case))
 
 (define (group-as-multilambdas bindings)
