@@ -143,8 +143,11 @@
       g)))
 
 (define (parsed-unbinarize e)
+  (parsed-unbinarize-1 e))
+
+(define (parsed-unbinarize-1 e)
   (if (list? e)
-    (mtch (map parsed-unbinarize e)
+    (mtch (map parsed-unbinarize-1 e)
       (s (bg . es))
         (if (and (symbol? bg) (starts-with (symbol->string bg) "bg-"))
           `(,s . ,es)
@@ -214,10 +217,6 @@
 ))
 (define grammar (binarize-grammar grammar))
 ;(shew grammar)
-;(hook-with timing-hook top-parse)
-;(hook-with timing-hook preprocess-top)
-;(hook-with timing-hook tokenize-top)
-;(hook-with timing-hook parsed-unbinarize)
 
 (define (split-into-tlfs tokens)
   (group-by-starts (lambda (token) (mtch token (_ _ (line column)) (eq? column 0))) tokens))
@@ -258,6 +257,7 @@
       (string-append "Parse failure in " filename " on line " (number->string line) ":\n"
         "\n" (string-trim (tokens->src tokens)) "\n\n"))
     (err 'parse-failure)))
+(hook-with timing-hook top-parse preprocess-top tokenize-top parsed-unbinarize)
 
 ;(tracefun tokenize-top)
 ;(hook-with timing-hook parse-file)
