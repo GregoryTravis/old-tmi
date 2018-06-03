@@ -362,13 +362,8 @@
       )))
 ;(tracefun compile-exp)
 
-(define (compile-thunk ce)
-  `(lambda () ,ce))
 (define (compile-src-thunk ce)
   `(lambda-exp (app ()) ,ce))
-
-(define (is-short-circuit op)
-  (or (equal? op "&&") (equal? op "||")))
 
 ;; All racket functions are available to be called directly from TMI; it's only
 ;; care and discipline that makes this work, thus it is wrong.  Most of the time
