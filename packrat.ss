@@ -32,7 +32,10 @@
                 (list 'epsilon s)))
             ;;; Hack: this means anything not in the grammar is a token
             ((not (hash-ref grammar symbol #f))
-              (if (and (not (eq? s (vector-length tokens))) (eq? symbol (car (vector-ref tokens s)))) (list (vector-ref tokens s) (+ s 1)) #f))
+              (if (and (not (eq? s (vector-length tokens)))
+                       (eq? symbol (car (vector-ref tokens s))))
+                (list (vector-ref tokens s) (+ s 1))
+                #f))
             (#t (mtch (hash-ref grammar symbol)
                   ('seq x y)
                     (mtch (parse x tokens s top-level? memo)
