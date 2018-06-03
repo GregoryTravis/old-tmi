@@ -17,7 +17,7 @@
   value)
 
 ;; Returns #f or (tree rest)
-(define (parse symbol tokens s e top-level? memo)
+(define (parse symbol tokens s top-level? memo)
   (let ((memo-val (hash-ref memo (list symbol s) '())))
     (if (not (eq? memo-val '()))
       memo-val
@@ -32,22 +32,22 @@
                 (list 'epsilon s)))
             ;;; Hack: this means anything not in the grammar is a token
             ((not (hash-ref grammar symbol #f))
-              (if (and (not (eq? s e)) (eq? symbol (car (vector-ref tokens s)))) (list (vector-ref tokens s) (+ s 1)) #f))
+              (if (and (not (eq? s (vector-length tokens))) (eq? symbol (car (vector-ref tokens s)))) (list (vector-ref tokens s) (+ s 1)) #f))
             (#t (mtch (hash-ref grammar symbol)
                   ('seq x y)
-                    (mtch (parse x tokens s e top-level? memo)
+                    (mtch (parse x tokens s top-level? memo)
                       (tx new-s)
-                        (mtch (parse y tokens new-s e #f memo)
+                        (mtch (parse y tokens new-s #f memo)
                           (ty new-new-s)
                             (list (list symbol tx ty) new-new-s)
                           #f #f)
                       #f #f)
                   ('alt x y)
-                    (mtch (parse x tokens s e top-level? memo)
+                    (mtch (parse x tokens s top-level? memo)
                       (t new-s)
                         (list (list symbol t) new-s)
                       #f
-                        (mtch (parse y tokens s e top-level? memo)
+                        (mtch (parse y tokens s top-level? memo)
                           (t new-s)
                             (list (list symbol t) new-s)
                           #f
@@ -55,13 +55,13 @@
                   x
                     (begin
                       (assert (atom? x))
-                      (mtch (parse x tokens s e top-level? memo)
+                      (mtch (parse x tokens s top-level? memo)
                         (t new-s)
                           (list (list symbol t) new-s)
                         #f #f))))))))))
 (define (top-parse tokens)
   ;(shew 'TOP tokens)
-  (mtch (parse 'S (list->vector tokens) 0 (length tokens) #t (make-hash))
+  (mtch (parse 'S (list->vector tokens) 0 #t (make-hash))
     (t final-s) (if (eq? final-s (length tokens)) t #f)
     _ #f))
 
@@ -261,7 +261,7 @@
       (string-append "Parse failure in " filename " on line " (number->string line) ":\n"
         "\n" (string-trim (tokens->src tokens)) "\n\n"))
     (err 'parse-failure)))
-;(hook-with timing-hook top-parse preprocess-top tokenize-top parsed-unbinarize)
+(hook-with timing-hook top-parse preprocess-top tokenize-top parsed-unbinarize)
 
 ;(tracefun tokenize-top)
 ;(hook-with timing-hook parse-file)
