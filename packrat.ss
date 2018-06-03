@@ -261,7 +261,7 @@
       (string-append "Parse failure in " filename " on line " (number->string line) ":\n"
         "\n" (string-trim (tokens->src tokens)) "\n\n"))
     (err 'parse-failure)))
-(hook-with timing-hook top-parse preprocess-top tokenize-top parsed-unbinarize)
+;(hook-with timing-hook top-parse preprocess-top tokenize-top parsed-unbinarize)
 
 ;(tracefun tokenize-top)
 ;(hook-with timing-hook parse-file)
