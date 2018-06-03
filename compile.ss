@@ -58,18 +58,14 @@
         ('definition ('identifier name . d) ('equals . _) body)
           `(fun ,name)
         ('definition ('app (('identifier name . d) . d)) ('equals . _) body)
-          `(fun ,name)
-        ('definition ('unop ('unary-operator op . _) pat) ('equals . _) body)
-          `(unop ,op)))
+          `(fun ,name)))
     bindings))
 
 ; Takes ("name" def def def), returns scheme letrec (name val) form
 (define (compile-multilambda-group ml)
   (mtch ml
     (('fun name) . defs)
-      `(,(string->symbol name) ,(compile-multilambda name defs))
-    (('unop name) . defs)
-      `(,(string->symbol (++ "op" name)) ,(compile-multilambda name defs))))
+      `(,(string->symbol name) ,(compile-multilambda name defs))))
 
 (define pm-symgen (tagged-symbol-generator-generator 'pm))
 
@@ -102,9 +98,7 @@
     ('app (('identifier . d) . pat))
       pat
     ('identifier . d)
-      '()
-    ('unop ('unary-operator . _) pat)
-      `(,pat)))
+      '()))
 
 (define (compile-int-multilambda-1 name args ml failure)
  (stack-trace-push-pop stack-trace-push-pop-enabled-funs ml
@@ -357,8 +351,6 @@
         (compile-exp e)
       ('app es)
         (no-bad-funs (map compile-exp es))
-      ('unop ('unary-operator op . _) e)
-        `(,(string->symbol (string-append "op" op)) ,(compile-exp e))
       ('if b t e)
         `(if (tmi-if ,(compile-exp b)) ,(compile-exp t) ,(compile-exp e))
       ('let . _)
@@ -429,6 +421,8 @@
             (rparam `(identifier ,(symbol->string (pm-symgen)))))
         (compile-simplify
           `(lambda-exp (app (,lparam ,rparam)) (binop ,lparam ,op ,rparam))))
+    ('unop ('unary-operator op . _) e)
+      `(app ((identifier ,(++ "op" op)) ,e))
     ('binop l ('operator "&&" . _) r)
       `(app ((identifier "op&&") ,(compile-src-thunk l) ,(compile-src-thunk r)))
     ('binop l ('operator "||" . _) r)
