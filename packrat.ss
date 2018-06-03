@@ -31,10 +31,10 @@
                 #f
                 (list 'epsilon s)))
             ;;; Hack: this means anything not in the grammar is a token
-            ((not (assoc symbol grammar))
+            ((not (hash-ref grammar symbol #f))
               (if (and (not (eq? s e)) (eq? symbol (car (vector-ref tokens s)))) (list (vector-ref tokens s) (+ s 1)) #f))
-            (#t (mtch (assoc symbol grammar)
-                  (_ ('seq x y))
+            (#t (mtch (hash-ref grammar symbol)
+                  ('seq x y)
                     (mtch (parse x tokens s e top-level? memo)
                       (tx new-s)
                         (mtch (parse y tokens new-s e #f memo)
@@ -42,7 +42,7 @@
                             (list (list symbol tx ty) new-new-s)
                           #f #f)
                       #f #f)
-                  (_ ('alt x y))
+                  ('alt x y)
                     (mtch (parse x tokens s e top-level? memo)
                       (t new-s)
                         (list (list symbol t) new-s)
@@ -52,7 +52,7 @@
                             (list (list symbol t) new-s)
                           #f
                             #f))
-                  (_ x)
+                  x
                     (begin
                       (assert (atom? x))
                       (mtch (parse x tokens s e top-level? memo)
@@ -216,6 +216,10 @@
   (phash-entry (seq identifier colon exp))
 ))
 (define grammar (binarize-grammar grammar))
+;; Convert to hash form
+(define grammar (make-hash
+  (map (lambda (rule) (cons (car rule) (cadr rule)))
+    grammar)))
 ;(shew grammar)
 
 (define (split-into-tlfs tokens)
@@ -257,7 +261,7 @@
       (string-append "Parse failure in " filename " on line " (number->string line) ":\n"
         "\n" (string-trim (tokens->src tokens)) "\n\n"))
     (err 'parse-failure)))
-(hook-with timing-hook top-parse preprocess-top tokenize-top parsed-unbinarize)
+;(hook-with timing-hook top-parse preprocess-top tokenize-top parsed-unbinarize)
 
 ;(tracefun tokenize-top)
 ;(hook-with timing-hook parse-file)
