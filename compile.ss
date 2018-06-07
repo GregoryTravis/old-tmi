@@ -127,19 +127,19 @@
     ; End of the list; nothing has matched, so crash
     '() failer))
 
-(define (compile-int-app-pattern args1 dpat1 body1)
+(define (compile-int-app-pattern args dpat body)
   (let ((bvar (pm-symgen)))
-    `(let ((,bvar (tmi-match-app-pattern ,args1 ',dpat1)))
+    `(let ((,bvar (tmi-match-app-pattern ,args ',dpat)))
        (if (eq? ,bvar #f)
          #f
-         (list (apply ,(compile-body-with-lambda dpat1 body1) ,bvar))))))
+         (list (apply ,(compile-body-with-lambda dpat body) ,bvar))))))
 ;(tracefun compile-body-with-lambda compile-int-app-pattern)
 
 (define (compile-body-with-lambda pat body)
   `(lambda ,(tmi-gather-vars-app-pattern pat) ,(compile-exp body)))
 
-(define (tmi-gather-vars-app-pattern pat1)
-  (mtch pat1
+(define (tmi-gather-vars-app-pattern pat)
+  (mtch pat
     (a . d)
       (let ((a-bindings (tmi-gather-vars-pattern a)))
         (if (eq? a-bindings #f)
@@ -151,8 +151,8 @@
     '()
       '()))
 
-(define (tmi-gather-vars-pattern pat1)
-  (mtch pat1
+(define (tmi-gather-vars-pattern pat)
+  (mtch pat
     ('identifier name . _)
       `(,(string->symbol name))
     ('integer value . _)
@@ -168,20 +168,20 @@
       ;(tmi-gather-vars-app-pattern `((identifier . ,cd) ,var))))
 ;(tracefun tmi-gather-vars-app-pattern tmi-gather-vars-pattern compile-body-with-lambda)
 
-(define (tmi-match-app-pattern args1 pat1)
-  (mtch pat1
+(define (tmi-match-app-pattern args pat)
+  (mtch pat
     (a . d)
-      (if (pair? args1)
-        (let ((a-bindings (tmi-match-pattern (car args1) a)))
+      (if (pair? args)
+        (let ((a-bindings (tmi-match-pattern (car args) a)))
           (if (eq? a-bindings #f)
             #f
-            (let ((d-bindings (tmi-match-app-pattern (cdr args1) d)))
+            (let ((d-bindings (tmi-match-app-pattern (cdr args) d)))
               (if (eq? d-bindings #f)
                 #f
                 (append a-bindings d-bindings)))))
         #f)
     '()
-      (if (null? args1)
+      (if (null? args)
         '()
         #f)))
 
@@ -213,55 +213,55 @@
 
 ; omg I hate myself, these 1s are there because my mtch macro
 ; is not hygienic
-(define (compile-app-pattern target1 pat1 body1)
-  (mtch pat1
+(define (compile-app-pattern target pat body)
+  (mtch pat
     (a . d)
       (let ((va (pm-symgen))
             (vd (pm-symgen)))
-      `(if (pair? ,target1)
-         (let ((,va (car ,target1))
-               (,vd (cdr ,target1)))
+      `(if (pair? ,target)
+         (let ((,va (car ,target))
+               (,vd (cdr ,target)))
            ,(compile-pattern va a
-              (compile-app-pattern vd d body1)))
+              (compile-app-pattern vd d body)))
          #f))
     '()
-      `(if (eq? '() ,target1)
-         ;(list ,(compile-exp body1) 'fff)
-         ;,(compile-exp body1)
-         ,body1
+      `(if (eq? '() ,target)
+         ;(list ,(compile-exp body) 'fff)
+         ;,(compile-exp body)
+         ,body
          #f)))
 
-(define (compile-type-pattern target1 e body1)
+(define (compile-type-pattern target e body)
   (mtch e
     (('identifier type . _) ('identifier var . _))
-      `(if (,(string->symbol (string-append "t-" type "?")) ,target1)
-          (let ((,(string->symbol var) ,target1))
-            ,body1)
+      `(if (,(string->symbol (string-append "t-" type "?")) ,target)
+          (let ((,(string->symbol var) ,target))
+            ,body)
           #f)))
 
-(define (compile-pattern target1 pat1 body1)
-  (mtch pat1
+(define (compile-pattern target pat body)
+  (mtch pat
     ('identifier name . _)
-      `(let ((,(string->symbol name) ,target1))
-         ,body1)
+      `(let ((,(string->symbol name) ,target))
+         ,body)
     ('integer value . _)
-      `(if (equal? ,target1 ,(string->number value))
-         ,body1
+      `(if (equal? ,target ,(string->number value))
+         ,body
          #f)
     ('string value . _)
       `(begin
-      (if (equal? ,target1 ,(strip-quotes value))
-         ,body1
+      (if (equal? ,target ,(strip-quotes value))
+         ,body
          #f)
          )
     ('constructor value . _)
-      `(if (equal? ,target1 (quote ,(string->symbol value)))
-         ,body1
+      `(if (equal? ,target (quote ,(string->symbol value)))
+         ,body
          #f)
     ('app (('constructor . cd) . ad))
-      (compile-app-pattern target1 `((constructor . ,cd) . ,ad) body1)
+      (compile-app-pattern target `((constructor . ,cd) . ,ad) body)
     ('app (('identifier . cd) var))
-      (compile-type-pattern target1 `((identifier . ,cd) ,var) body1)))
+      (compile-type-pattern target `((identifier . ,cd) ,var) body)))
 ;(tracefun compile-pattern-and-body)
 
 (define (compile-hash-literal entries)
