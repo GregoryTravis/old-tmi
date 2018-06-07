@@ -63,17 +63,18 @@
              ,(mtch-clause target pat body))))))
 
 (define-for-syntax (mtch-render target clauses)
-  (let ((code
-         `(let ((target ,target))
-            ,(mtch-clauses 'target clauses clauses))))
-    (if mtch-show-expansion
-        (begin
-          (pretty-print 'mtch)
-          (pretty-print target)
-          (pretty-print clauses)
-          (pretty-print code))
-        '())
-    code))
+  (let ((targvar (mtch-vargen)))
+    (let ((code
+           `(let ((,targvar ,target))
+              ,(mtch-clauses targvar clauses clauses))))
+      (if mtch-show-expansion
+          (begin
+            (pretty-print 'mtch)
+            (pretty-print target)
+            (pretty-print clauses)
+            (pretty-print code))
+          '())
+      code)))
 
 (define-macro (mtch target . clauses)
   (mtch-render target clauses))
