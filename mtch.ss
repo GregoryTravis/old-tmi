@@ -33,7 +33,8 @@
      ((mtch-is-quote? pat)
       `(if (equal? ',(cadr pat) ,target)
            ,body
-           (fail)))     ((pair? pat)
+           (fail)))
+     ((pair? pat)
       `(if (pair? ,target)
            (let ((,carvar (car ,target))
                  (,cdrvar (cdr ,target)))
