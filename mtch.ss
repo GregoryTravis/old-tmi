@@ -58,7 +58,7 @@
 (define-for-syntax (mtch-clauses target clauses all-clauses)
   (let ((failer (mtch-vargen)))
     (if (null? clauses)
-        `(err 'match-failure target ',all-clauses)
+        `(err 'match-failure ,target ',all-clauses)
         (let ((pat (car clauses))
               (body (cadr clauses))
               (rest (cddr clauses)))
