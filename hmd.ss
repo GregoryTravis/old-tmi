@@ -10,6 +10,10 @@ xx PAIR - (x :: b, y :: c) :: a => a = (b, c)
 CTOR - type List a = Cons a (List a) | Nil => (Cons (x :: a) y) :: List a
 SCOPE - /. x :: a -> ... x :: a ...
 CASELAMBDA - (/./. p0 b0 p1 b1 ...) => (sum p0 p1 ...) => (sum b0 b1 ..)
+
+todo
+- lambda (same as caselambda?); repeated vars
+- should global ref be a var or something else?
 |#
 
 (define (make-type-symgen)
@@ -62,9 +66,59 @@ CASELAMBDA - (/./. p0 b0 p1 b1 ...) => (sum p0 p1 ...) => (sum b0 b1 ..)
     ('var id)
       `(typed ,(ty) (var ,id))))
 
+(define (gen-unis-for-def-scope def)
+  (mtch def
+    ('def name clauses)
+      (apply append (map gen-unis-for-clause-scope clauses))))
+(define (gen-unis-for-clause-scope clause)
+  (mtch clause
+    ('typed t
+    ('clause ('pat pat) ('body body)))
+      (let ((bound (gather-exp-vars pat))
+            (referenced (gather-exp-vars body)))
+        (apply append
+          (map (lambda (var)
+                 (mtch var ('typed ref-t ('var ref-id))
+                   (mtch (find-var-in-list ref-id bound)
+                     ('typed bound-t ('var bound-id))
+                       (begin
+                         (assert (eq? ref-id bound-id))
+                         (list (list bound-t ref-t)))
+                     '()
+                       '())))
+               referenced)))))
+(define (gather-exp-vars exp)
+  (mtch exp
+    ('typed t ('app exps))
+      (apply append (map gather-exp-vars exps))
+    ('typed t ('cton exps))
+      (apply append (map gather-exp-vars exps))
+    ('typed t ('ctor c))
+      '()
+    ('typed t ('var id))
+      (list exp)))
+(define (find-var-in-list id varlist)
+  (mtch varlist
+    (('typed t ('var vid)) . d)
+      (if (eq? vid id)
+        (car varlist)
+        (find-var-in-list id d))
+    '()
+      '()))
+
 (define typed-defs (map add-type-to-def defs))
-(shew 'outside-main)
+
+(define cl '(clause (pat (cton ((ctor C) (var x) (var y)))) (body (app ((var f) (var y) (var x))))))
+(define tcl (add-type-to-clause cl))
+
 (define (main)
   (set! ty (make-type-symgen))
-  (shew typed-defs))
-  ;(shew (ntimes-f 100 ty)))
+  ;(shew cl tcl)
+  ;(shew (gen-unis-for-clause-scope tcl))
+
+  (shew typed-defs)
+  (shew (apply append (map gen-unis-for-def-scope typed-defs)))
+
+  ;(shew typed-defs))
+  ;(shew (ntimes-f 100 ty))
+  )
