@@ -41,15 +41,15 @@ todo
            (pat (cton ((ctor Nil))))))))
 
 (define defs
-  '((def fold ((clause (pat (app ((var f) (cton ((ctor Cons) (var x) (var xs))) (var z))))
-                       (body (app ((var f) (var x) (app ((var fold) (var xs) (var z)))))))
-               (clause (pat (app ((var f) (cton ((ctor Nil))) (var z))))
-                       (body (var z)))))))
+  '((def fold (/./. ((clause (pat (app ((var f) (cton ((ctor Cons) (var x) (var xs))) (var z))))
+                             (body (app ((var f) (var x) (app ((var fold) (var xs) (var z)))))))
+                     (clause (pat (app ((var f) (cton ((ctor Nil))) (var z))))
+                             (body (var z))))))))
 
 (define (add-type-to-def def)
   (mtch def
-    ('def name clauses)
-      `(def ,name ,(map add-type-to-clause clauses))))
+    ('def name ('/./. clauses))
+      `(def ,name (typed ,(ty) ,(map add-type-to-clause clauses)))))
 (define (add-type-to-clause clause)
   (mtch clause
     ('clause ('pat pat) ('body body))
@@ -68,7 +68,7 @@ todo
 
 (define (gen-unis-for-def-scope def)
   (mtch def
-    ('def name clauses)
+    ('def name ('typed t clauses))
       (apply append (map gen-unis-for-clause-scope clauses))))
 (define (gen-unis-for-clause-scope clause)
   (mtch clause
