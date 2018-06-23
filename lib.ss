@@ -1142,6 +1142,7 @@
         (apply-until-fixpoint f oo))))
 
 (define (ntimes n x) (if (eq? n 0) '() (cons x (ntimes (- n 1) x))))
+(define (ntimes-f n f) (if (eq? n 0) '() (cons (f) (ntimes-f (- n 1) f))))
 
 ;; If (f o) returns true, it is the start of a group continuing until just
 ;; before the next such o.  os does not have to start with such an item.
