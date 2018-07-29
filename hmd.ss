@@ -40,85 +40,81 @@ todo
           ((pat (cton ((ctor Cons) (var a) (type ((typector List) (var a))))))
            (pat (cton ((ctor Nil))))))))
 
-(define defs
-  '((def fold (/./. ((clause (pat (app ((var f) (cton ((ctor Cons) (var x) (var xs))) (var z))))
-                             (body (app ((var f) (var x) (app ((var fold) (var xs) (var z)))))))
-                     (clause (pat (app ((var f) (cton ((ctor Nil))) (var z))))
-                             (body (var z))))))))
+(define initial-type-env
+  ;;'((+ (F (P Int Int) Int))))
+  '((+ (F Int (F Int Int)))))
 
-(define (add-type-to-def def)
-  (mtch def
-    ('def name ('/./. clauses))
-      `(def ,name (typed ,(ty) ,(map add-type-to-clause clauses)))))
-(define (add-type-to-clause clause)
-  (mtch clause
-    ('clause ('pat pat) ('body body))
-      `(typed ,(ty) (clause (pat ,(add-type-to-exp pat)) (body ,(add-type-to-exp body))))))
-; 'exp' means 'pat or body'
-(define (add-type-to-exp exp)
-  (mtch exp
-    ('app exps)
-      `(typed ,(ty) (app ,(map add-type-to-exp exps)))
-    ('cton exps)
-      `(typed ,(ty) (cton ,(map add-type-to-exp exps)))
-    ('ctor c)
-      `(typed ,(ty) (ctor ,c))
-    ('var id)
-      `(typed ,(ty) (var ,id))))
+;(define foo '(L (V f) (L (V x) (A (V +) (P (A (V f) (V x)) (V x))))))
+; (Int -> Int) -> Int -> Int
+; /. f /. x (f x) + x
+(define foo '(L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x)))))
 
-(define (gen-unis-for-def-scope def)
-  (mtch def
-    ('def name ('typed t clauses))
-      (apply append (map gen-unis-for-clause-scope clauses))))
-(define (gen-unis-for-clause-scope clause)
-  (mtch clause
-    ('typed t
-    ('clause ('pat pat) ('body body)))
-      (let ((bound (gather-exp-vars pat))
-            (referenced (gather-exp-vars body)))
-        (apply append
-          (map (lambda (var)
-                 (mtch var ('typed ref-t ('var ref-id))
-                   (mtch (find-var-in-list ref-id bound)
-                     ('typed bound-t ('var bound-id))
-                       (begin
-                         (assert (eq? ref-id bound-id))
-                         (list (list bound-t ref-t)))
-                     '()
-                       '())))
-               referenced)))))
-(define (gather-exp-vars exp)
-  (mtch exp
-    ('typed t ('app exps))
-      (apply append (map gather-exp-vars exps))
-    ('typed t ('cton exps))
-      (apply append (map gather-exp-vars exps))
-    ('typed t ('ctor c))
-      '()
-    ('typed t ('var id))
-      (list exp)))
-(define (find-var-in-list id varlist)
-  (mtch varlist
-    (('typed t ('var vid)) . d)
-      (if (eq? vid id)
-        (car varlist)
-        (find-var-in-list id d))
-    '()
-      '()))
+;; This isn't really an env so much as a set of equations to unify; maybe
+;; it should be in env (var->exp map) form.  Not clear when I should be
+;; adding bindings/equations or not.
+(define (tinf e)
+  (mtch (tinf0 e initial-type-env)
+    (t env)
+      (let ((t-var (ty)))
+        `(,t-var ,(unify `((,t-var . ,t) . ,env))))))
+(define (tinf0 e env)
+  (mtch e
+    ('L var body)
+      (mtch (tinf0 var env)
+        (var-t env)
+          (mtch (tinf0 body env)
+            (body-t env)
+              `((F ,var-t ,body-t) ,env)))
+    ('V ident)
+      (mtch (assoc ident env)
+        (_ . ident-t)
+          `(,ident-t ,env)
+        #f
+          (let ((ident-t (ty)))
+            `(,ident-t ((,ident . ,ident-t) . ,env))))
+    ('A f a)
+      (let ((f-arg-t (ty)) ;; ONO maybe don't need a fresh arg var here
+            (f-result-t (ty)))
+        (mtch (tinf0 f env)
+          (f-t env)
+            (mtch (tinf0 a env)
+              (a-t env)
+                `(,f-result-t
+                  ((,f-t . (F ,f-arg-t ,f-result-t))
+                   (,f-result-t . ,a-t)
+                   .
+                   ,env)))))
+    #|
+    ('P a d)
+      (let ((pair-t (ty)))
+        (mtch (tinf0 a env)
+          (a-t env)
+            (mtch (tinf0 d env)
+              (d-t env)
+                `((P ,a-t ,d-t) ,env))))
+    |#
+                ))  ; Should I generating a binding here?
+(tracefun tinf0)
 
-(define typed-defs (map add-type-to-def defs))
+; Return a list of substitutions that unifies the equ
+; (l . r) -> ((var . subst) ...)
+(define (unify-equation equ)
+  (mtch equ
+    (l . r)
+    (cond
+      ((atom? l) `(,l . ,r))
+      ((atom? r) `(,r . ,l))
+      (#t
+        (mtch equ
+          (('F a0 b0) . ('F a1 b1))
+            (append (unify-equation `(,a0 . ,a1)) (unify-equation `(,b0 . ,b1))))))))
+(tracefun unify-equation)
 
-(define cl '(clause (pat (cton ((ctor C) (var x) (var y)))) (body (app ((var f) (var y) (var x))))))
-(define tcl (add-type-to-clause cl))
+(define (unify env)
+  ;(map unify-equation env)
+  env)
 
 (define (main)
   (set! ty (make-type-symgen))
-  ;(shew cl tcl)
-  ;(shew (gen-unis-for-clause-scope tcl))
-
-  (shew typed-defs)
-  (shew (apply append (map gen-unis-for-def-scope typed-defs)))
-
-  ;(shew typed-defs))
-  ;(shew (ntimes-f 100 ty))
-  )
+  (shew foo)
+  (shew (tinf foo)))
