@@ -52,7 +52,7 @@ todo
 (define (tinf e)
   (tinf0 e initial-type-env '()))
 
-; (exp, env, unis) -> (typed-exp, env, unis)
+; (exp, env, unis) -> (typed-exp, unis)
 (define (tinf0 e env unis)
   (mtch e
     ('L (V var) body)
