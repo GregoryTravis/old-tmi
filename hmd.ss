@@ -42,7 +42,7 @@ todo
 
 (define initial-type-env
   ;;'((+ (F (P Int Int) Int))))
-  '((+ . (F Int (F Int Int)))))
+  '((+ . (F (C Int) (F (C Int) (C Int))))))
 
 ;(define foo '(L (V f) (L (V x) (A (V +) (P (A (V f) (V x)) (V x))))))
 ; (Int -> Int) -> Int -> Int
@@ -55,23 +55,125 @@ todo
 ; (exp, env, unis) -> (typed-exp, unis)
 (define (tinf0 e env unis)
   (mtch e
-    ('L (V var) body)
+    ('L ('V var) body)
       (let ((var-t (ty)))
-        (mtch (tinf0 body `((,var . ,var-t) . ,env) unis)
+        (mtch (tinf0 body `((,var . (TV ,var-t)) . ,env) unis)
           ((T body body-t) unis)
-            `((T (T ,body ,body-t) (F ,var-t ,body-t)) ,unis)))
+            ;`((T (L (T (V ,var) (TV ,var-t)) (T ,body ,body-t)) (F (TV ,var-t) (TV ,body-t))) ,unis)))
+            `((T (L (T (V ,var) (TV ,var-t)) (T ,body ,body-t)) (F (TV ,var-t) ,body-t)) ,unis)))
     ('A fun arg)
       (let ((result-t (ty)))
         (mtch (tinf0 fun env unis)
           ((T fun fun-t) unis)
             (mtch (tinf0 arg env unis)
               ((T arg arg-t) unis)
-                `((T (A (T ,fun ,fun-t) (T ,arg ,arg-t)) ,result-t) ((,fun-t (F ,arg-t ,result-t)) . ,unis)))))
+                `((T (A (T ,fun ,fun-t) (T ,arg ,arg-t)) (TV ,result-t)) ((,fun-t (F ,arg-t (TV ,result-t))) . ,unis)))))
     ('V x)
       `((T ,e ,(cdr (assoc x env))) ,unis)))
 (tracefun tinf0)
 
+(define (ut a b)
+  (if (not (equal? a b))
+    (begin
+      (shew a b)
+      (err 'test-failure))
+    '()))
+
+(ut 1 1)
+;(ut 1 2)
+
+(define (unify unis)
+  (mtch unis
+    ()
+      '()
+    (uni . unis)
+      (let ((unifiers (find-unifiers uni)))
+        (append unifiers (unify (apply-unifiers unifiers unis))))))
+        ;(append unifiers (unify unis)))))
+
+;; Feels a little pre-optimized to me
+(define (find-unifiers uni)
+  (mtch uni
+    (('TV a) ('TV b))
+      `(((TV ,a) (TV ,(ty))) ((TV ,b) (TV ,(ty))))
+    (('TV a) b)
+      `(((TV ,a) ,b))
+    (b ('TV a))
+      `(((TV ,a) ,b))
+    (('F a b) ('F c d))
+      (append (find-unifiers `(,a ,c)) (find-unifiers `(,b ,d)))
+    ((C a) (C b))
+      (if (eq? a b) '() (err 'type-mismatch a b))
+      ))
+
+(define (apply-unifiers unifiers unis)
+  (map (lambda (uni)
+    (mtch uni
+      (a b)
+        `(,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b))))
+    unis))
+
+(define (apply-unifiers-to-type-term unifiers term)
+  (mtch term
+    ('TV x)
+      (mtch (assoc `(TV ,x) unifiers)
+        #f
+          term
+        (('TV _) rewrite)
+          rewrite)
+    ('C x)
+      term
+    ('F a b)
+      `(F ,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b))
+    ))
+;(tracefun apply-unifiers apply-unifiers-to-type-term )
+(tracefun apply-unifiers-to-type-term )
+
+(define (apply-unifiers-to-term unifiers e)
+  (mtch e
+    ('T e t)
+      `(T ,(apply-unifiers-to-term unifiers e) ,(apply-unifiers-to-type-term unifiers t))
+    ('L v body)
+      `(L ,(apply-unifiers-to-term unifiers v) ,(apply-unifiers-to-term unifiers body))
+    ('A fun arg)
+      `(A ,(apply-unifiers-to-term unifiers fun) ,(apply-unifiers-to-term unifiers arg))
+    ('V x)
+      e))
+
+    #|
+    ('T ('L ('T ('V var) var-t) ('T body body-t)) lambda-t)
+      `(T (L (T (V ,var) ,(apply-unifiers-to-type-term unifiers var-t))
+             (T ,(apply-unifiers-to-term unifiers body) ,(apply-unifiers-to-type-term unifieres body-t)))
+          ,(apply-unifiers-to-type-term unifiers lambda-t))
+    ('T ('A a b) t)
+      `(T (A ,(apply-unifiers-to-term unifiers a) ,(apply-unifiers-to-term unifiers b))
+          ,(apply-unifiers-to-type-term unifiers t))
+    ('T ('V x) t)
+      `(T (V x) ,(apply-unifiers-to-type-term unifiers t))))
+      |#
+
+;(tracefun apply-unifiers-to-term)
+
 (define (main)
   (set! ty (make-type-symgen))
   (shew foo)
-  (shew (tinf foo)))
+  (mtch (tinf foo)
+    (typed-exp unis)
+      (begin
+        (shew typed-exp)
+        (shew unis)
+        ;(shew (find-unifiers '((TV x) (TV y))))
+        ;(shew (find-unifiers '((TV d) (F (TV b) (TV c)))))
+        ;(shew (find-unifiers '((F (C Int) (F (C Int) (C Int))) (F (TV e) (TV d)))))
+        ;(shew (find-unifiers '((TV a) (F (TV b) (TV e)))))
+        ;(shew (find-unifiers '((F (C Int) (TV a)) (F (TV b) (F (C Int) (C Int))))))
+        ;(shew (map find-unifiers unis))
+        ;(shew (unify unis))
+        ;(shew (unify unis))
+        ;(shew (unify (reverse (unify unis))))
+        ;(shew (unify (reverse (unify unis))))
+        (let ((unifiers (unify (reverse (unify unis)))))
+          (shew unifiers)
+          (shew (apply-unifiers-to-term unifiers typed-exp)))
+          (shew typed-exp)
+        )))
