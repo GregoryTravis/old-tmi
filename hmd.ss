@@ -238,6 +238,25 @@ todo
 (ut '((a) (c b))
     (ec-set-add '((a) (c)) 'c 'b))
 
+(define (lshew-type t)
+  (mtch t
+    ('C c)
+      (->string c)
+    ('TV v)
+      (->string v)
+    ('F a b)
+      (++ (lshew-type a) " -> " (lshew-type b))))
+;(tracefun lshew-type)
+
+(define (lshew-eqns eqns)
+  (join-things "\n" (map (lambda (eqn) (mtch eqn (a b) (++ (lshew-type a) " = " (lshew-type b)))) eqns)))
+(define (shew-eqns eqns) (display (lshew-eqns eqns)) (display "\n"))
+
+(define (lshew-ecs ecs)
+  (join-things "\n"
+    (map (lambda (ec) (join-things " = " (map lshew-type ec))) ecs)))
+(define (shew-ecs ecs) (display (lshew-ecs ecs)) (display "\n"))
+
 (define (unify-create-initial-ec-set eqns) (unify-create-initial-ec-set-1 eqns (ec-set-make)))
 (define (unify-create-initial-ec-set-1 eqns ecs)
   (mtch eqns
@@ -267,32 +286,13 @@ todo
     '()
       ecs))
 
-(define (lshew-type t)
-  (mtch t
-    ('C c)
-      (->string c)
-    ('TV v)
-      (->string v)
-    ('F a b)
-      (++ (lshew-type a) " -> " (lshew-type b))))
-;(tracefun lshew-type)
-
-(define (lshew-eqns eqns)
-  (join-things "\n" (map (lambda (eqn) (mtch eqn (a b) (++ (lshew-type a) " = " (lshew-type b)))) eqns)))
-(define (shew-eqns eqns) (display (lshew-eqns eqns)) (display "\n"))
-
-(define (lshew-ecs ecs)
-  (join-things "\n"
-    (map (lambda (ec) (join-things " = " (map lshew-type ec))) ecs)))
-(define (shew-ecs ecs) (display (lshew-ecs ecs)) (display "\n"))
-
 ;; ecs -> ecs
 (define (unify-one-step ecs)
-  (shew 'step 'before ecs)
+  ;(shew 'step 'before ecs)
   (let ((sub-eqns (unify-get-ec-all-sub-eqns ecs)))
-    (shew 'sub-eqns sub-eqns)
+    ;(shew 'sub-eqns sub-eqns)
     (let ((added (unify-ec-set-add-eqns ecs sub-eqns)))
-      (shew 'added added)
+      ;(shew 'added added)
       added)))
 
 (define (unify eqns)
