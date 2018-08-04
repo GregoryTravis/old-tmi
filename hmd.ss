@@ -267,6 +267,25 @@ todo
     '()
       ecs))
 
+(define (lshew-type t)
+  (mtch t
+    ('C c)
+      (->string c)
+    ('TV v)
+      (->string v)
+    ('F a b)
+      (++ (lshew-type a) " -> " (lshew-type b))))
+;(tracefun lshew-type)
+
+(define (lshew-eqns eqns)
+  (join-things "\n" (map (lambda (eqn) (mtch eqn (a b) (++ (lshew-type a) " = " (lshew-type b)))) eqns)))
+(define (shew-eqns eqns) (display (lshew-eqns eqns)) (display "\n"))
+
+(define (lshew-ecs ecs)
+  (join-things "\n"
+    (map (lambda (ec) (join-things " = " (map lshew-type ec))) ecs)))
+(define (shew-ecs ecs) (display (lshew-ecs ecs)) (display "\n"))
+
 ;; ecs -> ecs
 (define (unify-one-step ecs)
   (shew 'step 'before ecs)
@@ -287,10 +306,13 @@ todo
       (begin
         (shew typed-exp)
         (shew 'eqns eqns)
+        (shew 'eqns)
+        (shew-eqns eqns)
         ;(shew 'unified (unify eqns))
         ;(shew 'all-pairs (unify-get-ec-set-all-pairs (unify eqns)))
         ;(shew 'all-sub-eqns (unify-get-ec-all-sub-eqns (unify eqns)))
         ;(shew 'added (unify-ec-set-add-eqns eqns (unify-get-ec-all-sub-eqns (unify eqns))))
         ;(shew (unify-one-step (unify-create-initial-ec-set eqns)))
         (shew (unify eqns))
+        (shew-ecs (unify eqns))
         )))
