@@ -19,6 +19,7 @@
 
 (define (show-exn exn)
   (shew exn)
+  ;(shew (continuation-mark-set->context (vector-ref (struct->vector exn) 2)))
   (print-error-trace (current-output-port) exn))
 
 (define (safe-run thunk)

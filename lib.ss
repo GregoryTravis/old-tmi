@@ -509,6 +509,17 @@
             '()))
    lyst))
 
+(define (number-elements l) (number-elements-1 l 0))
+(define (number-elements-1 l i)
+  (mtch l
+    (a . d)
+      `((,i . ,a) . ,(number-elements-1 d (+ i 1)))
+    '()
+      '()))
+
+;; (define (list-as-set-equal? a b)
+;;   (equal? (list->set a) (list->set b)))
+
 (define (divide-by-pred p lyst)
   (cons (grep p lyst) (grep (fnot p) lyst)))
 
@@ -1194,3 +1205,15 @@
   (mtch lyst
     (aa . dd) (if (equal? a aa) dd (cons aa (rember a dd)))
     '() '()))
+
+;; (a b c) -> ((a b) (a c) (b c))
+(define (all-pairs l)
+  (mtch l
+    (a . d)
+      (append (map (lambda (dx) (list a dx)) d)
+        (all-pairs d))
+    '()
+      '()))
+(assert (equal? (all-pairs '(a b c)) '((a b) (a c) (b c))))
+(assert (equal? (all-pairs '(a b)) '((a b))))
+(assert (equal? (all-pairs '(a)) '()))

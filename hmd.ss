@@ -70,7 +70,7 @@ todo
                 `((T (A (T ,fun ,fun-t) (T ,arg ,arg-t)) (TV ,result-t)) ((,fun-t (F ,arg-t (TV ,result-t))) . ,unis)))))
     ('V x)
       `((T ,e ,(cdr (assoc x env))) ,unis)))
-(tracefun tinf0)
+;(tracefun tinf0)
 
 (define (ut a b)
   (if (not (equal? a b))
@@ -82,6 +82,7 @@ todo
 (ut 1 1)
 ;(ut 1 2)
 
+#|
 (define (unify unis)
   (mtch unis
     ()
@@ -112,6 +113,7 @@ todo
       (a b)
         `(,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b))))
     unis))
+|#
 
 (define (apply-unifiers-to-type-term unifiers term)
   (mtch term
@@ -127,7 +129,7 @@ todo
       `(F ,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b))
     ))
 ;(tracefun apply-unifiers apply-unifiers-to-type-term )
-(tracefun apply-unifiers-to-type-term )
+;(tracefun apply-unifiers-to-type-term )
 
 (define (apply-unifiers-to-term unifiers e)
   (mtch e
@@ -154,26 +156,141 @@ todo
 
 ;(tracefun apply-unifiers-to-term)
 
+(define (ec-set-make) '())
+
+(define (ec-set-check s)
+  (assert (ec-set-ok s)))
+
+(define (ec-set-ok s)
+  (let ((all-elements (apply append s)))
+    (equal? all-elements (unique all-elements))))
+
+(assert (ec-set-ok '((a) (b c) (d))))
+(assert (not (ec-set-ok '((a) (b c a) (d)))))
+
+(define (ec-set-index-of s e) (ec-set-index-of-1 s e 0))
+(define (ec-set-index-of-1 s e i)
+  (mtch s
+    (a . d)
+      (if (member e a)
+        i
+        (ec-set-index-of-1 d e (+ i 1)))
+    '()
+      #f))
+
+(ut 1
+    (ec-set-index-of '((a) (b c) (d)) 'c))
+(ut #f
+    (ec-set-index-of '((a) (b c) (d)) 'e))
+
+(define (ec-set-add-to-ec s i e)
+  (if (eq? i 0)
+    (cons (append (car s) (list e)) (cdr s))
+    (cons (car s) (ec-set-add-to-ec (cdr s) (- i 1) e))))
+
+(ut '((a) (b d) (c))
+    (ec-set-add-to-ec '((a) (b) (c)) 1 'd))
+
+(define (ec-set-add-element s e)
+  (let ((index (ec-set-index-of s e)))
+    (if (eq? index #f)
+      (append s `((,e)))
+      s)))
+      ;(ec-set-add-to-ec s index e))))
+
+(ut '((a) (b) (c))
+    (ec-set-add-element '((a) (b) (c)) 'b))
+(ut '((a) (b) (c) (d))
+    (ec-set-add-element '((a) (b) (c)) 'd))
+
+(define (ec-combine-ecs s ai bi)
+  (assert (not (eq? ai bi)))
+  ;(shew 'yeah ai bi (number-elements s))
+  (mtch (divide-by-pred (lambda (p) (or (eq? (car p) ai) (eq? (car p) bi))) (number-elements s))
+    (match . no-match)
+      (begin
+      ;(shew 'haha match no-match)
+        (assert (eq? 2 (length match)))
+        (let ((match (map (lambda (x) (mtch x (i . x) x)) match))
+              (no-match (map (lambda (x) (mtch x (i . x) x)) no-match)))
+          (append no-match (mtch match (a b) (list (append a b))))))))
+;(tracefun ec-combine-ecs)
+
+(ut '((a) (d) (b c))
+    (ec-combine-ecs '((a) (b) (c) (d)) 1 2))
+
+(define (ec-set-add s a b)
+  (let ((s (ec-set-add-element (ec-set-add-element s a) b)))
+    (let ((a-index (ec-set-index-of s a))
+          (b-index (ec-set-index-of s b)))
+      (if (not (eq? a-index b-index))
+        (ec-combine-ecs s a-index b-index)
+        s))))
+
+(ut '((a b))
+    (ec-set-add (ec-set-make) 'a 'b))
+(ut '((b a))
+    (ec-set-add (ec-set-add-element (ec-set-make) 'b) 'a 'b))
+(ut '((a b))
+    (ec-set-add (ec-set-add-element (ec-set-make) 'a) 'a 'b))
+(ut '((c) (a b))
+    (ec-set-add '((a) (c)) 'a 'b))
+(ut '((a) (c b))
+    (ec-set-add '((a) (c)) 'c 'b))
+
+(define (unify-create-initial-ec-set eqns) (unify-create-initial-ec-set-1 eqns (ec-set-make)))
+(define (unify-create-initial-ec-set-1 eqns ecs)
+  (mtch eqns
+    ((a b) . d)
+      (unify-create-initial-ec-set-1 d (ec-set-add ecs a b))
+    '()
+      ecs))
+
+(define (unify-get-ec-set-all-pairs ecs)
+  (apply append (map all-pairs ecs)))
+  ;(map all-pairs ecs))
+
+(define (unify-get-sub-eqns eqn)
+  (mtch eqn
+    (('F a b) ('F c d))
+      `((,a ,c) (,b ,d))
+    x
+      '()))
+
+(define (unify-get-ec-all-sub-eqns ecs)
+  (apply append (map unify-get-sub-eqns (unify-get-ec-set-all-pairs ecs))))
+
+(define (unify-ec-set-add-eqns ecs eqns)
+  (mtch eqns
+    ((a b) . d)
+      (unify-ec-set-add-eqns (ec-set-add ecs a b) d)
+    '()
+      ecs))
+
+;; ecs -> ecs
+(define (unify-one-step ecs)
+  (shew 'step 'before ecs)
+  (let ((sub-eqns (unify-get-ec-all-sub-eqns ecs)))
+    (shew 'sub-eqns sub-eqns)
+    (let ((added (unify-ec-set-add-eqns ecs sub-eqns)))
+      (shew 'added added)
+      added)))
+
+(define (unify eqns)
+  (apply-until-fixpoint unify-one-step (unify-create-initial-ec-set eqns)))
+
 (define (main)
   (set! ty (make-type-symgen))
   (shew foo)
   (mtch (tinf foo)
-    (typed-exp unis)
+    (typed-exp eqns)
       (begin
         (shew typed-exp)
-        (shew unis)
-        ;(shew (find-unifiers '((TV x) (TV y))))
-        ;(shew (find-unifiers '((TV d) (F (TV b) (TV c)))))
-        ;(shew (find-unifiers '((F (C Int) (F (C Int) (C Int))) (F (TV e) (TV d)))))
-        ;(shew (find-unifiers '((TV a) (F (TV b) (TV e)))))
-        ;(shew (find-unifiers '((F (C Int) (TV a)) (F (TV b) (F (C Int) (C Int))))))
-        ;(shew (map find-unifiers unis))
-        ;(shew (unify unis))
-        ;(shew (unify unis))
-        ;(shew (unify (reverse (unify unis))))
-        ;(shew (unify (reverse (unify unis))))
-        (let ((unifiers (unify (reverse (unify unis)))))
-          (shew unifiers)
-          (shew (apply-unifiers-to-term unifiers typed-exp)))
-          (shew typed-exp)
+        (shew 'eqns eqns)
+        ;(shew 'unified (unify eqns))
+        ;(shew 'all-pairs (unify-get-ec-set-all-pairs (unify eqns)))
+        ;(shew 'all-sub-eqns (unify-get-ec-all-sub-eqns (unify eqns)))
+        ;(shew 'added (unify-ec-set-add-eqns eqns (unify-get-ec-all-sub-eqns (unify eqns))))
+        ;(shew (unify-one-step (unify-create-initial-ec-set eqns)))
+        (shew (unify eqns))
         )))
