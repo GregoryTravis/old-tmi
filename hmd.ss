@@ -44,8 +44,6 @@ todo
   ;;'((+ (F (P Int Int) Int))))
   '((+ . (F (C Int) (F (C Int) (C Int))))))
 
-(define foo '(L (V f) (L (V x) (A (V f) (A (V f) (V x))))))
-
 ; fold = /. f /. xs /. z if xs == [] z else (cons (f (car xs)) (fold f (cdr xs) z))
 ; or
 ; fold f [] z = z
@@ -448,6 +446,16 @@ todo
     ; (a -> a) -> a -> a
     ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
      (F (F (TV d) (TV d)) (F (TV d) (TV d))))
+
+    ; /. x /. y y
+    ; a -> b -> b
+    ((L (V x) (L (V y) (V y)))
+     (F (V a) (F (V b) (V b))))
+
+    ; /. x /. y 
+    ; a -> b -> a
+    ((L (V x) (L (V y) (V x)))
+     (F (V a) (F (V b) (V a))))
    ))
 
 (define (run-unify-tests)
@@ -457,6 +465,8 @@ todo
         (shew 'test src actual expected)
         (assert (equal? expected (just-type src))))))
     unify-tests))
+
+(define foo '(L (V x) (L (V y) (V x))))
 
 (define (main)
   ;(run-unify-tests)
