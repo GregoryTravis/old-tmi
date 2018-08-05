@@ -44,6 +44,8 @@ todo
   ;;'((+ (F (P Int Int) Int))))
   '((+ . (F (C Int) (F (C Int) (C Int))))))
 
+(define foo '(L (V f) (L (V x) (A (V f) (A (V f) (V x))))))
+
 ; fold = /. f /. xs /. z if xs == [] z else (cons (f (car xs)) (fold f (cdr xs) z))
 ; or
 ; fold f [] z = z
@@ -457,6 +459,6 @@ todo
     unify-tests))
 
 (define (main)
-  (run-unify-tests)
+  ;(run-unify-tests)
   (let ((t (just-type foo)))
     (shew t (lshew-type (just-type foo)))))
