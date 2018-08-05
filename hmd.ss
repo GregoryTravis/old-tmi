@@ -97,18 +97,26 @@ todo
 (define (gen-inst-substitution tvars)
   (map (lambda (tv) `(,tv (TV ,(ty)))) tvars))
 
+#|
 (define (instantiate-poly t)
   (apply-unifiers-to-type-term 
     (gen-inst-substitution (gather-tvars t))
     t))
+|#
+
+(define (instantiate-poly t)
+  (mtch t
+    ('Forall vs t)
+      (apply-unifiers-to-type-term (gen-inst-substitution vs) t)
+    t
+      t))
+
 (tracefun gen-inst-substitution instantiate-poly)
 
 (define (env-lookup-and-inst x env)
   (mtch (assoc x env)
     (x . t)
-      (begin
-        (shew 'uuuu (instantiate-poly t))
-        t)))
+      (instantiate-poly t)))
 
 (define (tinf e)
   (tinf0 e initial-type-env '()))
@@ -544,7 +552,7 @@ todo
     ; /. f /. x f (f x)
     ; (a -> a) -> a -> a
     ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
-     (Forall ((TV e)) (PT Fun ((PT Fun ((TV e) (TV e))) (PT Fun ((TV e) (TV e)))))))
+     (Forall ((TV d)) (PT Fun ((PT Fun ((TV d) (TV d))) (PT Fun ((TV d) (TV d)))))))
 
     ; /. x /. y y
     ; a -> b -> b
@@ -560,6 +568,9 @@ todo
      (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ((K 3)
      (C Int))
+
+    (((A (A (V Cons) (K 1)) (V Nil)))
+     (List Int))
    ))
 
 (define (run-unify-tests)
@@ -570,10 +581,10 @@ todo
         (assert (equal? expected (just-type src))))))
     unify-tests))
 
-(define foo '(L (V x) (L (V y) (V x))))
-;(define foo '(A (A (V Cons) (K 1)) (V Nil)))
+;(define foo '(L (V x) (L (V y) (V x))))
+(define foo '(A (A (V Cons) (K 1)) (V Nil)))
 
 (define (main)
-  (run-unify-tests)
+  ;(run-unify-tests)
   (let ((t (just-type foo)))
     (shew t (lshew-type (just-type foo)))))
