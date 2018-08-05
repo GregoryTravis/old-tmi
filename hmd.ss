@@ -162,11 +162,20 @@ todo
   (assert (ec-set-ok s)))
 
 (define (ec-set-ok s)
+  (and
+    (ec-set-ok-unique s)
+    (ec-set-ok-no-op s)))
+(define (ec-set-ok-unique s)
   (let ((all-elements (apply append s)))
     (equal? all-elements (unique all-elements))))
+(define (ec-set-ok-no-op s)
+  ;; Verifying this is a no-op
+  (and
+    (equal? s (unify (unify-get-ec-set-all-pairs s)))
+    (equal? s (unify-ec-set-add-eqns (ec-set-make) (unify-get-ec-set-all-pairs s)))))
 
-(assert (ec-set-ok '((a) (b c) (d))))
-(assert (not (ec-set-ok '((a) (b c a) (d)))))
+(assert (ec-set-ok '((a z) (b c) (d y))))
+(assert (not (ec-set-ok '((a z) (b c a) (d y)))))
 
 (define (ec-set-index-of s e) (ec-set-index-of-1 s e 0))
 (define (ec-set-index-of-1 s e i)
@@ -257,6 +266,7 @@ todo
     (map (lambda (ec) (join-things " = " (map lshew-type ec))) ecs)))
 (define (shew-ecs ecs) (display (lshew-ecs ecs)) (display "\n"))
 
+;; eqns -> ecs (not unified)
 (define (unify-create-initial-ec-set eqns) (unify-create-initial-ec-set-1 eqns (ec-set-make)))
 (define (unify-create-initial-ec-set-1 eqns ecs)
   (mtch eqns
@@ -265,6 +275,7 @@ todo
     '()
       ecs))
 
+;; ecs -> eqns
 (define (unify-get-ec-set-all-pairs ecs)
   (apply append (map all-pairs ecs)))
   ;(map all-pairs ecs))
@@ -295,8 +306,16 @@ todo
       ;(shew 'added added)
       added)))
 
+;; eqns -> ecs (unified)
 (define (unify eqns)
   (apply-until-fixpoint unify-one-step (unify-create-initial-ec-set eqns)))
+
+(define (type-is-constant t) (mtch t ('C c) #t x #f))
+(define (type-is-var t) (mtch t ('V v) #t x #f))
+(define (type-is-fun t) (mtch t ('F a b) #t x #f))
+
+(define (unify-ec-is-vars-n-const ec)
+  (all? (map (for type-is-constant type-is-var) ec)))
 
 (define (main)
   (set! ty (make-type-symgen))
@@ -304,15 +323,14 @@ todo
   (mtch (tinf foo)
     (typed-exp eqns)
       (begin
-        (shew typed-exp)
+        ;(shew typed-exp)
         (shew 'eqns eqns)
         (shew 'eqns)
         (shew-eqns eqns)
-        ;(shew 'unified (unify eqns))
-        ;(shew 'all-pairs (unify-get-ec-set-all-pairs (unify eqns)))
-        ;(shew 'all-sub-eqns (unify-get-ec-all-sub-eqns (unify eqns)))
-        ;(shew 'added (unify-ec-set-add-eqns eqns (unify-get-ec-all-sub-eqns (unify eqns))))
-        ;(shew (unify-one-step (unify-create-initial-ec-set eqns)))
-        (shew (unify eqns))
-        (shew-ecs (unify eqns))
+        (let ((unified (unify eqns)))
+          (shew 'unified)
+          (shew unified)
+          (shew-ecs unified)
+          (ec-set-check unified)
+        )
         )))
