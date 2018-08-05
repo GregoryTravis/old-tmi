@@ -41,8 +41,7 @@ todo
            (pat (cton ((ctor Nil))))))))
 
 (define initial-type-env
-  ;;'((+ (F (P Int Int) Int))))
-  '((+ . (F (C Int) (F (C Int) (C Int))))))
+  '((+ . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))))
 
 ; fold = /. f /. xs /. z if xs == [] z else (cons (f (car xs)) (fold f (cdr xs) z))
 ; or
@@ -66,15 +65,14 @@ todo
       (let ((var-t (ty)))
         (mtch (tinf0 body `((,var . (TV ,var-t)) . ,env) unis)
           ((T body body-t) unis)
-            ;`((T (L (T (V ,var) (TV ,var-t)) (T ,body ,body-t)) (F (TV ,var-t) (TV ,body-t))) ,unis)))
-            `((T (L (T (V ,var) (TV ,var-t)) (T ,body ,body-t)) (F (TV ,var-t) ,body-t)) ,unis)))
+            `((T (L (T (V ,var) (TV ,var-t)) (T ,body ,body-t)) (PT Fun ((TV ,var-t) ,body-t))) ,unis)))
     ('A fun arg)
       (let ((result-t (ty)))
         (mtch (tinf0 fun env unis)
           ((T fun fun-t) unis)
             (mtch (tinf0 arg env unis)
               ((T arg arg-t) unis)
-                `((T (A (T ,fun ,fun-t) (T ,arg ,arg-t)) (TV ,result-t)) ((,fun-t (F ,arg-t (TV ,result-t))) . ,unis)))))
+                `((T (A (T ,fun ,fun-t) (T ,arg ,arg-t)) (TV ,result-t)) ((,fun-t (PT Fun (,arg-t (TV ,result-t)))) . ,unis)))))
     ('V x)
       `((T ,e ,(cdr (assoc x env))) ,unis)))
 ;(tracefun tinf0)
@@ -108,7 +106,7 @@ todo
       `(((TV ,a) ,b))
     (b ('TV a))
       `(((TV ,a) ,b))
-    (('F a b) ('F c d))
+    (('PT 'Fun (a b)) ('PT 'Fun (c d)))
       (append (find-unifiers `(,a ,c)) (find-unifiers `(,b ,d)))
     ((C a) (C b))
       (if (eq? a b) '() (err 'type-mismatch a b))
@@ -132,8 +130,8 @@ todo
           rewrite)
     ('C x)
       term
-    ('F a b)
-      `(F ,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b))
+    ('PT 'Fun (a b))
+      `(PT Fun (,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b)))
     ))
 ;(tracefun apply-unifiers apply-unifiers-to-type-term )
 ;(tracefun apply-unifiers-to-type-term )
@@ -250,7 +248,7 @@ todo
       (->string c)
     ('TV v)
       (->string v)
-    ('F a b)
+    ('PT 'Fun (a b))
       (++ "(" (lshew-type a) " -> " (lshew-type b) ")")))
 ;(tracefun lshew-type)
 
@@ -279,7 +277,7 @@ todo
 
 (define (unify-get-sub-eqns eqn)
   (mtch eqn
-    (('F a b) ('F c d))
+    (('PT 'Fun (a b)) ('PT 'Fun (c d)))
       `((,a ,c) (,b ,d))
     x
       '()))
@@ -319,7 +317,7 @@ todo
 
 ;(define (type-is-constant t) (mtch t ('C c) #t x #f))
 (define (type-is-var t) (mtch t ('TV v) #t x #f))
-(define (type-is-fun t) (mtch t ('F a b) #t x #f))
+(define (type-is-fun t) (mtch t ('PT 'Fun (a b)) #t x #f))
 
 (define (type-is-monotype t)
   (mtch t
@@ -327,7 +325,7 @@ todo
       #t
     ('TV v)
       #f
-    ('F a b)
+    ('PT 'Fun (a b))
       (and (type-is-monotype a) (type-is-monotype b))))
 
 (define (unify-ec-is-type-error ec)
@@ -435,40 +433,40 @@ todo
     ; /. f /. x (f x) + x
     ; (Int -> Int) -> Int -> Int
     ((L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
-     (F (F (C Int) (C Int)) (F (C Int) (C Int))))
+     (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int))))))
 
     ; /. x x
     ; a -> a
     ((L (V x) (V x))
-     (F (TV a) (TV a)))
+     (PT Fun ((TV a) (TV a))))
 
     ; /. f /. x f (f x)
     ; (a -> a) -> a -> a
     ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
-     (F (F (TV d) (TV d)) (F (TV d) (TV d))))
+     (PT Fun ((PT Fun ((TV d) (TV d))) (PT Fun ((TV d) (TV d))))))
 
     ; /. x /. y y
     ; a -> b -> b
     ((L (V x) (L (V y) (V y)))
-     (F (V a) (F (V b) (V b))))
+     (PT Fun ((TV a) (PT Fun ((TV b) (TV b))))))
 
     ; /. x /. y 
     ; a -> b -> a
     ((L (V x) (L (V y) (V x)))
-     (F (V a) (F (V b) (V a))))
+     (PT Fun ((TV a) (PT Fun ((TV b) (TV a))))))
    ))
 
 (define (run-unify-tests)
   (map (lambda (test) (mtch test
     (src expected)
       (let ((actual (just-type src)))
-        (shew 'test src actual expected)
+        (shew 'test src actual expected (equal? expected (just-type src)))
         (assert (equal? expected (just-type src))))))
     unify-tests))
 
 (define foo '(L (V x) (L (V y) (V x))))
 
 (define (main)
-  ;(run-unify-tests)
+  (run-unify-tests)
   (let ((t (just-type foo)))
     (shew t (lshew-type (just-type foo)))))
