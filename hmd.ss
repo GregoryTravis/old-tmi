@@ -244,7 +244,7 @@ todo
     ('TV v)
       (->string v)
     ('F a b)
-      (++ (lshew-type a) " -> " (lshew-type b))))
+      (++ "(" (lshew-type a) " -> " (lshew-type b) ")")))
 ;(tracefun lshew-type)
 
 (define (lshew-eqns eqns)
@@ -395,7 +395,12 @@ todo
           ;(shew (unify-get-ec-set-all-pairs unified))
           ;(shew (unify-sub-one-step unified))
           ;(shew (unify-sub-one-step (unify-sub-one-step (unify-sub-one-step unified))))
-          (shew 'so (unify-sub unified))
+          (let ((all-subs (unify-sub unified)))
+            (shew 'so all-subs)
+            (let ((typed-term-2 (apply-unifiers-to-term all-subs typed-exp)))
+              (shew 'and-so typed-term-2)
+              (mtch typed-term-2 ('T e t) (shew (lshew-type t)))
+              ))
           #|
           (let ((subs (unify-get-subs unified)))
             (let ((next (unify-apply-subs unified subs)))
