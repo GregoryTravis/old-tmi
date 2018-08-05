@@ -51,9 +51,9 @@ todo
     ; List a
     (Nil . (Forall ((TV a)) (PT List ((TV a)))))
     ; List a -> a
-    (car . (Forall ((TV a))(PT Fun ((PT List ((TV a))) ((TV a))))))
+    (car . (Forall ((TV a)) (PT Fun ((PT List ((TV a))) (TV a)))))
     ; List a -> List a
-    (cdr . (Forall ((TV a))(PT Fun ((PT List ((TV a))) ((PT List ((TV a))))))))
+    (cdr . (Forall ((TV a)) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))))
   ))
 
 (define (get-constant-type k)
@@ -571,6 +571,10 @@ todo
 
     (((A (A (V Cons) (K 1)) (V Nil)))
      (List Int))
+    ((A (V car) (A (A (V Cons) (K 1)) (V Nil)))
+     (C Int))
+    ((A (V cdr) (A (A (V Cons) (K 1)) (V Nil)))
+     (PT List ((C Int))))
    ))
 
 (define (run-unify-tests)
@@ -582,7 +586,7 @@ todo
     unify-tests))
 
 ;(define foo '(L (V x) (L (V y) (V x))))
-(define foo '(A (A (V Cons) (K 1)) (V Nil)))
+(define foo '(A (V cdr) (A (A (V Cons) (K 1)) (V Nil))))
 
 (define (main)
   ;(run-unify-tests)
