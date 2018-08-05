@@ -44,10 +44,21 @@ todo
   ;;'((+ (F (P Int Int) Int))))
   '((+ . (F (C Int) (F (C Int) (C Int))))))
 
-;(define foo '(L (V f) (L (V x) (A (V +) (P (A (V f) (V x)) (V x))))))
 ; (Int -> Int) -> Int -> Int
 ; /. f /. x (f x) + x
 (define foo '(L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x)))))
+
+; fold = /. f /. xs /. z if xs == [] z else (cons (f (car xs)) (fold f (cdr xs) z))
+; or
+; fold f [] z = z
+; fold f (x : xs) z = (f x) : (fold f xs z)
+; So this needs:
+; - List T = Nil | Const T (List T)
+; - multiple clauses
+;   - this is probablly just: set them equal to each other
+; - parameterized types
+; - if/then/else
+; - Fix
 
 (define (tinf e)
   (tinf0 e initial-type-env '()))
