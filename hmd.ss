@@ -160,19 +160,9 @@ todo
 
 (define (ec-set-check s)
   (assert (ec-set-ok s)))
-
 (define (ec-set-ok s)
-  (and
-    (ec-set-ok-unique s)
-    (ec-set-ok-no-op s)))
-(define (ec-set-ok-unique s)
   (let ((all-elements (apply append s)))
     (equal? all-elements (unique all-elements))))
-(define (ec-set-ok-no-op s)
-  ;; Verifying this is a no-op
-  (and
-    (equal? s (unify (unify-get-ec-set-all-pairs s)))
-    (equal? s (unify-ec-set-add-eqns (ec-set-make) (unify-get-ec-set-all-pairs s)))))
 
 (assert (ec-set-ok '((a z) (b c) (d y))))
 (assert (not (ec-set-ok '((a z) (b c a) (d y)))))
@@ -298,7 +288,7 @@ todo
       ecs))
 
 ;; ecs -> ecs
-(define (unify-one-step ecs)
+(define (unify-dive-one-step ecs)
   ;(shew 'step 'before ecs)
   (let ((sub-eqns (unify-get-ec-all-sub-eqns ecs)))
     ;(shew 'sub-eqns sub-eqns)
@@ -308,14 +298,82 @@ todo
 
 ;; eqns -> ecs (unified)
 (define (unify eqns)
-  (apply-until-fixpoint unify-one-step (unify-create-initial-ec-set eqns)))
+  (apply-until-fixpoint unify-dive-one-step (unify-create-initial-ec-set eqns)))
+
+(define (unify-big-check s)
+  (and
+    (ec-set-ok s)
+    (unify-check-no-op s)))
+(define (unify-check-no-op s)
+  ;; Verifying this is a no-op
+  (and
+    (equal? s (unify (unify-get-ec-set-all-pairs s)))
+    (equal? s (unify-ec-set-add-eqns (ec-set-make) (unify-get-ec-set-all-pairs s)))))
 
 (define (type-is-constant t) (mtch t ('C c) #t x #f))
-(define (type-is-var t) (mtch t ('V v) #t x #f))
+(define (type-is-var t) (mtch t ('TV v) #t x #f))
 (define (type-is-fun t) (mtch t ('F a b) #t x #f))
 
-(define (unify-ec-is-vars-n-const ec)
-  (all? (map (for type-is-constant type-is-var) ec)))
+(define (type-is-monotype t)
+  (mtch t
+    ('C c)
+      #t
+    ('TV v)
+      #f
+    ('F a b)
+      (and (type-is-monotype a) (type-is-monotype b))))
+
+(define (unify-ec-is-type-error ec)
+  (> (length (grep type-is-monotype ec)) 1))
+(define (unify-ecs-is-type-error ecs)
+  (any? (map unify-ec-is-type-error ecs)))
+
+(define (unify-ec-is-vars-n-mono ec)
+  (all? (map (for type-is-monotype type-is-var) ec)))
+
+; ONO maybe check explicitly for ones with no vars at all?
+(define (unify-vm-ec-to-subs ec)
+  (mtch (divide-by-pred type-is-monotype ec)
+    ((t) . vs)
+      (begin
+        ;(assert (> (length vs) 0))
+        (map (lambda (v) `(,v ,t)) vs))))
+
+(define (unify-get-subs ecs)
+  (shew 'vnc (grep unify-ec-is-vars-n-mono ecs))
+  (apply append
+    (map unify-vm-ec-to-subs (grep unify-ec-is-vars-n-mono ecs))))
+
+(define (unify-map-over-subs-types f subs)
+  (map (lambda (sub) (mtch sub (a b) `(,(f a) ,(f b)))) subs))
+
+(define (unify-apply-subs ecs subs)
+  (unify-map-over-subs-types
+    (lambda (e) (apply-unifiers-to-type-term subs e))
+    (unify-get-ec-set-all-pairs ecs)))
+
+;; ecs -> (subs ecs)
+(define (unify-sub-one-step ecs)
+  (let ((subs (unify-get-subs ecs)))
+    (shew 'subs subs)
+    (let ((applied (unify-apply-subs ecs subs)))
+      (shew 'applied applied)
+      (let ((unified (unify applied)))
+        (shew 'unified unified)
+        `(,subs ,unified)
+        )
+      )))
+;(tracefun unify-sub-one-step)
+;; ecs -> subs
+(define (unify-sub ecs) (unify-sub-1 '() ecs))
+(define (unify-sub-1 subs ecs)
+  (mtch (unify-sub-one-step ecs)
+    (new-subs new-ecs)
+      (if (equal? new-ecs ecs)
+        (begin
+          (assert (equal? new-subs '()))
+          subs)
+        (unify-sub-1 (append subs new-subs) new-ecs))))
 
 (define (main)
   (set! ty (make-type-symgen))
@@ -328,9 +386,24 @@ todo
         (shew 'eqns)
         (shew-eqns eqns)
         (let ((unified (unify eqns)))
+          (unify-big-check unified)
           (shew 'unified)
           (shew unified)
           (shew-ecs unified)
-          (ec-set-check unified)
+          (assert (not (unify-ecs-is-type-error unified)))
+          ;(shew (grep unify-ec-is-vars-n-mono unified))
+          ;(shew (unify-get-ec-set-all-pairs unified))
+          ;(shew (unify-sub-one-step unified))
+          ;(shew (unify-sub-one-step (unify-sub-one-step (unify-sub-one-step unified))))
+          (shew 'so (unify-sub unified))
+          #|
+          (let ((subs (unify-get-subs unified)))
+            (let ((next (unify-apply-subs unified subs)))
+              (shew 'next next)
+              (let ((next2 (unify next)))
+                (shew 'next2 next2)
+                )
+              ))
+              |#
         )
         )))
