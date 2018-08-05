@@ -59,6 +59,7 @@ todo
 (define (get-constant-type k)
   (cond
     ((number? k) '(C Int))
+    ((or (eq? k #t) (eq? k #f)) '(C Bool))
     (#t (err 'bad-constant k))))
 
 ; fold = /. f /. xs /. z if xs == [] z else (cons (f (car xs)) (fold f (cdr xs) z))
@@ -568,6 +569,8 @@ todo
      (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ((K 3)
      (C Int))
+    ((K #t)
+     (C Bool))
 
     (((A (A (V Cons) (K 1)) (V Nil)))
      (List Int))
@@ -586,7 +589,8 @@ todo
     unify-tests))
 
 ;(define foo '(L (V x) (L (V y) (V x))))
-(define foo '(A (V cdr) (A (A (V Cons) (K 1)) (V Nil))))
+;(define foo '(If (K #t) (K 1) (K 2)))
+(define foo '(K #t))
 
 (define (main)
   ;(run-unify-tests)
