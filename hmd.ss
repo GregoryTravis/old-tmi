@@ -1,6 +1,8 @@
 (dload "lib.ss")
 (dload "mtch.ss")
 
+;; types: ec, ecs, eqn, eqns, e, te
+
 #|
 Typing rules
 
@@ -45,13 +47,13 @@ todo
     ; int -> int -> int
     (+ . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ; a -> List a -> List a
-    (Cons . (PT Fun ((TV a) (PT Fun ((PT List ((TV a))) (PT List ((TV a))))))))
+    (Cons . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))))))
     ; List a
-    (Nil . (PT List ((TV a))))
+    (Nil . (Forall ((TV a)) (PT List ((TV a)))))
     ; List a -> a
-    (car . (PT Fun ((PT List ((TV a))) ((TV a)))))
+    (car . (Forall ((TV a))(PT Fun ((PT List ((TV a))) ((TV a))))))
     ; List a -> List a
-    (cdr . (PT Fun ((PT List ((TV a))) ((PT List ((TV a)))))))
+    (cdr . (Forall ((TV a))(PT Fun ((PT List ((TV a))) ((PT List ((TV a))))))))
   ))
 
 (define (get-constant-type k)
@@ -317,6 +319,8 @@ todo
       (++ "(" (lshew-type a) " -> " (lshew-type b) ")")
     ('PT c targs)
       (++ "(" (join-things " " (cons c (map lshew-type targs))) ")")
+    ('Forall vars t)
+      (++ "Forall " (join-things " " (map lshew-type vars)) " . " (lshew-type t))
       ))
 ;(tracefun lshew-type)
 
@@ -483,6 +487,21 @@ todo
           (append subs (unify-extract-final-subs new-ecs)))
         (unify-sub-1 (append subs new-subs) new-ecs))))
 
+;; te -> ((TV a)...)
+;; Since we aren't even thinking of higher-rank, this just returns all the TVs in the expression.
+(define (free-type-vars te)
+  (gather-tvars te))
+
+;; te -> te
+;; This just quantifies the type of the top-level expression, ignoring everything inside
+(define (quantify-type te)
+  (mtch te
+    ('T e t)
+      (let ((ftv (free-type-vars t)))
+        (if (eq? ftv '())
+          te
+          `(T ,e (Forall ,(free-type-vars t) ,t))))))
+
 (define (unify-really e)
   (set! ty (make-type-symgen))
   (shew e)
@@ -503,7 +522,9 @@ todo
             (shew 'so all-subs)
             (let ((typed-term-2 (apply-unifiers-to-term all-subs typed-exp)))
               (shew 'and-so typed-term-2)
-              typed-term-2))))))
+              (let ((quantified (quantify-type typed-term-2)))
+                (shew 'quantified quantified)
+                quantified)))))))
 
 (define (just-type e)
   (mtch (unify-really e) ('T e t) t))
@@ -518,22 +539,22 @@ todo
     ; /. x x
     ; a -> a
     ((L (V x) (V x))
-     (PT Fun ((TV a) (TV a))))
+     (Forall ((TV a)) (PT Fun ((TV a) (TV a)))))
 
     ; /. f /. x f (f x)
     ; (a -> a) -> a -> a
     ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
-     (PT Fun ((PT Fun ((TV e) (TV e))) (PT Fun ((TV e) (TV e))))))
+     (Forall ((TV e)) (PT Fun ((PT Fun ((TV e) (TV e))) (PT Fun ((TV e) (TV e)))))))
 
     ; /. x /. y y
     ; a -> b -> b
     ((L (V x) (L (V y) (V y)))
-     (PT Fun ((TV a) (PT Fun ((TV b) (TV b))))))
+     (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (TV b)))))))
 
-    ; /. x /. y 
+    ; /. x /. y x
     ; a -> b -> a
     ((L (V x) (L (V y) (V x)))
-     (PT Fun ((TV a) (PT Fun ((TV b) (TV a))))))
+     (Forall ((TV b) (TV a)) (PT Fun ((TV a) (PT Fun ((TV b) (TV a)))))))
 
     ((V +)
      (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
