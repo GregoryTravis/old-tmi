@@ -47,7 +47,7 @@ todo
     ; int -> int -> int
     (+ . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ; a -> a -> Bool
-    (== . (PT Fun ((TV a) (PT Fun ((TV a) (C Bool))))))
+    (== . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((TV a) (C Bool)))))))
     ; a -> List a -> List a
     (Cons . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))))))
     ; List a
@@ -381,7 +381,7 @@ todo
       ;`((,a ,c) (,b ,d))
     (('PT ctor-a targs-a) ('PT ctor-b targs-b))
       (begin
-        (assert (eq? ctor-a ctor-b))
+        (assert (eq? ctor-a ctor-b) eqn)
         (assert (eq? (length targs-a) (length targs-b)))
         (zip targs-a targs-b))
     x
@@ -403,7 +403,8 @@ todo
   (let ((sub-eqns (unify-get-ec-all-sub-eqns ecs)))
     ;(shew 'sub-eqns sub-eqns)
     (let ((added (unify-ec-set-add-eqns ecs sub-eqns)))
-      ;(shew 'added added)
+      ;(shew 'added)
+      ;(shew-ecs added)
       added)))
 
 ;; eqns -> ecs (unified)
@@ -535,6 +536,7 @@ todo
           `(T ,e (Forall ,(free-type-vars t) ,t))))))
 
 (define (unify-really e)
+  (shew 'START)
   (set! ty (make-type-symgen))
   (shew e)
   (mtch (tinf e)
@@ -555,7 +557,7 @@ todo
             (let ((typed-term-2 (apply-unifiers-to-term all-subs typed-exp)))
               (shew 'and-so typed-term-2)
               (let ((quantified (quantify-type typed-term-2)))
-                (shew 'quantified quantified)
+                ;(shew 'quantified quantified)
                 quantified)))))))
 
 (define (just-type e)
@@ -619,11 +621,25 @@ todo
         (assert (equal? expected (just-type src))))))
     unify-tests))
 
-(define foo '(L (V x) (L (V y) (V x))))
+;(define foo '(L (V x) (L (V y) (V x))))
+#|
 ; /. f /. xs /. z if xs == [] z else (f (car xs) (fold f (cdr xs) z))
 ; fold f [] z = z
 ; fold f (x : xs) z = f x (fold f xs z)
 ; forall a . (a -> b -> b) -> ((List a) -> (b -> b))
+fix f = f (fix f)
+fix f x = f (fix f) x
+fix f x = f (/. x fix f x) x
+f :: (a -> b) -> (a -> b)
+fix f :: a -> b
+fix :: ((a -> b) -> (a -> b)) -> (a -> b)
+|#
+; Open-recursion thing
+; /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
+(define foo '(L (V rec) (L (V f) (L (V xs) (L (V z)
+                (If (A (A (V ==) (V xs)) (V Nil))
+                  (V z)
+                  (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
 
 (define (main)
   (run-unify-tests)
