@@ -46,6 +46,8 @@ todo
   '(
     ; int -> int -> int
     (+ . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
+    ; a -> a -> Bool
+    (== . (PT Fun ((TV a) (PT Fun ((TV a) (C Bool))))))
     ; a -> List a -> List a
     (Cons . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))))))
     ; List a
@@ -70,8 +72,8 @@ todo
 ; - List T = Nil | Const T (List T)
 ; - multiple clauses
 ;   - this is probablly just: set them equal to each other
-; - parameterized types
-; - if/then/else
+; + parameterized types
+; + if/then/else
 ; - Fix
 
 (define (gather-tvars e)
@@ -114,7 +116,7 @@ todo
     t
       t))
 
-(tracefun gen-inst-substitution instantiate-poly)
+;(tracefun gen-inst-substitution instantiate-poly)
 
 (define (env-lookup-and-inst x env)
   (mtch (assoc x env)
@@ -471,6 +473,7 @@ todo
       (map unify-vm-ec-to-subs (grep unify-ec-is-vars-n-mono ecs)))
     (apply append
       (map unify-vo-ec-to-subs (grep unify-ec-is-vars-only ecs)))))
+(tracefun unify-get-subs)
 
 (define (unify-map-over-subs-types f subs)
   (map (lambda (sub) (mtch sub (a b) `(,(f a) ,(f b)))) subs))
@@ -487,6 +490,7 @@ todo
 ;; ecs -> subs
 (define (unify-extract-final-subs ecs)
   (map (lambda (ec) (mtch ec (('TV v) x) ec)) ecs))
+(tracefun unify-extract-final-subs)
 
 ;; ecs -> (subs ecs)
 (define (unify-sub-one-step ecs)
@@ -589,8 +593,8 @@ todo
     ((K #t)
      (C Bool))
 
-    (((A (A (V Cons) (K 1)) (V Nil)))
-     (List Int))
+    ((A (A (V Cons) (K 1)) (V Nil))
+     (PT List ((C Int))))
     ((A (V car) (A (A (V Cons) (K 1)) (V Nil)))
      (C Int))
     ((A (V cdr) (A (A (V Cons) (K 1)) (V Nil)))
@@ -608,8 +612,10 @@ todo
         (assert (equal? expected (just-type src))))))
     unify-tests))
 
-;(define foo '(L (V x) (L (V y) (V x))))
-(define foo '(If (K #t) (K 1) (K 2)))
+(define foo '(L (V x) (L (V y) (V x))))
+; /. a /. b if a == b then a else b
+; a -> a -> a
+;(define foo '(L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))))
 
 (define (main)
   ;(run-unify-tests)
