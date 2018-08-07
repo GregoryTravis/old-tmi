@@ -64,12 +64,8 @@ todo
     ((or (eq? k #t) (eq? k #f)) '(C Bool))
     (#t (err 'bad-constant k))))
 
-; fold = /. f /. xs /. z if xs == [] z else (cons (f (car xs)) (fold f (cdr xs) z))
-; or
-; fold f [] z = z
-; fold f (x : xs) z = (f x) : (fold f xs z)
 ; So this needs:
-; - List T = Nil | Const T (List T)
+; + List T = Nil | Const T (List T)
 ; - multiple clauses
 ;   - this is probablly just: set them equal to each other
 ; + parameterized types
@@ -484,12 +480,18 @@ todo
     (unify-get-ec-set-all-pairs ecs)))
 
 ;; Really not sure if this is right, just a guess.
-;; After all other subs are done, the remainder ecs
-;; Should be just a set of (var, something) pairs,
-;; so verify and just return them as subs
+;; Return all entries that are ((TV x) y).
+;; And actually HACK because (1) the arg is an ecs,
+;; not an eqns, and (2) it might be in the other
+;; order.
 ;; ecs -> subs
 (define (unify-extract-final-subs ecs)
-  (map (lambda (ec) (mtch ec (('TV v) x) ec)) ecs))
+  (grep (lambda (ec) (mtch ec
+    (('TV v) x)
+      #t
+    x
+      #f))
+    ecs))
 (tracefun unify-extract-final-subs)
 
 ;; ecs -> (subs ecs)
@@ -602,6 +604,11 @@ todo
 
     ((If (K #t) (K 1) (K 2))
      (C Int))
+
+    ; /. a /. b if a == b then a else b
+    ; a -> a -> a
+    ((L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b))))
+     (Forall ((TV c)) (PT Fun ((TV c) (PT Fun ((TV c) (TV c)))))))
    ))
 
 (define (run-unify-tests)
@@ -613,11 +620,12 @@ todo
     unify-tests))
 
 (define foo '(L (V x) (L (V y) (V x))))
-; /. a /. b if a == b then a else b
-; a -> a -> a
-;(define foo '(L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))))
+; /. f /. xs /. z if xs == [] z else (f (car xs) (fold f (cdr xs) z))
+; fold f [] z = z
+; fold f (x : xs) z = f x (fold f xs z)
+; forall a . (a -> b -> b) -> ((List a) -> (b -> b))
 
 (define (main)
-  ;(run-unify-tests)
+  (run-unify-tests)
   (let ((t (just-type foo)))
     (shew t (lshew-type (just-type foo)))))
