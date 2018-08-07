@@ -18,6 +18,21 @@ todo
 - should global ref be a var or something else?
 |#
 
+#|
+; /. f /. xs /. z if xs == [] z else (f (car xs) (fold f (cdr xs) z))
+; fold f [] z = z
+; fold f (x : xs) z = f x (fold f xs z)
+; forall a b . (a -> b -> b) -> ((List a) -> (b -> b))
+fix f = f (fix f)
+fix f x = f (fix f) x
+fix f x = f (/. x fix f x) x
+f :: (a -> b) -> (a -> b)
+fix f :: a -> b
+fix :: ((a -> b) -> (a -> b)) -> (a -> b)
+; Open-recursion fold
+; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
+|#
+
 (define (make-type-symgen)
   (let ((n 0))
     (lambda ()
@@ -139,9 +154,12 @@ todo
             (mtch (tinf0 arg env unis)
               (('T arg arg-t) unis)
                 `((T (A (T ,fun ,fun-t) (T ,arg ,arg-t)) (TV ,result-t)) ((,fun-t (PT Fun (,arg-t (TV ,result-t)))) . ,unis)))))
-    ;('Fix f)
-      ;(mtch (tinf0 fun env unis)
-        ;(T fun (
+    ('Fix fun)
+      (mtch (tinf0 fun env unis)
+        (('T fun ('PT 'Fun (a b))) unis)
+          `((T (Fix (T ,fun (PT Fun (,a ,b)))) ,a) ;; Could also be b since a == b
+            ((,a ,b)
+            . ,unis)))
     ('If b th el)
       (let ((result-t (ty)))
         (mtch (tinf0 b env unis)
@@ -236,6 +254,8 @@ todo
       `(L ,(apply-unifiers-to-term unifiers v) ,(apply-unifiers-to-term unifiers body))
     ('A fun arg)
       `(A ,(apply-unifiers-to-term unifiers fun) ,(apply-unifiers-to-term unifiers arg))
+    ('Fix fun)
+      `(Fix ,(apply-unifiers-to-term unifiers fun))
     ('If b th el)
       `(If ,(apply-unifiers-to-term unifiers b) ,(apply-unifiers-to-term unifiers th) ,(apply-unifiers-to-term unifiers el))
     ('V x)
@@ -452,6 +472,19 @@ todo
     (all? (map (for type-is-monotype type-is-var) ec))
     (> (length (grep type-is-monotype ec)) 0)))
 
+; Just vars and one other thing not a var
+(define (unify-ec-is-vars-n-1-thing ec)
+  (eq? (- (length ec) 1)
+       (length (grep type-is-var ec))))
+;(tracefun unify-ec-is-vars-n-1-thing)
+
+(define (unify-v1-ec-to-subs ec)
+  (mtch (divide-by-pred type-is-var ec)
+    (vs . (t))
+      (begin
+        (map (lambda (v) `(,v ,t)) vs))))
+;(tracefun unify-v1-ec-to-subs)
+
 ; ONO maybe check explicitly for ones with no vars at all?
 (define (unify-vm-ec-to-subs ec)
   (mtch (divide-by-pred type-is-monotype ec)
@@ -470,11 +503,16 @@ todo
 ;(tracefun unify-vm-ec-to-subs unify-vo-ec-to-subs)
 
 (define (unify-get-subs ecs)
-  (append
-    (apply append
-      (map unify-vm-ec-to-subs (grep unify-ec-is-vars-n-mono ecs)))
-    (apply append
-      (map unify-vo-ec-to-subs (grep unify-ec-is-vars-only ecs)))))
+  (let ((phase1
+    (append
+      (apply append
+        (map unify-vm-ec-to-subs (grep unify-ec-is-vars-n-mono ecs)))
+      (apply append
+        (map unify-vo-ec-to-subs (grep unify-ec-is-vars-only ecs))))))
+    (if (eq? phase1 '())
+      (apply append
+        (map unify-v1-ec-to-subs (grep unify-ec-is-vars-n-1-thing ecs)))
+      phase1)))
 (tracefun unify-get-subs)
 
 (define (unify-map-over-subs-types f subs)
@@ -492,12 +530,7 @@ todo
 ;; order.
 ;; ecs -> subs
 (define (unify-extract-final-subs ecs)
-  (grep (lambda (ec) (mtch ec
-    (('TV v) x)
-      #t
-    x
-      #f))
-    ecs))
+  '())
 (tracefun unify-extract-final-subs)
 
 ;; ecs -> (subs ecs)
@@ -616,6 +649,15 @@ todo
     ; a -> a -> a
     ((L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b))))
      (Forall ((TV c)) (PT Fun ((TV c) (PT Fun ((TV c) (TV c)))))))
+
+    ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
+    ((Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
+            (If (A (A (V ==) (V xs)) (V Nil))
+              (V z)
+              (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
+     (Forall ((TV m) (TV e))
+         (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
+                  (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))))
    ))
 
 (define (run-unify-tests)
@@ -627,24 +669,10 @@ todo
     unify-tests))
 
 ;(define foo '(L (V x) (L (V y) (V x))))
-#|
-; /. f /. xs /. z if xs == [] z else (f (car xs) (fold f (cdr xs) z))
-; fold f [] z = z
-; fold f (x : xs) z = f x (fold f xs z)
-; forall a . (a -> b -> b) -> ((List a) -> (b -> b))
-fix f = f (fix f)
-fix f x = f (fix f) x
-fix f x = f (/. x fix f x) x
-f :: (a -> b) -> (a -> b)
-fix f :: a -> b
-fix :: ((a -> b) -> (a -> b)) -> (a -> b)
-|#
-; Open-recursion thing
-; /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
-(define foo '(L (V rec) (L (V f) (L (V xs) (L (V z)
-                (If (A (A (V ==) (V xs)) (V Nil))
-                  (V z)
-                  (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
+(define foo '(Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
+                     (If (A (A (V ==) (V xs)) (V Nil))
+                       (V z)
+                       (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z))))))))))
 
 (define (main)
   (run-unify-tests)
