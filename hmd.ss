@@ -573,6 +573,22 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
      (Forall ((TV m) (TV e))
          (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
                   (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))))
+
+    ; map = /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (map f (cdr x))
+    ; (a -> b) -> List a -> List b
+    ; map = /. rec /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (rec f (cdr x))
+    ; ((a -> b) -> List a -> List b) -> (a -> b) -> List a -> List b
+    ((Fix (L (V rec) (L (V f) (L (V x)
+            (If (A (A (V ==) (V x)) (V Nil))
+                (V Nil)
+                (A (A (V Cons) (A (V f) (A (V car) (V x))))
+                   (A (A (V rec) (V f)) (A (V cdr) (V x)))))))))
+     (Forall
+       ((TV o) (TV l))
+         (PT
+            Fun
+               ((PT Fun ((TV o) (TV l)))
+                   (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))))
    ))
 
 (define (run-unify-tests)
