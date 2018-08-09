@@ -337,11 +337,13 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     '()
       ecs))
 
+;; One set of all unordered pairs of equal items
 ;; ecs -> eqns
 (define (unify-get-ec-set-all-pairs ecs)
   (apply append (map all-pairs ecs)))
   ;(map all-pairs ecs))
 
+;; Get equal sub-parts from equal terms
 (define (unify-get-sub-eqns eqn)
   (mtch eqn
     ;(('PT 'Fun (a b)) ('PT 'Fun (c d)))
@@ -354,6 +356,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     x
       '()))
 
+;; Get all equal sub parts from all possible equal pairs
 (define (unify-get-ec-all-sub-eqns ecs)
   (apply append (map unify-get-sub-eqns (unify-get-ec-set-all-pairs ecs))))
 
@@ -606,7 +609,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (map (lambda (test) (mtch test
     (src expected)
       (let ((actual (just-type src)))
-        (shew 'test src expected actual (equal? expected (just-type src)))
+        (shew 'test src expected actual (equal? expected actual))
         (assert (equal? expected (just-type src))))))
     unify-tests))
 
