@@ -115,13 +115,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (gen-inst-substitution tvars)
   (map (lambda (tv) `(,tv (TV ,(ty)))) tvars))
 
-#|
-(define (instantiate-poly t)
-  (apply-unifiers-to-type-term 
-    (gen-inst-substitution (gather-tvars t))
-    t))
-|#
-
 (define (instantiate-poly t)
   (mtch t
     ('Forall vs t)
@@ -189,45 +182,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (ut 1 1)
 ;(ut 1 2)
 
-#|
-(define (unify unis)
-  (mtch unis
-    ()
-      '()
-    (uni . unis)
-      (let ((unifiers (find-unifiers uni)))
-        (append unifiers (unify (apply-unifiers unifiers unis))))))
-        ;(append unifiers (unify unis)))))
-
-;; Feels a little pre-optimized to me
-;; Should be called dive?
-;; eqn -> subs
-(define (find-unifiers uni)
-  (mtch uni
-    (('TV a) ('TV b))
-      `(((TV ,a) (TV ,(ty))) ((TV ,b) (TV ,(ty))))
-    (('TV a) b)
-      `(((TV ,a) ,b))
-    (b ('TV a))
-      `(((TV ,a) ,b))
-    ;(('PT 'Fun (a b)) ('PT 'Fun (c d)))
-      ;(append (find-unifiers `(,a ,c)) (find-unifiers `(,b ,d)))
-    (('PT x targs-x) ('PT y targs-y))
-      (if (and (eq? x y) (eq? (length targs-x) (length targs-y)))
-        (apply append (map find-unifiers (zip targs-x targs-y)))
-        '())
-    ((C a) (C b))
-      (if (eq? a b) '() (err 'type-mismatch a b))
-      ))
-
-(define (apply-unifiers unifiers unis)
-  (map (lambda (uni)
-    (mtch uni
-      (a b)
-        `(,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b))))
-    unis))
-|#
-
 (define (apply-unifiers-to-type-term unifiers term)
   (mtch term
     ('TV x)
@@ -262,18 +216,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       e
     ('K k)
       e))
-
-    #|
-    ('T ('L ('T ('V var) var-t) ('T body body-t)) lambda-t)
-      `(T (L (T (V ,var) ,(apply-unifiers-to-type-term unifiers var-t))
-             (T ,(apply-unifiers-to-term unifiers body) ,(apply-unifiers-to-type-term unifieres body-t)))
-          ,(apply-unifiers-to-type-term unifiers lambda-t))
-    ('T ('A a b) t)
-      `(T (A ,(apply-unifiers-to-term unifiers a) ,(apply-unifiers-to-term unifiers b))
-          ,(apply-unifiers-to-type-term unifiers t))
-    ('T ('V x) t)
-      `(T (V x) ,(apply-unifiers-to-type-term unifiers t))))
-      |#
 
 ;(tracefun apply-unifiers-to-term)
 
