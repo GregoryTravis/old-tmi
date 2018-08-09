@@ -378,10 +378,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       ;(shew-ecs added)
       added)))
 
-;; eqns -> ecs (unified)
-(define (unify eqns)
-  (apply-until-fixpoint unify-dive-one-step (unify-create-initial-ec-set eqns)))
-
 (define (boop eqns)
   (let ((all-subs-pre (boop2 (unify-create-initial-ec-set eqns))))
     (shew 'all-subs-pre)
@@ -400,6 +396,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (boop2 ecs)
   (shew 'boop2)
   (shew-ecs ecs)
+  (assert (ec-set-ok ecs))
+  (assert (not (unify-ecs-is-type-error ecs)))
   (if (null? ecs)
     '()
     (let ((dove (apply-until-fixpoint unify-dive-one-step ecs)))
@@ -409,8 +407,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (append
           (apply append
             (map unify-v1-ec-to-subs (grep unify-ec-is-vars-n-1-thing dove)))
-          ;(apply append
-            ;(map unify-vm-ec-to-subs (grep unify-ec-is-vars-n-mono dove)))
           (apply append
             (map unify-vo-ec-to-subs (grep unify-ec-is-vars-only dove))))))
         (shew 'subs)
@@ -425,6 +421,25 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (let ((remove-singletons (grep (lambda (ec) (> (length ec) 1)) applied)))
               (cons sub (boop2 remove-singletons)))))))))
 
+(define (infer-types e)
+  (shew 'START)
+  (set! ty (make-type-symgen))
+  (shew e)
+  (mtch (tinf e)
+    (typed-exp eqns)
+      (begin
+        (shew typed-exp)
+        (let ((all-subs (boop eqns)))
+          (shew 'all-subs)
+          (shew-eqns all-subs)
+          (let ((typed-term-subbed (apply-unifiers-to-term all-subs typed-exp)))
+            (shew 'typed-term-subbed typed-term-subbed)
+            (let ((quantified (quantify-type typed-term-subbed)))
+              (shew 'quantified quantified)
+                quantified))))))
+          ;(unify-big-check unified)
+          ;(assert (not (unify-ecs-is-type-error unified)))
+
 ;; Maybe doesn't need to be done via the pairs route.
 (define (unify-apply-subs2 ecs subs)
   (let ((applied
@@ -434,16 +449,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ;(shew 'before-thing)
     ;(shew-eqns applied)
     (unify-create-initial-ec-set applied)))
-
-(define (unify-big-check s)
-  (and
-    (ec-set-ok s)
-    (unify-check-no-op s)))
-(define (unify-check-no-op s)
-  ;; Verifying this is a no-op
-  (and
-    (equal? s (unify (unify-get-ec-set-all-pairs s)))
-    (equal? s (unify-ec-set-add-eqns (ec-set-make) (unify-get-ec-set-all-pairs s)))))
 
 ;(define (type-is-constant t) (mtch t ('C c) #t x #f))
 (define (type-is-var t) (mtch t ('TV v) #t x #f))
@@ -466,11 +471,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (unify-ecs-is-type-error ecs)
   (any? (map unify-ec-is-type-error ecs)))
 
-(define (unify-ec-is-vars-n-mono ec)
-  (and
-    (all? (map (for type-is-monotype type-is-var) ec))
-    (> (length (grep type-is-monotype ec)) 0)))
-
 ; Just vars and one other thing not a var
 (define (unify-ec-is-vars-n-1-thing ec)
   (eq? (- (length ec) 1)
@@ -484,14 +484,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (map (lambda (v) `(,v ,t)) vs))))
 ;(tracefun unify-v1-ec-to-subs)
 
-; ONO maybe check explicitly for ones with no vars at all?
-(define (unify-vm-ec-to-subs ec)
-  (mtch (divide-by-pred type-is-monotype ec)
-    ((t) . vs)
-      (begin
-        ;(assert (> (length vs) 0))
-        (map (lambda (v) `(,v ,t)) vs))))
-
 (define (unify-ec-is-vars-only ec)
   (all? (map type-is-var ec)))
 
@@ -499,63 +491,10 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (map (lambda (v) `(,v ,(car ec))) (cdr ec)))
 
 ;(tracefun unify-ec-is-vars-n-mono unify-ec-is-vars-only)
-(tracefun unify-vm-ec-to-subs unify-vo-ec-to-subs)
-
-(define (unify-get-subs ecs)
-  (let ((phase1
-    (append
-      (apply append
-        (map unify-vm-ec-to-subs (grep unify-ec-is-vars-n-mono ecs)))
-      (apply append
-        (map unify-vo-ec-to-subs (grep unify-ec-is-vars-only ecs))))))
-    (if (eq? phase1 '())
-      (apply append
-        (map unify-v1-ec-to-subs (grep unify-ec-is-vars-n-1-thing ecs)))
-      phase1)))
-(tracefun unify-get-subs)
+;(tracefun unify-vm-ec-to-subs unify-vo-ec-to-subs)
 
 (define (unify-map-over-subs-types f subs)
   (map (lambda (sub) (mtch sub (a b) `(,(f a) ,(f b)))) subs))
-
-(define (unify-apply-subs ecs subs)
-  (unify-map-over-subs-types
-    (lambda (e) (apply-unifiers-to-type-term subs e))
-    (unify-get-ec-set-all-pairs ecs)))
-
-;; Really not sure if this is right, just a guess.
-;; Return all entries that are ((TV x) y).
-;; And actually HACK because (1) the arg is an ecs,
-;; not an eqns, and (2) it might be in the other
-;; order.
-;; ecs -> subs
-(define (unify-extract-final-subs ecs)
-  '())
-(tracefun unify-extract-final-subs)
-
-;; ecs -> (subs ecs)
-(define (unify-sub-one-step ecs)
-  (let ((subs (unify-get-subs ecs)))
-    (shew 'subs subs)
-    (let ((applied (unify-apply-subs ecs subs)))
-      (shew 'applied applied)
-      (shew-ecs applied)
-      (let ((unified (unify applied)))
-        (shew 'unified unified)
-        (shew-ecs unified)
-        `(,subs ,unified)
-        )
-      )))
-;(tracefun unify-sub-one-step)
-;; ecs -> subs
-(define (unify-sub ecs) (unify-sub-1 '() ecs))
-(define (unify-sub-1 subs ecs)
-  (mtch (unify-sub-one-step ecs)
-    (new-subs new-ecs)
-      (if (equal? new-ecs ecs)
-        (begin
-          (assert (equal? new-subs '()))
-          (append subs (unify-extract-final-subs new-ecs)))
-        (unify-sub-1 (append subs new-subs) new-ecs))))
 
 ;; te -> ((TV a)...)
 ;; Since we aren't even thinking of higher-rank, this just returns all the TVs in the expression.
@@ -572,52 +511,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
           te
           `(T ,e (Forall ,(free-type-vars t) ,t))))))
 
-(define (unify-really e)
-  (shew 'START)
-  (set! ty (make-type-symgen))
-  (shew e)
-  (mtch (tinf e)
-    (typed-exp eqns)
-      (begin
-        (shew typed-exp)
-        (shew 'eqns eqns)
-        (shew 'eqns)
-        (shew-eqns eqns)
-        (let ((unified (unify eqns)))
-          (unify-big-check unified)
-          (shew 'unified)
-          (shew unified)
-          (shew-ecs unified)
-          (assert (not (unify-ecs-is-type-error unified)))
-          (let ((all-subs (unify-sub unified)))
-            (shew 'so all-subs)
-            (let ((typed-term-2 (apply-unifiers-to-term all-subs typed-exp)))
-              (shew 'and-so typed-term-2)
-              (let ((quantified (quantify-type typed-term-2)))
-                ;(shew 'quantified quantified)
-                quantified)))))))
-
-(define (boop-top e)
-  (shew 'START)
-  (set! ty (make-type-symgen))
-  (shew e)
-  (mtch (tinf e)
-    (typed-exp eqns)
-      (begin
-        (shew typed-exp)
-        (let ((all-subs (boop eqns)))
-          (shew 'all-subs)
-          (shew-eqns all-subs)
-          (let ((typed-term-subbed (apply-unifiers-to-term all-subs typed-exp)))
-            (shew 'typed-term-subbed typed-term-subbed)
-            (let ((quantified (quantify-type typed-term-subbed)))
-              (shew 'quantified quantified)
-                quantified))))))
-          ;(unify-big-check unified)
-          ;(assert (not (unify-ecs-is-type-error unified)))
-
 (define (just-type e)
-  (mtch (boop-top e) ('T e t) t))
+  (mtch (infer-types e) ('T e t) t))
 
 (define unify-tests
   '(
