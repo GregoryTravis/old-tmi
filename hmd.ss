@@ -384,6 +384,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       `(,a ,(apply-unifiers-to-type-term subs b))))
     subs))
 
+; speed: this still generates all the subs for an ec, but we only need one
 (define (infer-find-a-sub ecs)
   (mtch (find-first-maybe unify-ec-is-vars-n-1-thing ecs)
     (v1-ec)
