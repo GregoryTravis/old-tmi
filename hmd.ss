@@ -384,6 +384,18 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       `(,a ,(apply-unifiers-to-type-term subs b))))
     subs))
 
+(define (infer-find-a-sub ecs)
+  (mtch (find-first-maybe unify-ec-is-vars-n-1-thing ecs)
+    (v1-ec)
+      `(,(unify-v1-ec-to-subs v1-ec))
+    #f
+      (mtch (find-first-maybe unify-ec-is-vars-only ecs)
+        (vo-ec)
+          `(,(unify-vo-ec-to-subs vo-ec))
+        #f
+          #f)))
+;(tracefun infer-find-a-sub)
+
 (define (infer-subs eqns)
   (apply-subs-to-subs-rhs (infer-subs-1 (unify-create-initial-ec-set eqns))))
 
@@ -397,23 +409,17 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (let ((dove (apply-until-fixpoint unify-dive-one-step ecs)))
       (shew 'dove)
       (shew-ecs dove)
-      (let ((subs
-        (append
-          (apply append
-            (map unify-v1-ec-to-subs (grep unify-ec-is-vars-n-1-thing dove)))
-          (apply append
-            (map unify-vo-ec-to-subs (grep unify-ec-is-vars-only dove))))))
-        (shew 'subs)
-        (shew-ecs subs)
-        (assert (> (length subs) 0))
-        (let ((sub (car subs)))
-          (shew 'sub)
-          (shew-eqns (list sub))
-          (let ((applied (unify-apply-subs2 dove (list sub))))
-            (shew 'applied)
-            (shew-ecs applied)
-            (let ((remove-singletons (grep (lambda (ec) (> (length ec) 1)) applied)))
-              (cons sub (infer-subs-1 remove-singletons)))))))))
+      (mtch (infer-find-a-sub dove)
+        ((sub . rest))
+          (begin
+            (shew 'sub)
+            (shew sub)
+            (shew-eqns (list sub))
+            (let ((applied (unify-apply-subs2 dove (list sub))))
+              (shew 'applied)
+              (shew-ecs applied)
+              (let ((remove-singletons (grep (lambda (ec) (> (length ec) 1)) applied)))
+                (cons sub (infer-subs-1 remove-singletons)))))))))
 
 (define (infer-types e)
   (shew 'START)
@@ -467,8 +473,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 ; Just vars and one other thing not a var
 (define (unify-ec-is-vars-n-1-thing ec)
-  (eq? (- (length ec) 1)
-       (length (grep type-is-var ec))))
+  (and (> (length ec) 1)
+    (eq? (- (length ec) 1)
+         (length (grep type-is-var ec)))))
 ;(tracefun unify-ec-is-vars-n-1-thing)
 
 (define (unify-v1-ec-to-subs ec)
@@ -485,7 +492,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (map (lambda (v) `(,v ,(car ec))) (cdr ec)))
 
 ;(tracefun unify-ec-is-vars-n-mono unify-ec-is-vars-only)
-;(tracefun unify-vm-ec-to-subs unify-vo-ec-to-subs)
+;(tracefun unify-v1-ec-to-subs unify-vo-ec-to-subs)
 
 (define (unify-map-over-subs-types f subs)
   (map (lambda (sub) (mtch sub (a b) `(,(f a) ,(f b)))) subs))

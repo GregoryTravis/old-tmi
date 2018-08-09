@@ -438,6 +438,13 @@
    ((pred (car lyst)) (car lyst))
    (#t (find-first pred (cdr lyst)))))
 
+;; -> (value) or #f
+(define (find-first-maybe pred lyst)
+  (cond
+   ((null? lyst) #f)
+   ((pred (car lyst)) (list (car lyst)))
+   (#t (find-first-maybe pred (cdr lyst)))))
+
 (define (cton? o)
   (and (pair? o) (ctor? (car o))))
 
@@ -548,6 +555,7 @@
 
 ;; ;; maybe stuff.
 
+#| This is weird, it should take a pred, not a transform
 ;; f should return either (value) or #f; find-first-maybe will return
 ;; the first one it finds that's not null, in the same format: (value)
 ;; or #f.
@@ -558,6 +566,7 @@
         (if (eq? r #f)
             (find-first-maybe f (cdr lyst))
             r))))
+|#
 
 ;; Retrieve x for each (just x) in list, and throw away failures.
 ;; Good advice for the youth of today!
