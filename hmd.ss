@@ -523,6 +523,14 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ((L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
      (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int))))))
 
+    ; (/. f /. x (f x) + x) (/. x + 1) 2
+    ; Int
+    ((A
+       (A (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
+          (L (V x) (A (A (V +) (V x)) (K 1))))
+       (K 2))
+     (C Int))
+
     ; /. x x
     ; a -> a
     ((L (V x) (V x))
