@@ -601,10 +601,25 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ((If (K #f) (K 1) (K 2))
      (C Int) 2)
 
+    ((A (A (V ==) (K 1)) (K 1))
+     (C Bool) #t)
+    ((A (A (V ==) (K 1)) (K 2))
+     (C Bool) #f)
+
     ; /. a /. b if a == b then a else b
     ; a -> a -> a
     ((L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b))))
      (Forall ((TV c)) (PT Fun ((TV c) (PT Fun ((TV c) (TV c)))))) ,testpred-closure)
+
+    ; (/. a /. b if a == b then a else b) 1 2
+    ; 2
+    ((A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 2))
+     (C Int) 2)
+
+    ; (/. a /. b if a == b then a else b) 1 1
+    ; 1
+    ((A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 1))
+     (C Int) 1)
 
     ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
     ((Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
@@ -641,17 +656,20 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (shew 'test src expected-type actual-type (equal? expected-type actual-type))
             (assert (equal? expected-type actual-type))
             (let ((actual-result (leval typed-src)))
+              ;(shew 'test src expected-result actual-result (equal? expected-type actual-type))
               (if (procedure? expected-result)
                 (assert (expected-result actual-result) actual-result)
                 (assert (equal? expected-result actual-result) expected-result actual-result))))))))
     unify-tests))
 
+(define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
 (define global-env `(
   (+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
   (Cons . (Native ,(lambda (a) `(Native ,(lambda (d) `(Cons ,a ,d))))))
   (Nil . Nil)
   (car . (Native ,(lambda (x) (mtch x ('Cons a d) a))))
   (cdr . (Native ,(lambda (x) (mtch x ('Cons a d) d))))
+  (== . ,(native-curry-2 eq?))
 ))
 
 (define (lookup x ass)
