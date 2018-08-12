@@ -543,20 +543,42 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ((L (V x) (V x))
      (Forall ((TV a)) (PT Fun ((TV a) (TV a)))) ,testpred-closure)
 
+    ; (/. x x) 44
+    ; int
+    ((A (L (V x) (V x)) (K 44))
+     (C Int) 44)
+
     ; /. f /. x f (f x)
     ; (a -> a) -> a -> a
     ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
      (Forall ((TV d)) (PT Fun ((PT Fun ((TV d) (TV d))) (PT Fun ((TV d) (TV d)))))) ,testpred-closure)
+
+    ; (/. f /. x f (f x)) (/. x x + x) 13
+    ; 52
+    ((A (A (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
+           (L (V x) (A (A (V +) (V x)) (V x))))
+        (K 13))
+     (C Int) 52)
 
     ; /. x /. y y
     ; a -> b -> b
     ((L (V x) (L (V y) (V y)))
      (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (TV b)))))) ,testpred-closure)
 
+    ; (/. x /. y y) 1 2
+    ; 2
+    ((A (A (L (V x) (L (V y) (V y))) (K 1)) (K 2))
+     (C Int) 2)
+
     ; /. x /. y x
     ; a -> b -> a
     ((L (V x) (L (V y) (V x)))
      (Forall ((TV b) (TV a)) (PT Fun ((TV a) (PT Fun ((TV b) (TV a)))))) ,testpred-closure)
+
+    ; (/. x /. y x) 1 2
+    ; 1
+    ((A (A (L (V x) (L (V y) (V x))) (K 1)) (K 2))
+     (C Int) 1)
 
     ((V +)
      (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))) ,testpred-native)
@@ -617,10 +639,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (mtch typed-src ('T _ actual-type)
           (begin
             (shew 'test src expected-type actual-type (equal? expected-type actual-type))
-            (shew 'haha)
             (assert (equal? expected-type actual-type))
             (let ((actual-result (leval typed-src)))
-              (shew 'haha2)
               (if (procedure? expected-result)
                 (assert (expected-result actual-result) actual-result)
                 (assert (equal? expected-result actual-result) expected-result actual-result))))))))
