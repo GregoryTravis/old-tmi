@@ -655,6 +655,16 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             Fun
                ((PT Fun ((TV o) (TV l)))
                    (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))) ,testpred-closure)
+
+    ; map (/. x x + x) ns
+    ((A (A (Fix (L (V rec) (L (V f) (L (V x)
+                   (If (A (A (V ==) (V x)) (V Nil))
+                       (V Nil)
+                       (A (A (V Cons) (A (V f) (A (V car) (V x))))
+                          (A (A (V rec) (V f)) (A (V cdr) (V x)))))))))
+           (L (V x) (A (A (V +) (V x)) (V x))))
+        (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
+     (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
    ))
 
 (define (run-unify-tests)
