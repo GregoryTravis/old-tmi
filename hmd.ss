@@ -641,60 +641,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     #f
       (err 'lookup x ass)))
 
-#|
-(define hmd-types
-  '(((PT List ((TV a))) Nil (Cons (TV a) (PT List ((TV a)))))))
-
-(define (idt-build-env params vars)
-  (map (lambda (x) (mtch x (p ('TV v)) `(,v . ,p)))
-    (zip params vars)))
-
-(define (idt-is-instance v cexp env)
-  (mtch (list v cexp)
-    ((v-ctor . v-args) (cexp-ctor . cexp-args))
-      (and
-        (eq? v-ctor cexp-ctor)
-        (all? (map (lambda (x) (mtch x (v cexp) (is-data-type v cexp env)))
-                   (zip v-args cexp-args))))
-    (v ('TV var))
-      (idt-is-instance v (lookup var env) env)
-    (i ('C 'Int))
-      (number? i)
-    (b ('C 'Bool))
-      (boolean? b)
-    (v cexp)
-      (cond
-        ((and (symbol? v) (eq? v cexp)) #t)
-        (#t #f))))
-(tracefun idt-is-instance)
-
-(define (is-data-type-1 v actual-type t env)
-  (mtch (list actual-type t)
-    (('PT a-ctor params) (('PT t-ctor vars) . cexps))
-      (if (not (eq? a-ctor t-ctor))
-        #f
-        (let ((new-env (idt-build-env params vars)))
-          (mtch (find-first-maybe
-                  (lambda (cexp) (idt-is-instance v cexp (append new-env env)))
-                  cexps)
-            (inst)
-              #t
-            #f
-              #f)))))
-
-(define (is-data-type v t env)
-  (find-first-maybe (lambda (tt) (is-data-type-1 v t tt env)) hmd-types))
-(tracefun is-data-type is-data-type-1)
-
-(define (check-data-type v t)
-  (mtch (is-data-type v t '())
-    (t)
-      'dummy
-    #f
-      (err 'wrong-type v t)))
-;(tracefun check-data-type)
-|#
-
 (define (leval-check-type v t)
   (mtch (list v t)
     (('Closure lam env) t)
@@ -705,12 +651,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (assert (number? i))
     (b ('C 'Bool))
       (assert (boolean? b) b)
-    #|
-    (v t)
-      (cond
-        ((or (and (list? v) (symbol? (car v))) (symbol? v)) (check-data-type v t))
-        (#t (err 'wut v t)))
-    |#
     x
       x
     )
