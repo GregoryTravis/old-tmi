@@ -863,9 +863,11 @@
        (let ((l (length e)))
          (or (eq? l 3) (eq? l 4)))))
 
+#| What a surprise that this caused a bug
 (define (boolean? x)
   (or (eq? x 'True)
       (eq? x 'False)))
+|#
 
 (define (pair?-exp? p)
   (and (pair? p)

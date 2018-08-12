@@ -50,6 +50,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define ty (make-type-symgen))
 
+#|
 ; (type ((typector T) (var a) ...) (pat pat ...))
 ; (pat exp)    ;; Except pats don't have apps
 ; (body exp)
@@ -58,6 +59,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   '((type ((typector List) (var a))
           ((pat (cton ((ctor Cons) (var a) (type ((typector List) (var a))))))
            (pat (cton ((ctor Nil))))))))
+|#
 
 (define initial-type-env
   '(
@@ -611,13 +613,17 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (run-unify-tests)
   (map (lambda (test) (mtch test
     (src expected-type expected-result)
-      (let ((actual-type (just-type src)))
-        (shew 'test src expected-type actual-type (equal? expected-type actual-type))
-        (assert (equal? expected-type actual-type))
-        (let ((actual-result (leval src)))
-          (if (procedure? expected-result)
-            (assert (expected-result actual-result) actual-result)
-            (assert (equal? expected-result actual-result) expected-result actual-result))))))
+      (let ((typed-src (infer-types src)))
+        (mtch typed-src ('T _ actual-type)
+          (begin
+            (shew 'test src expected-type actual-type (equal? expected-type actual-type))
+            (shew 'haha)
+            (assert (equal? expected-type actual-type))
+            (let ((actual-result (leval typed-src)))
+              (shew 'haha2)
+              (if (procedure? expected-result)
+                (assert (expected-result actual-result) actual-result)
+                (assert (equal? expected-result actual-result) expected-result actual-result))))))))
     unify-tests))
 
 (define global-env `(
@@ -635,11 +641,87 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     #f
       (err 'lookup x ass)))
 
+#|
+(define hmd-types
+  '(((PT List ((TV a))) Nil (Cons (TV a) (PT List ((TV a)))))))
+
+(define (idt-build-env params vars)
+  (map (lambda (x) (mtch x (p ('TV v)) `(,v . ,p)))
+    (zip params vars)))
+
+(define (idt-is-instance v cexp env)
+  (mtch (list v cexp)
+    ((v-ctor . v-args) (cexp-ctor . cexp-args))
+      (and
+        (eq? v-ctor cexp-ctor)
+        (all? (map (lambda (x) (mtch x (v cexp) (is-data-type v cexp env)))
+                   (zip v-args cexp-args))))
+    (v ('TV var))
+      (idt-is-instance v (lookup var env) env)
+    (i ('C 'Int))
+      (number? i)
+    (b ('C 'Bool))
+      (boolean? b)
+    (v cexp)
+      (cond
+        ((and (symbol? v) (eq? v cexp)) #t)
+        (#t #f))))
+(tracefun idt-is-instance)
+
+(define (is-data-type-1 v actual-type t env)
+  (mtch (list actual-type t)
+    (('PT a-ctor params) (('PT t-ctor vars) . cexps))
+      (if (not (eq? a-ctor t-ctor))
+        #f
+        (let ((new-env (idt-build-env params vars)))
+          (mtch (find-first-maybe
+                  (lambda (cexp) (idt-is-instance v cexp (append new-env env)))
+                  cexps)
+            (inst)
+              #t
+            #f
+              #f)))))
+
+(define (is-data-type v t env)
+  (find-first-maybe (lambda (tt) (is-data-type-1 v t tt env)) hmd-types))
+(tracefun is-data-type is-data-type-1)
+
+(define (check-data-type v t)
+  (mtch (is-data-type v t '())
+    (t)
+      'dummy
+    #f
+      (err 'wrong-type v t)))
+;(tracefun check-data-type)
+|#
+
+(define (leval-check-type v t)
+  (mtch (list v t)
+    (('Closure lam env) t)
+      (assert (mtch t ('PT 'Fun (a b)) #t ('Forall _ ('PT 'Fun (a b))) #t))
+    (('Native f) t)
+      (assert (mtch t ('PT 'Fun (a b)) #t ('Forall _ ('PT 'Fun (a b))) #t))
+    (i ('C 'Int))
+      (assert (number? i))
+    (b ('C 'Bool))
+      (assert (boolean? b) b)
+    #|
+    (v t)
+      (cond
+        ((or (and (list? v) (symbol? (car v))) (symbol? v)) (check-data-type v t))
+        (#t (err 'wut v t)))
+    |#
+    x
+      x
+    )
+  v)
+;(tracefun leval-check-type)
+
 (define (leval e) (leval0 e global-env))
 (define (leval0 e env)
   (mtch e
     ('T e t)
-      (leval0 e env)
+      (leval-check-type (leval0 e env) t)
     ('L v b)
       `(Closure ,e ,env)
     ('A f x)
