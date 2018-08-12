@@ -630,6 +630,16 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
          (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
                   (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
 
+    ; fold = fix + ns 0
+    ((A (A (A (Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
+                      (If (A (A (V ==) (V xs)) (V Nil))
+                        (V z)
+                        (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
+              (V +))
+           (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
+        (K 0))
+     (C Int) 10)
+
     ; map = /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (map f (cdr x))
     ; (a -> b) -> List a -> List b
     ; map = /. rec /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (rec f (cdr x))
