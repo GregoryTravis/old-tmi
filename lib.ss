@@ -18,6 +18,8 @@
 (define trace-stump-level 1000)
 (define (trace-indent) (set! impl-tracefun-indentation (+ 1 impl-tracefun-indentation)))
 (define (trace-unindent) (set! impl-tracefun-indentation (+ -1 impl-tracefun-indentation)))
+(define (reset-tracefun)
+  (set! impl-tracefun-indentation 0))
 
 (define (tracing-push-print exp)
   (display "        ")
