@@ -65,6 +65,10 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   '(
     ; int -> int -> int
     (+ . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
+    ; int -> int -> int
+    (* . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
+    ; int -> int -> int
+    (- . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ; a -> a -> Bool
     (== . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((TV a) (C Bool)))))))
     ; a -> List a -> List a
@@ -665,6 +669,21 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
            (L (V x) (A (A (V +) (V x)) (V x))))
         (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
+
+    ; fact
+    ((Fix (L (V rec)
+       (L (V n) (If (A (A (V ==) (V n)) (K 0))
+                    (K 1)
+                    (A (A (V *) (V n)) (A (V rec) (A (A (V -) (V n)) (K 1))))))))
+     (PT Fun ((C Int) (C Int))) ,testpred-closure)
+
+    ; fact 10 baby
+    ((A (Fix (L (V rec)
+          (L (V n) (If (A (A (V ==) (V n)) (K 0))
+                         (K 1)
+                         (A (A (V *) (V n)) (A (V rec) (A (A (V -) (V n)) (K 1))))))))
+        (K 10))
+     (C Int) 3628800)
    ))
 
 (define (run-unify-tests)
@@ -682,9 +701,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                 (assert (equal? expected-result actual-result) expected-result actual-result))))))))
     unify-tests))
 
-(define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
+(define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (shew 'um f x y) (f x y))))))
 (define global-env `(
   (+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
+  (- . ,(native-curry-2 -))
+  (* . ,(native-curry-2 *))
   (Cons . (Native ,(lambda (a) `(Native ,(lambda (d) `(Cons ,a ,d))))))
   (Nil . Nil)
   (car . (Native ,(lambda (x) (mtch x ('Cons a d) a))))
@@ -747,10 +768,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 ;(tracefun leval0)
 
 (define foo
-  '(A
-    (A (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
-       (L (V y) (A (A (V +) (V y)) (K 1))))
-    (K 2)))
+  '(A (Fix (L (V rec)
+        (L (V n) (If (A (A (V ==) (V n)) (K 0))
+                       (K 1)
+                       (A (A (V *) (V n)) (A (V rec) (A (A (V -) (V n)) (K 1))))))))
+      (K 10)))
 
 (define (main)
   (run-unify-tests)
