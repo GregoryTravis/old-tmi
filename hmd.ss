@@ -530,29 +530,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define unify-tests
   `(
-    ; /. f /. x (f x) + x
-    ; (Int -> Int) -> Int -> Int
-    ((L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
-     (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int))))) ,testpred-closure)
-
-    ; (/. f /. x (f x) + x) (/. x + 1) 2
-    ; Int
-    ((A
-       (A (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
-          (L (V x) (A (A (V +) (V x)) (K 1))))
-       (K 2))
-     (C Int) 5)
-
-    ; /. x x
-    ; a -> a
-    ((L (V x) (V x))
-     (Forall ((TV a)) (PT Fun ((TV a) (TV a)))) ,testpred-closure)
-
-    ; (/. x x) 44
-    ; int
-    ((A (L (V x) (V x)) (K 44))
-     (C Int) 44)
-
     ; /. f /. x f (f x)
     ; (a -> a) -> a -> a
     ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
@@ -798,20 +775,41 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       '()))
 
 (define program '(
+  ; /. f /. x (f x) + x
+  ; (Int -> Int) -> Int -> Int
   (foo . (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x)))))
-  (main .
+
+  ; (/. f /. x (f x) + x) (/. x + 1) 2
+  ; Int
+  (foo5 .
     (A (A (V foo)
           (L (V x) (A (A (V +) (V x)) (K 1))))
        (K 2)))
+
+  ; /. x x
+  ; a -> a
+  (id .
+    (L (V x) (V x)))
+
+  ; (/. x x) 44
+  ; int
+  (id44 .
+    (A (V id) (K 44)))
 ))
 
 (define program-expected-results `(
   (foo
     (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))
     ,testpred-closure)
-  (main
+  (foo5
     (C Int)
     5)
+  (id
+    (Forall ((TV a)) (PT Fun ((TV a) (TV a))))
+    ,testpred-closure)
+  (id44
+    (C Int)
+    44)
 ))
 
 (define (verify-results typed-program evaled-program)
