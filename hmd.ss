@@ -805,25 +805,29 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     '()
       '()))
 
+(define program-expected-results `(
+  (foo
+    (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))
+    ,testpred-closure)
+  (main
+    (C Int)
+    5)
+))
+
+(define (verify-results typed-program evaled-program)
+  (map (lambda (per) (mtch per (name expected-type expected-result)
+    (let ((actual-type (mtch (lookup name typed-program) ('T e t) t))
+          (actual-result (lookup name evaled-program)))
+      (assert (equal? expected-type actual-type) expected-type actual-type)
+      (if (procedure? expected-result)
+        (assert (expected-result actual-result) actual-result)
+        (assert (equal? expected-result actual-result) expected-result actual-result))
+      (shew 'test name 'ok))))
+    program-expected-results))
+
 (define (main)
   (let ((typed-program (infer-program program)))
     (shew-program-types typed-program)
     (let ((evaled-program (eval-program typed-program global-env)))
-      (shew 'evaled evaled-program))))
-  #|
-  (mtch (infer-types foo)
-    ('T e t)
-      (begin
-        (shew 'well (lshew-type t))
-        (set! initial-type-env (append initial-type-env `((foo . ,t))))
-        (set! global-env (append global-env `((foo . ,(leval `(T ,e ,t))))))
-        (mtch (infer-types appp)
-          ('T e t)
-            (begin
-              (shew 'okok (lshew-type t))
-              (shew 'and (leval `(T ,e ,t))))))))
-              |#
-  ;(run-unify-tests)
-  ;(let ((typed-foo (infer-types foo)))
-    ;(mtch typed-foo ('T e t)
-      ;(shew (lshew-type t) (leval typed-foo)))))
+      (shew 'evaled evaled-program)
+      (verify-results typed-program evaled-program))))
