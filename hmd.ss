@@ -136,7 +136,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (mtch (assoc x env)
     (x . t)
       (instantiate-poly t)))
-(tracefun env-lookup-and-inst)
+;(tracefun env-lookup-and-inst)
 
 (define (tinf e type-env)
   (tinf0 e type-env '()))
@@ -767,14 +767,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       k))
 ;(tracefun leval)
 
-(define program '(
-  (foo . (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x)))))
-  (main .
-    (A (A (V foo)
-          (L (V x) (A (A (V +) (V x)) (K 1))))
-       (K 2)))
-))
-
 (define (shew-program-types typed-program)
   (display
     (++
@@ -804,6 +796,14 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
           . ,(eval-program rest `((,name . ,evaled-e) . ,env))))
     '()
       '()))
+
+(define program '(
+  (foo . (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x)))))
+  (main .
+    (A (A (V foo)
+          (L (V x) (A (A (V +) (V x)) (K 1))))
+       (K 2)))
+))
 
 (define program-expected-results `(
   (foo
