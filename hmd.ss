@@ -530,42 +530,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define unify-tests
   `(
-    ; /. x /. y y
-    ; a -> b -> b
-    ((L (V x) (L (V y) (V y)))
-     (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (TV b)))))) ,testpred-closure)
-
-    ; (/. x /. y y) 1 2
-    ; 2
-    ((A (A (L (V x) (L (V y) (V y))) (K 1)) (K 2))
-     (C Int) 2)
-
-    ; /. x /. y x
-    ; a -> b -> a
-    ((L (V x) (L (V y) (V x)))
-     (Forall ((TV b) (TV a)) (PT Fun ((TV a) (PT Fun ((TV b) (TV a)))))) ,testpred-closure)
-
-    ; (/. x /. y x) 1 2
-    ; 1
-    ((A (A (L (V x) (L (V y) (V x))) (K 1)) (K 2))
-     (C Int) 1)
-
-    ((V +)
-     (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))) ,testpred-native)
-    ((K 3)
-     (C Int) 3)
-    ((K #t)
-     (C Bool) #t)
-    ((K #f)
-     (C Bool) #f)
-
-    ((A (A (V Cons) (K 1)) (V Nil))
-     (PT List ((C Int))) (Cons 1 Nil))
-    ((A (V car) (A (A (V Cons) (K 1)) (V Nil)))
-     (C Int) 1)
-    ((A (V cdr) (A (A (V Cons) (K 1)) (V Nil)))
-     (PT List ((C Int))) Nil)
-
     ((If (K #t) (K 1) (K 2))
      (C Int) 1)
     ((If (K #f) (K 1) (K 2))
@@ -795,6 +759,42 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (A (A (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
           (L (V x) (A (A (V +) (V x)) (V x))))
        (K 13)))
+
+  ; /. x /. y y
+  ; a -> b -> b
+  (xyy .
+    (L (V x) (L (V y) (V y))))
+
+  ; (/. x /. y y) 1 2
+  ; 2
+  (xyy12 .
+    (A (A (L (V x) (L (V y) (V y))) (K 1)) (K 2)))
+
+  ; /. x /. y x
+  ; a -> b -> a
+  (xyx .
+    (L (V x) (L (V y) (V x))))
+
+  ; (/. x /. y x) 1 2
+  ; 1
+  (xyx12 .
+    (A (A (L (V x) (L (V y) (V x))) (K 1)) (K 2)))
+
+    (plus .
+      (V +))
+    (k3 .
+      (K 3))
+    (tru .
+      (K #t))
+    (fal .
+      (K #f))
+
+    (cons1n .
+      (A (A (V Cons) (K 1)) (V Nil)))
+    (car1n .
+      (A (V car) (A (A (V Cons) (K 1)) (V Nil))))
+    (cdr1n .
+      (A (V cdr) (A (A (V Cons) (K 1)) (V Nil))))
 ))
 
 (define program-expected-results `(
@@ -804,8 +804,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (foo5
     (C Int)
     5)
-  (id
-    (Forall ((TV a)) (PT Fun ((TV a) (TV a))))
+  (id (Forall ((TV a)) (PT Fun ((TV a) (TV a))))
     ,testpred-closure)
   (id44
     (C Int)
@@ -816,6 +815,39 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
    (da13
      (C Int)
      52)
+   (xyy
+     (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (TV b))))))
+     ,testpred-closure)
+   (xyy12
+     (C Int)
+     2)
+   (xyx
+     (Forall ((TV b) (TV a)) (PT Fun ((TV a) (PT Fun ((TV b) (TV a))))))
+     ,testpred-closure)
+   (xyx12
+     (C Int)
+     1)
+    (plus
+      (PT Fun ((C Int) (PT Fun ((C Int) (C Int)))))
+      ,testpred-native)
+    (k3
+      (C Int)
+      3)
+    (tru
+      (C Bool)
+      #t)
+    (fal
+      (C Bool)
+      #f)
+    (cons1n
+      (PT List ((C Int)))
+      (Cons 1 Nil))
+    (car1n
+      (C Int)
+      1)
+    (cdr1n
+      (PT List ((C Int)))
+      Nil)
 ))
 
 (define (verify-results typed-program evaled-program)
