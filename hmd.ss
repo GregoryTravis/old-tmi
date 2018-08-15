@@ -530,31 +530,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define unify-tests
   `(
-    ((If (K #t) (K 1) (K 2))
-     (C Int) 1)
-    ((If (K #f) (K 1) (K 2))
-     (C Int) 2)
-
-    ((A (A (V ==) (K 1)) (K 1))
-     (C Bool) #t)
-    ((A (A (V ==) (K 1)) (K 2))
-     (C Bool) #f)
-
-    ; /. a /. b if a == b then a else b
-    ; a -> a -> a
-    ((L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b))))
-     (Forall ((TV c)) (PT Fun ((TV c) (PT Fun ((TV c) (TV c)))))) ,testpred-closure)
-
-    ; (/. a /. b if a == b then a else b) 1 2
-    ; 2
-    ((A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 2))
-     (C Int) 2)
-
-    ; (/. a /. b if a == b then a else b) 1 1
-    ; 1
-    ((A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 1))
-     (C Int) 1)
-
     ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
     ((Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
             (If (A (A (V ==) (V xs)) (V Nil))
@@ -780,21 +755,46 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (xyx12 .
     (A (A (L (V x) (L (V y) (V x))) (K 1)) (K 2)))
 
-    (plus .
-      (V +))
-    (k3 .
-      (K 3))
-    (tru .
-      (K #t))
-    (fal .
-      (K #f))
+  (plus .
+    (V +))
+  (k3 .
+    (K 3))
+  (tru .
+    (K #t))
+  (fal .
+    (K #f))
 
-    (cons1n .
-      (A (A (V Cons) (K 1)) (V Nil)))
-    (car1n .
-      (A (V car) (A (A (V Cons) (K 1)) (V Nil))))
-    (cdr1n .
-      (A (V cdr) (A (A (V Cons) (K 1)) (V Nil))))
+  (cons1n .
+    (A (A (V Cons) (K 1)) (V Nil)))
+  (car1n .
+    (A (V car) (A (A (V Cons) (K 1)) (V Nil))))
+  (cdr1n .
+    (A (V cdr) (A (A (V Cons) (K 1)) (V Nil))))
+
+  (if12t .
+    (If (K #t) (K 1) (K 2)))
+  (if12f .
+    (If (K #f) (K 1) (K 2)))
+
+  (eq11 .
+    (A (A (V ==) (K 1)) (K 1)))
+  (eq12 .
+    (A (A (V ==) (K 1)) (K 2)))
+
+  ; /. a /. b if a == b then a else b
+  ; a -> a -> a
+  (eqaba .
+    (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))))
+
+  ; (/. a /. b if a == b then a else b) 1 2
+  ; 2
+  (eqaba12 .
+    (A (A (V eqaba) (K 1)) (K 2)))
+
+  ; (/. a /. b if a == b then a else b) 1 1
+  ; 1
+  (eqaba11 .
+    (A (A (V eqaba) (K 1)) (K 1)))
 ))
 
 (define program-expected-results `(
@@ -848,6 +848,27 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (cdr1n
       (PT List ((C Int)))
       Nil)
+    (if12t
+      (C Int)
+      1)
+    (if12f
+      (C Int)
+      2)
+    (eq11
+      (C Bool)
+      #t)
+    (eq12
+      (C Bool)
+      #f)
+    (eqaba
+      (Forall ((TV c)) (PT Fun ((TV c) (PT Fun ((TV c) (TV c))))))
+      ,testpred-closure)
+    (eqaba12
+      (C Int)
+      2)
+    (eqaba11
+      (C Int)
+      1)
 ))
 
 (define (verify-results typed-program evaled-program)
