@@ -530,51 +530,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define unify-tests
   `(
-    ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
-    ((Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
-            (If (A (A (V ==) (V xs)) (V Nil))
-              (V z)
-              (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
-     (Forall ((TV m) (TV e))
-         (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
-                  (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
-
-    ; fold = fix + ns 0
-    ((A (A (A (Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
-                      (If (A (A (V ==) (V xs)) (V Nil))
-                        (V z)
-                        (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
-              (V +))
-           (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
-        (K 0))
-     (C Int) 10)
-
-    ; map = /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (map f (cdr x))
-    ; (a -> b) -> List a -> List b
-    ; map = /. rec /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (rec f (cdr x))
-    ; ((a -> b) -> List a -> List b) -> (a -> b) -> List a -> List b
-    ((Fix (L (V rec) (L (V f) (L (V x)
-            (If (A (A (V ==) (V x)) (V Nil))
-                (V Nil)
-                (A (A (V Cons) (A (V f) (A (V car) (V x))))
-                   (A (A (V rec) (V f)) (A (V cdr) (V x)))))))))
-     (Forall
-       ((TV o) (TV l))
-         (PT
-            Fun
-               ((PT Fun ((TV o) (TV l)))
-                   (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))) ,testpred-closure)
-
-    ; map (/. x x + x) ns
-    ((A (A (Fix (L (V rec) (L (V f) (L (V x)
-                   (If (A (A (V ==) (V x)) (V Nil))
-                       (V Nil)
-                       (A (A (V Cons) (A (V f) (A (V car) (V x))))
-                          (A (A (V rec) (V f)) (A (V cdr) (V x)))))))))
-           (L (V x) (A (A (V +) (V x)) (V x))))
-        (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
-     (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
-
     ; fact
     ((Fix (L (V rec)
        (L (V n) (If (A (A (V ==) (V n)) (K 0))
@@ -795,6 +750,40 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   ; 1
   (eqaba11 .
     (A (A (V eqaba) (K 1)) (K 1)))
+
+  ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
+  (fold .
+    (Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
+            (If (A (A (V ==) (V xs)) (V Nil))
+              (V z)
+              (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z))))))))))
+
+  ; fold = fix + ns 0
+  (fold1-4 .
+    (A (A (A (V fold)
+              (V +))
+           (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
+        (K 0)))
+
+  ; map = /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (map f (cdr x))
+  ; (a -> b) -> List a -> List b
+  ; map = /. rec /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (rec f (cdr x))
+  ; ((a -> b) -> List a -> List b) -> (a -> b) -> List a -> List b
+  (map .
+    (Fix (L (V rec) (L (V f) (L (V x)
+            (If (A (A (V ==) (V x)) (V Nil))
+                (V Nil)
+                (A (A (V Cons) (A (V f) (A (V car) (V x))))
+                   (A (A (V rec) (V f)) (A (V cdr) (V x))))))))))
+  ; map (/. x x + x) ns
+  (map1-4 .
+    (A (A (Fix (L (V rec) (L (V f) (L (V x)
+                  (If (A (A (V ==) (V x)) (V Nil))
+                      (V Nil)
+                      (A (A (V Cons) (A (V f) (A (V car) (V x))))
+                         (A (A (V rec) (V f)) (A (V cdr) (V x)))))))))
+          (L (V x) (A (A (V +) (V x)) (V x))))
+       (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil)))))))
 ))
 
 (define program-expected-results `(
@@ -869,6 +858,25 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (eqaba11
       (C Int)
       1)
+    (fold
+      (Forall ((TV m) (TV e))
+          (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
+                   (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e))))))))
+      ,testpred-closure)
+    (fold1-4
+      (C Int)
+      10)
+    (map
+      (Forall
+        ((TV o) (TV l))
+          (PT
+             Fun
+                ((PT Fun ((TV o) (TV l)))
+                    (PT Fun ((PT List ((TV o))) (PT List ((TV l))))))))
+      ,testpred-closure)
+    (map1-4
+      (PT List ((C Int)))
+      (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
 ))
 
 (define (verify-results typed-program evaled-program)
