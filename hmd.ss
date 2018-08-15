@@ -530,18 +530,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define unify-tests
   `(
-    ; /. f /. x f (f x)
-    ; (a -> a) -> a -> a
-    ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
-     (Forall ((TV d)) (PT Fun ((PT Fun ((TV d) (TV d))) (PT Fun ((TV d) (TV d)))))) ,testpred-closure)
-
-    ; (/. f /. x f (f x)) (/. x x + x) 13
-    ; 52
-    ((A (A (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
-           (L (V x) (A (A (V +) (V x)) (V x))))
-        (K 13))
-     (C Int) 52)
-
     ; /. x /. y y
     ; a -> b -> b
     ((L (V x) (L (V y) (V y)))
@@ -795,6 +783,18 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   ; int
   (id44 .
     (A (V id) (K 44)))
+
+  ; /. f /. x f (f x)
+  ; (a -> a) -> a -> a
+  (double-apply  .
+    (L (V f) (L (V x) (A (V f) (A (V f) (V x))))))
+
+  ; (/. f /. x f (f x)) (/. x x + x) 13
+  ; 52
+  (da13 .
+    (A (A (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
+          (L (V x) (A (A (V +) (V x)) (V x))))
+       (K 13)))
 ))
 
 (define program-expected-results `(
@@ -810,6 +810,12 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (id44
     (C Int)
     44)
+  (double-apply
+    (Forall ((TV d)) (PT Fun ((PT Fun ((TV d) (TV d))) (PT Fun ((TV d) (TV d))))))
+    ,testpred-closure)
+   (da13
+     (C Int)
+     52)
 ))
 
 (define (verify-results typed-program evaled-program)
