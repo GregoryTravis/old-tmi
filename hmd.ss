@@ -797,7 +797,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (if (procedure? expected-result)
         (assert (expected-result actual-result) actual-result)
         (assert (equal? expected-result actual-result) expected-result actual-result))
-      (shew `(test ,name)))))
+      ;(shew `(test ,name)))))
     test-program)
   (shew 'test-ok))
 
