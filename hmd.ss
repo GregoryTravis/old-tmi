@@ -532,102 +532,101 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   `(
     ; /. f /. x (f x) + x
     ; (Int -> Int) -> Int -> Int
-    ((L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
-     (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int))))) ,testpred-closure)
+    (foo (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
+      (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))
+      ,testpred-closure)
 
     ; (/. f /. x (f x) + x) (/. x + 1) 2
     ; Int
-    ((A
-       (A (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
-          (L (V x) (A (A (V +) (V x)) (K 1))))
-       (K 2))
-     (C Int) 5)
+    (fooa (A (A (V foo) (L (V x) (A (A (V +) (V x)) (K 1)))) (K 2))
+      (C Int)
+      5)
 
     ; /. x x
     ; a -> a
-    ((L (V x) (V x))
+    (id (L (V x) (V x))
      (Forall ((TV a)) (PT Fun ((TV a) (TV a)))) ,testpred-closure)
 
     ; (/. x x) 44
     ; int
-    ((A (L (V x) (V x)) (K 44))
+    (ida (A (L (V x) (V x)) (K 44))
      (C Int) 44)
 
     ; /. f /. x f (f x)
     ; (a -> a) -> a -> a
-    ((L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
+    (dapp (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
      (Forall ((TV d)) (PT Fun ((PT Fun ((TV d) (TV d))) (PT Fun ((TV d) (TV d)))))) ,testpred-closure)
 
     ; (/. f /. x f (f x)) (/. x x + x) 13
     ; 52
-    ((A (A (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
+    (dappa (A (A (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
            (L (V x) (A (A (V +) (V x)) (V x))))
         (K 13))
      (C Int) 52)
 
     ; /. x /. y y
     ; a -> b -> b
-    ((L (V x) (L (V y) (V y)))
+    (xyy (L (V x) (L (V y) (V y)))
      (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (TV b)))))) ,testpred-closure)
 
     ; (/. x /. y y) 1 2
     ; 2
-    ((A (A (L (V x) (L (V y) (V y))) (K 1)) (K 2))
+    (xxya (A (A (L (V x) (L (V y) (V y))) (K 1)) (K 2))
      (C Int) 2)
 
     ; /. x /. y x
     ; a -> b -> a
-    ((L (V x) (L (V y) (V x)))
+    (xyx (L (V x) (L (V y) (V x)))
      (Forall ((TV b) (TV a)) (PT Fun ((TV a) (PT Fun ((TV b) (TV a)))))) ,testpred-closure)
 
     ; (/. x /. y x) 1 2
     ; 1
-    ((A (A (L (V x) (L (V y) (V x))) (K 1)) (K 2))
+    (xyxa (A (A (L (V x) (L (V y) (V x))) (K 1)) (K 2))
      (C Int) 1)
 
-    ((V +)
+    (plus (V +)
      (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))) ,testpred-native)
-    ((K 3)
+    (three (K 3)
      (C Int) 3)
-    ((K #t)
+    (troo (K #t)
      (C Bool) #t)
-    ((K #f)
+    (fals (K #f)
      (C Bool) #f)
 
-    ((A (A (V Cons) (K 1)) (V Nil))
+    (cns (A (A (V Cons) (K 1)) (V Nil))
      (PT List ((C Int))) (Cons 1 Nil))
-    ((A (V car) (A (A (V Cons) (K 1)) (V Nil)))
+    (carcns (A (V car) (A (A (V Cons) (K 1)) (V Nil)))
      (C Int) 1)
-    ((A (V cdr) (A (A (V Cons) (K 1)) (V Nil)))
+    (cdrcns (A (V cdr) (A (A (V Cons) (K 1)) (V Nil)))
      (PT List ((C Int))) Nil)
 
-    ((If (K #t) (K 1) (K 2))
+    (ift (If (K #t) (K 1) (K 2))
      (C Int) 1)
-    ((If (K #f) (K 1) (K 2))
+    (iff (If (K #f) (K 1) (K 2))
      (C Int) 2)
 
-    ((A (A (V ==) (K 1)) (K 1))
+    (eqt (A (A (V ==) (K 1)) (K 1))
      (C Bool) #t)
-    ((A (A (V ==) (K 1)) (K 2))
+    (eqf (A (A (V ==) (K 1)) (K 2))
      (C Bool) #f)
 
     ; /. a /. b if a == b then a else b
     ; a -> a -> a
-    ((L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b))))
+    (ifab (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b))))
      (Forall ((TV c)) (PT Fun ((TV c) (PT Fun ((TV c) (TV c)))))) ,testpred-closure)
 
     ; (/. a /. b if a == b then a else b) 1 2
     ; 2
-    ((A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 2))
+    (ifaban (A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 2))
      (C Int) 2)
 
     ; (/. a /. b if a == b then a else b) 1 1
     ; 1
-    ((A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 1))
+    (ifabae (A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 1))
      (C Int) 1)
 
     ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
-    ((Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
+    (fold (Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
             (If (A (A (V ==) (V xs)) (V Nil))
               (V z)
               (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
@@ -636,7 +635,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                   (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
 
     ; fold = fix + ns 0
-    ((A (A (A (Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
+    (folda (A (A (A (Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
                       (If (A (A (V ==) (V xs)) (V Nil))
                         (V z)
                         (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
@@ -649,7 +648,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ; (a -> b) -> List a -> List b
     ; map = /. rec /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (rec f (cdr x))
     ; ((a -> b) -> List a -> List b) -> (a -> b) -> List a -> List b
-    ((Fix (L (V rec) (L (V f) (L (V x)
+    (map (Fix (L (V rec) (L (V f) (L (V x)
             (If (A (A (V ==) (V x)) (V Nil))
                 (V Nil)
                 (A (A (V Cons) (A (V f) (A (V car) (V x))))
@@ -662,7 +661,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                    (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))) ,testpred-closure)
 
     ; map (/. x x + x) ns
-    ((A (A (Fix (L (V rec) (L (V f) (L (V x)
+    (mapa (A (A (Fix (L (V rec) (L (V f) (L (V x)
                    (If (A (A (V ==) (V x)) (V Nil))
                        (V Nil)
                        (A (A (V Cons) (A (V f) (A (V car) (V x))))
@@ -672,14 +671,14 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
 
     ; fact
-    ((Fix (L (V rec)
+    (fact (Fix (L (V rec)
        (L (V n) (If (A (A (V ==) (V n)) (K 0))
                     (K 1)
                     (A (A (V *) (V n)) (A (V rec) (A (A (V -) (V n)) (K 1))))))))
      (PT Fun ((C Int) (C Int))) ,testpred-closure)
 
     ; fact 10 baby
-    ((A (Fix (L (V rec)
+    (fact10 (A (Fix (L (V rec)
           (L (V n) (If (A (A (V ==) (V n)) (K 0))
                          (K 1)
                          (A (A (V *) (V n)) (A (V rec) (A (A (V -) (V n)) (K 1))))))))
@@ -767,6 +766,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       k))
 ;(tracefun leval)
 
+#|
 (define program '(
   (foo . (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x)))))
   (main .
@@ -774,6 +774,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
           (L (V x) (A (A (V +) (V x)) (K 1))))
        (K 2)))
 ))
+|#
 
 (define (shew-program-types typed-program)
   (display
@@ -805,6 +806,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     '()
       '()))
 
+#|
 (define program-expected-results `(
   (foo
     (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))
@@ -813,21 +815,23 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (C Int)
     5)
 ))
+|#
 
 (define (verify-results typed-program evaled-program)
-  (map (lambda (per) (mtch per (name expected-type expected-result)
+  (map (lambda (per) (mtch per (name code expected-type expected-result)
     (let ((actual-type (mtch (lookup name typed-program) ('T e t) t))
           (actual-result (lookup name evaled-program)))
       (assert (equal? expected-type actual-type) expected-type actual-type)
       (if (procedure? expected-result)
         (assert (expected-result actual-result) actual-result)
         (assert (equal? expected-result actual-result) expected-result actual-result))
-      (shew 'test name 'ok))))
-    program-expected-results))
+      (shew `(test ,name)))))
+    unify-tests))
 
 (define (main)
-  (let ((typed-program (infer-program program)))
-    (shew-program-types typed-program)
-    (let ((evaled-program (eval-program typed-program global-env)))
-      (shew 'evaled evaled-program)
-      (verify-results typed-program evaled-program))))
+  (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) unify-tests)))
+    (let ((typed-program (infer-program program)))
+      (shew-program-types typed-program)
+      (let ((evaled-program (eval-program typed-program global-env)))
+        ;(shew 'evaled evaled-program)
+        (verify-results typed-program evaled-program)))))
