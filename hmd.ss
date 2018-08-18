@@ -634,10 +634,14 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
          (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
                   (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
 
+    (d1234 (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil)))))
+      (PT List ((C Int)))
+      (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))
+
     ; fold = fix + ns 0
     (folda (A (A (A (V fold)
               (V +))
-           (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
+           (V d1234))
         (K 0))
      (C Int) 10)
 
@@ -660,7 +664,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ; map (/. x x + x) ns
     (mapa (A (A (V map)
            (L (V x) (A (A (V +) (V x)) (V x))))
-        (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
+        (V d1234))
      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
 
     ; fact
