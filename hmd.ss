@@ -528,7 +528,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (testpred-closure x) (mtch x ('Closure . _) #t))
 (define (testpred-native x) (mtch x ('Native . _) #t))
 
-(define unify-tests
+(define test-program
   `(
     ; /. f /. x (f x) + x
     ; (Int -> Int) -> Int -> Int
@@ -549,7 +549,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     ; (/. x x) 44
     ; int
-    (ida (A (L (V x) (V x)) (K 44))
+    (ida (A (V id) (K 44))
      (C Int) 44)
 
     ; /. f /. x f (f x)
@@ -559,7 +559,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     ; (/. f /. x f (f x)) (/. x x + x) 13
     ; 52
-    (dappa (A (A (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
+    (dappa (A (A (V dapp)
            (L (V x) (A (A (V +) (V x)) (V x))))
         (K 13))
      (C Int) 52)
@@ -571,7 +571,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     ; (/. x /. y y) 1 2
     ; 2
-    (xxya (A (A (L (V x) (L (V y) (V y))) (K 1)) (K 2))
+    (xxya (A (A (V xyy) (K 1)) (K 2))
      (C Int) 2)
 
     ; /. x /. y x
@@ -581,7 +581,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     ; (/. x /. y x) 1 2
     ; 1
-    (xyxa (A (A (L (V x) (L (V y) (V x))) (K 1)) (K 2))
+    (xyxa (A (A (V xyx) (K 1)) (K 2))
      (C Int) 1)
 
     (plus (V +)
@@ -595,9 +595,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     (cns (A (A (V Cons) (K 1)) (V Nil))
      (PT List ((C Int))) (Cons 1 Nil))
-    (carcns (A (V car) (A (A (V Cons) (K 1)) (V Nil)))
+    (carcns (A (V car) (V cns))
      (C Int) 1)
-    (cdrcns (A (V cdr) (A (A (V Cons) (K 1)) (V Nil)))
+    (cdrcns (A (V cdr) (V cns))
      (PT List ((C Int))) Nil)
 
     (ift (If (K #t) (K 1) (K 2))
@@ -617,12 +617,12 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     ; (/. a /. b if a == b then a else b) 1 2
     ; 2
-    (ifaban (A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 2))
+    (ifaban (A (A (V ifab) (K 1)) (K 2))
      (C Int) 2)
 
     ; (/. a /. b if a == b then a else b) 1 1
     ; 1
-    (ifabae (A (A (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b)))) (K 1)) (K 1))
+    (ifabae (A (A (V ifab) (K 1)) (K 1))
      (C Int) 1)
 
     ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
@@ -635,10 +635,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                   (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
 
     ; fold = fix + ns 0
-    (folda (A (A (A (Fix (L (V rec) (L (V f) (L (V xs) (L (V z)
-                      (If (A (A (V ==) (V xs)) (V Nil))
-                        (V z)
-                        (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
+    (folda (A (A (A (V fold)
               (V +))
            (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
         (K 0))
@@ -661,11 +658,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                    (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))) ,testpred-closure)
 
     ; map (/. x x + x) ns
-    (mapa (A (A (Fix (L (V rec) (L (V f) (L (V x)
-                   (If (A (A (V ==) (V x)) (V Nil))
-                       (V Nil)
-                       (A (A (V Cons) (A (V f) (A (V car) (V x))))
-                          (A (A (V rec) (V f)) (A (V cdr) (V x)))))))))
+    (mapa (A (A (V map)
            (L (V x) (A (A (V +) (V x)) (V x))))
         (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil))))))
      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
@@ -678,15 +671,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
      (PT Fun ((C Int) (C Int))) ,testpred-closure)
 
     ; fact 10 baby
-    (fact10 (A (Fix (L (V rec)
-          (L (V n) (If (A (A (V ==) (V n)) (K 0))
-                         (K 1)
-                         (A (A (V *) (V n)) (A (V rec) (A (A (V -) (V n)) (K 1))))))))
-        (K 10))
+    (fact10 (A (V fact) (K 10))
      (C Int) 3628800)
    ))
 
-(define (run-unify-tests)
+(define (run-test-program)
   (map (lambda (test) (mtch test
     (src expected-type expected-result)
       (let ((typed-src (infer-types src)))
@@ -699,7 +688,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
               (if (procedure? expected-result)
                 (assert (expected-result actual-result) actual-result)
                 (assert (equal? expected-result actual-result) expected-result actual-result))))))))
-    unify-tests))
+    test-program))
 
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (shew 'um f x y) (f x y))))))
 (define global-env `(
@@ -766,16 +755,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       k))
 ;(tracefun leval)
 
-#|
-(define program '(
-  (foo . (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x)))))
-  (main .
-    (A (A (V foo)
-          (L (V x) (A (A (V +) (V x)) (K 1))))
-       (K 2)))
-))
-|#
-
 (define (shew-program-types typed-program)
   (display
     (++
@@ -806,17 +785,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     '()
       '()))
 
-#|
-(define program-expected-results `(
-  (foo
-    (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))
-    ,testpred-closure)
-  (main
-    (C Int)
-    5)
-))
-|#
-
 (define (verify-results typed-program evaled-program)
   (map (lambda (per) (mtch per (name code expected-type expected-result)
     (let ((actual-type (mtch (lookup name typed-program) ('T e t) t))
@@ -826,10 +794,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (assert (expected-result actual-result) actual-result)
         (assert (equal? expected-result actual-result) expected-result actual-result))
       (shew `(test ,name)))))
-    unify-tests))
+    test-program)
+  (shew 'test-ok))
 
 (define (main)
-  (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) unify-tests)))
+  (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) test-program)))
     (let ((typed-program (infer-program program)))
       (shew-program-types typed-program)
       (let ((evaled-program (eval-program typed-program global-env)))
