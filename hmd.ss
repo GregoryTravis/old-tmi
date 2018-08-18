@@ -694,7 +694,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                 (assert (equal? expected-result actual-result) expected-result actual-result))))))))
     test-program))
 
-(define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (shew 'um f x y) (f x y))))))
+(define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
 (define global-env `(
   (+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
   (- . ,(native-curry-2 -))
