@@ -679,21 +679,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
      (C Int) 3628800)
    ))
 
-(define (run-test-program)
-  (map (lambda (test) (mtch test
-    (src expected-type expected-result)
-      (let ((typed-src (infer-types src)))
-        (mtch typed-src ('T _ actual-type)
-          (begin
-            (shew 'test src expected-type actual-type (equal? expected-type actual-type))
-            (assert (equal? expected-type actual-type))
-            (let ((actual-result (leval typed-src)))
-              ;(shew 'test src expected-result actual-result (equal? expected-type actual-type))
-              (if (procedure? expected-result)
-                (assert (expected-result actual-result) actual-result)
-                (assert (equal? expected-result actual-result) expected-result actual-result))))))))
-    test-program))
-
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
 (define global-env `(
   (+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
