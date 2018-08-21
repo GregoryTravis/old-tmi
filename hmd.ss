@@ -787,10 +787,77 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     test-program)
   (shew 'test-ok))
 
-(define (main)
+(define (omain)
   (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) test-program)))
     (let ((typed-program (infer-program program)))
       (shew-program-types typed-program)
       (let ((evaled-program (eval-program typed-program global-env)))
         ;(shew 'evaled evaled-program)
         (verify-results typed-program evaled-program)))))
+
+(define small-test-program-description
+  `(
+    (main (K 1)
+      (C Int)
+      1)
+    ))
+
+(define (generate-typed-program-from-description d)
+  (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) d)))
+    (infer-program program)))
+
+(define (generate-headers) "#include <stdio.h>\n")
+(define (csrc-render-stuff l) (join-things "" (flatten l)))
+(define (csrc-stmt e) (list e ";"))
+(define (csrc-call f . args)
+  `(,f "(" ,(join-things-list ", " args) ")"))
+(define (csrc-funname f) `(tmig_ ,f))
+(define (csrc-return e) (csrc-stmt `(return " " ,e)))
+(define (csrc-render-stmts stmts) (list (join-things-list "\n" stmts) "\n"))
+
+(define (csrc-render-arg-decls arg-decls)
+  (assert (eq? arg-decls '()))
+  "()")
+
+(define (render-type t)
+  (mtch t
+    ('C 'Int)
+      'int))
+
+(define (csrc-fundef name return-type args body)
+  `(,(render-type return-type) " " ,name ,(csrc-render-arg-decls args)
+    "{\n" ,(csrc-render-stmts body) "}\n"))
+
+(define (generate-main-value-printer tp)
+  (mtch (lookup 'main tp)
+    ('T ('K i) ('C 'Int))
+      (csrc-fundef 'main '(C Int) '()
+        (list (csrc-stmt (csrc-call 'printf "\"%d\\n\"" (csrc-call (csrc-funname 'main))))
+              (csrc-return 0)))))
+;(tracefun generate-main-value-printer csrc-fundef)
+
+(define (compile-exp e)
+  (mtch e
+    ('T ('K i) ('C Int))
+      i))
+
+(define (compile-tlf-as-function e)
+  (mtch e (name . body) (mtch body
+    ('T ('K i) ('C Int))
+      (csrc-fundef (csrc-funname name) `(C Int) '()
+        (csrc-return (compile-exp body))))))
+
+(define (compile-program tp)
+  (list (generate-headers)
+        (map compile-tlf-as-function tp)
+        (generate-main-value-printer tp)))
+
+(define (main)
+  (let ((typed-program (generate-typed-program-from-description small-test-program-description)))
+    (shew-program-types typed-program)
+    (shew typed-program)
+    (let ((stuff (compile-program typed-program)))
+      (shew stuff)
+      (let ((stuff-string (csrc-render-stuff stuff)))
+        (shew stuff-string)
+        (write-string-to-file "tyc.c" stuff-string)))))
