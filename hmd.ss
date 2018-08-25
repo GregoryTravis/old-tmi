@@ -812,6 +812,13 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (PT Fun ((C Int) (C Int))) ,testpred-closure)
     (countdown2 (Fixn (K 2) (PT FixList ((V countdown0-rec) (V countdown1-rec) (V countdown2-rec))))
       (PT Fun ((C Int) (C Int))) ,testpred-closure)
+
+    (countdown0-5 (A (V countdown0) (K 5))
+      (C Int) 0)
+    (rountdown1-5 (A (V countdown0) (K 5))
+      (C Int) 0)
+    (countdown2-5 (A (V countdown0) (K 5))
+      (C Int) 0)
    ))
 
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
