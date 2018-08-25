@@ -138,7 +138,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (mtch (assoc x env)
     (x . t)
       (instantiate-poly t)))
-(tracefun env-lookup-and-inst)
+;(tracefun env-lookup-and-inst)
 
 (define (tinf e type-env)
   (tinf0 e type-env '()))
@@ -191,8 +191,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (type-of-nth-arg-of-multi-arg-fun-type (- n 1) b)))
       |#
 
-(tracefun tinf0*)
-(tracefun generate-fun-type unifiers-for-fixn-open-recs)
+;(tracefun tinf0*)
+;(tracefun generate-fun-type unifiers-for-fixn-open-recs)
 
 #|
 (define (unifiers-for-fixn-open-recs tes)
@@ -301,7 +301,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       `((T ,e ,(env-lookup-and-inst x env)) ,unis)
     ('K k)
       `((T ,e ,(get-constant-type k)) ,unis)))
-(tracefun tinf0)
+;(tracefun tinf0)
 
 (define (ut a b)
   (if (not (equal? a b))
@@ -654,7 +654,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define test-program
   `(
-    #|
     ; /. f /. x (f x) + x
     ; (Int -> Int) -> Int -> Int
     (foo (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
@@ -803,7 +802,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (fact10 (A (V fact) (K 10))
      (C Int) 3628800)
 
-    |#
     (even-oprec
       (L (V even-rec)
         (L (V odd-rec)
