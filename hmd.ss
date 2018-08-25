@@ -182,57 +182,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     '()
       ret-t))
 
-#|
-(define (type-of-nth-arg-of-multi-arg-fun-type n t)
-  (mtch `(,n ,t)
-    (0 ('PT 'Fun (a b)))
-      a
-    (n ('PT 'Fun (a b)))
-      (type-of-nth-arg-of-multi-arg-fun-type (- n 1) b)))
-      |#
-
 ;(tracefun tinf0*)
 ;(tracefun generate-fun-type unifiers-for-fixn-open-recs)
-
-#|
-(define (unifiers-for-fixn-open-recs tes)
-  ;; Assuming n functions of m args
-  ;; types: length n
-  ;; args-n-rets: n rows of n + 1
-  (let ((types (map (lambda (e) (mtch e ('T e t) t)) tes)))
-    (let ((args-n-rets (map multi-arg-fun-args-and-ret types)))
-      (shew 'heyy types args-n-rets)
-      (shew 'hey (length types) (length args-n-rets) (map length args-n-rets))
-      (assert (eq? (length types) (length args-n-rets)))
-      (assert (same (cons (+ (length types) 1) (map length args-n-rets))))
-      (let ((n (length types))
-            (m (length (car args-n-rets))))
-        (append
-          ;; Vertical unifications
-          (map-append
-            (lambda (r)
-              (map
-                (lambda (c)
-                  `(,(nth c (nth r args-n-rets))
-                    ,(nth c (nth (+ r 1) args-n-rets))))
-                (- m 1)))
-            n)
-          ;; Horizontal unifications
-          (map
-            (lambda (r)
-              `(,(nth r (nth r args-n-rets))
-                ,(nth (+ m 1) (nth r args-n-rets))))
-            n))))))
-
-;; Get list of arg types and return type of a multi-arg fun type.
-;; a -> b -> c => (a b c)
-(define (multi-arg-fun-args-and-ret t)
-  (mtch t
-    ('PT 'Fun (a ('PT 'Fun (b ('PT 'Fun (c d))))))
-      `(,a . ,(multi-arg-fun-args-and-ret `(PT Fun (,b (PT Fun (,c ,d))))))
-    ('PT 'Fun (a ('PT 'Fun (b c))))
-      `(,a ,b ,c)))
-|#
 
 ; (exp, env, unis) -> (typed-exp, unis)
 (define (tinf0 e env unis)
@@ -267,22 +218,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (result-ts new-unis)
               `((T (Fixn (K ,i) (PT FixList ,tes)) ,(nth i result-ts))
                 ,(append new-unis unis))))
-          ;(let ((result-t (mtch (nth i tes) ('T e t) (type-of-nth-arg-of-multi-arg-fun-type t))))
-
-      #|
-      (mtch (tinf0 f env unis)
-        (('T f ('PT 'Fun (ab ('PT 'Fun (cd ab2))))) unis)
-          (mtch (tinf0 g env unis)
-            (('T g ('PT 'Fun (ab3 ('PT 'Fun (cd2 cd3))))) unis)
-              `((T (Fixn (K ,i) (PT FixList ((T ,f (PT Fun (,ab (PT Fun (,cd ,ab2)))))
-                                             (T ,g (PT Fun (,ab3 (PT Fun (,cd2 ,cd3))))))))
-                   ,(nth i `(,ab ,cd)))
-                ((,ab ,ab2)
-                 (,ab ,ab3)
-                 (,cd ,cd2)
-                 (,cd ,cd3)
-                . ,unis))))
-                |#
 
     ('If b th el)
       (let ((result-t (ty)))
