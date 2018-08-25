@@ -143,6 +143,97 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (tinf e type-env)
   (tinf0 e type-env '()))
 
+;; Infer types of a list of expressions, returning a list of types
+;; and the final unis.  Thread the uni through each individual inference.
+;; es -> env -> unis -> (tes, unis)
+(define (tinf0* es env unis)
+  (mtch es
+    (e . es)
+      (mtch (tinf0 e env unis)
+        (te unis)
+          (mtch (tinf0* es env unis)
+            (tes unis)
+              `((,te . ,tes) ,unis)))
+    '()
+      `(() ,unis)))
+
+;; Generate necessary unifiers for a set of typed Fixn open-recursive forms.
+;; Each of the a .. e are actually function types.
+;; f :: a -> b -> ... -> e -> a
+;; g :: a -> b -> ... -> e -> b
+;; ...
+;; j :: a -> b -> ... -> e -> e
+;; Returns (generated-tvs unis)
+(define (unifiers-for-fixn-open-recs tes)
+  (let ((types (map (lambda (e) (mtch e ('T e t) t)) tes)))
+    (let ((tvs (map (lambda (tv) `(TV ,tv)) (ntimes-f (length types) ty))))
+      (let ((form-ts (map (lambda (tv) (generate-fun-type tvs tv)) tvs)))
+        (shew 'types (map lshew-type types))
+        (shew 'form-ts (map lshew-type form-ts))
+        (shew 'eqs)
+        (display (lshew-eqns (zip types form-ts)))
+        (display "\n")
+        `(,tvs ,(zip types form-ts))))))
+
+(define (generate-fun-type arg-ts ret-t)
+  (mtch arg-ts
+    (a-t . d-t)
+      `(PT Fun (,a-t ,(generate-fun-type d-t ret-t)))
+    '()
+      ret-t))
+
+#|
+(define (type-of-nth-arg-of-multi-arg-fun-type n t)
+  (mtch `(,n ,t)
+    (0 ('PT 'Fun (a b)))
+      a
+    (n ('PT 'Fun (a b)))
+      (type-of-nth-arg-of-multi-arg-fun-type (- n 1) b)))
+      |#
+
+(tracefun tinf0*)
+(tracefun generate-fun-type unifiers-for-fixn-open-recs)
+
+#|
+(define (unifiers-for-fixn-open-recs tes)
+  ;; Assuming n functions of m args
+  ;; types: length n
+  ;; args-n-rets: n rows of n + 1
+  (let ((types (map (lambda (e) (mtch e ('T e t) t)) tes)))
+    (let ((args-n-rets (map multi-arg-fun-args-and-ret types)))
+      (shew 'heyy types args-n-rets)
+      (shew 'hey (length types) (length args-n-rets) (map length args-n-rets))
+      (assert (eq? (length types) (length args-n-rets)))
+      (assert (same (cons (+ (length types) 1) (map length args-n-rets))))
+      (let ((n (length types))
+            (m (length (car args-n-rets))))
+        (append
+          ;; Vertical unifications
+          (map-append
+            (lambda (r)
+              (map
+                (lambda (c)
+                  `(,(nth c (nth r args-n-rets))
+                    ,(nth c (nth (+ r 1) args-n-rets))))
+                (- m 1)))
+            n)
+          ;; Horizontal unifications
+          (map
+            (lambda (r)
+              `(,(nth r (nth r args-n-rets))
+                ,(nth (+ m 1) (nth r args-n-rets))))
+            n))))))
+
+;; Get list of arg types and return type of a multi-arg fun type.
+;; a -> b -> c => (a b c)
+(define (multi-arg-fun-args-and-ret t)
+  (mtch t
+    ('PT 'Fun (a ('PT 'Fun (b ('PT 'Fun (c d))))))
+      `(,a . ,(multi-arg-fun-args-and-ret `(PT Fun (,b (PT Fun (,c ,d))))))
+    ('PT 'Fun (a ('PT 'Fun (b c))))
+      `(,a ,b ,c)))
+|#
+
 ; (exp, env, unis) -> (typed-exp, unis)
 (define (tinf0 e env unis)
   (mtch e
@@ -170,6 +261,15 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ;; Fixn 0 (f g) :: a -> b
     ;; Fixn 1 (f g) :: c -> d
     ('Fixn ('K i) (PT FixList (f g)))
+      (mtch (tinf0* `(,f ,g) env unis)
+        (tes unis)
+          (mtch (unifiers-for-fixn-open-recs tes)
+            (result-ts new-unis)
+              `((T (Fixn (K ,i) (PT FixList ,tes)) ,(nth i result-ts))
+                ,(append new-unis unis))))
+          ;(let ((result-t (mtch (nth i tes) ('T e t) (type-of-nth-arg-of-multi-arg-fun-type t))))
+
+      #|
       (mtch (tinf0 f env unis)
         (('T f ('PT 'Fun (ab ('PT 'Fun (cd ab2))))) unis)
           (mtch (tinf0 g env unis)
@@ -182,6 +282,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                  (,cd ,cd2)
                  (,cd ,cd3)
                 . ,unis))))
+                |#
 
     ('If b th el)
       (let ((result-t (ty)))
@@ -200,7 +301,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       `((T ,e ,(env-lookup-and-inst x env)) ,unis)
     ('K k)
       `((T ,e ,(get-constant-type k)) ,unis)))
-;(tracefun tinf0)
+(tracefun tinf0)
 
 (define (ut a b)
   (if (not (equal? a b))
@@ -553,6 +654,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define test-program
   `(
+    #|
     ; /. f /. x (f x) + x
     ; (Int -> Int) -> Int -> Int
     (foo (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
@@ -701,6 +803,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (fact10 (A (V fact) (K 10))
      (C Int) 3628800)
 
+    |#
     (even-oprec
       (L (V even-rec)
         (L (V odd-rec)
