@@ -757,6 +757,15 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (odd (Fixn (K 1) (PT FixList ((V even-oprec) (V odd-oprec))))
       (PT Fun ((C Int) (C Int))) ,testpred-closure)
 
+    (e4 (A (V even) (K 4))
+      (C Int) 1)
+    (e5 (A (V even) (K 5))
+      (C Int) 0)
+    (o4 (A (V odd) (K 4))
+      (C Int) 0)
+    (o5 (A (V odd) (K 5))
+      (C Int) 1)
+
     ;; Silly countdown example just to test 3-way mutual recursion
     (countdown0-rec
       (L (V countdown0-rec)
@@ -840,6 +849,13 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   v)
 ;(tracefun leval-check-type)
 
+(define (generate-nested-application f args)
+  (mtch args
+    (a)
+      `(A ,f ,a)
+    (a . d)
+      (generate-nested-application `(A ,f ,a) d)))
+
 (define (leval e env)
   (mtch e
     ('T e t)
@@ -865,10 +881,20 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ('Fix f)
       (leval `(A ,f (L (V x) (A (Fix ,f) (V x)))) env)
     ('Fixn (K i) (PT FixList funs))
-      (leval `(A (A ,(nth i `,funs)
+      (leval
+        (generate-nested-application
+          (nth i funs)
+          (map
+            (lambda (i)
+              `(L (V x) (A (Fixn (K ,i) (PT FixList ,funs)) (V x))))
+            (gen-integer-sequence 0 (length funs))))
+        env)
+      #|
+      (leval `(A (A ,(nth i funs)
                     (L (V x) (A (Fixn 0 ,funs) (V x))))
                  (L (V x) (A (Fixn 1 ,funs) (V x))))
              env)
+             |#
     ('V v)
       (lookup v env)
     ('K k)
@@ -918,10 +944,18 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     test-program)
   (shew 'test-ok))
 
+(define (shew-elide-closures program)
+  (shew
+    (grep
+      (lambda (b) (mtch b (name . ('Closure . _)) #f (name . value) #t))
+      program)))
+
 (define (main)
   (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) test-program)))
     (let ((typed-program (infer-program program)))
       (shew-program-types typed-program)
       (let ((evaled-program (eval-program typed-program global-env)))
         ;(shew 'evaled evaled-program)
+        ;(shew 'evaled)
+        ;(shew-elide-closures evaled-program)
         (verify-results typed-program evaled-program)))))

@@ -1155,7 +1155,7 @@
 ; Inclusive
 (define (gen-integer-sequence s e)
   (if (>= s e)
-      `(,e)
+      `()
       (cons s (gen-integer-sequence (+ s 1) e))))
 
 ; Apply until no change
