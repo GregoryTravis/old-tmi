@@ -780,7 +780,22 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
               (V +))
            (V d1234))
         (K 0))
-     (C Int) 10)
+      (C Int) 10)
+
+    (p-fold (Fix (L (V rec) (L (V f) (ML ((PL (PA (PA (V Cons) (PV a)) (PV d))
+                                              (L (V z) (A (A (V f) (V a)) (A (A (A (V rec) (V f)) (V d)) (V z)))))
+                                          (PL (PV Nil)
+                                              (L (V z) (V z))))))))
+      (Forall ((TV f) (TV i))
+          (PT Fun ((PT Fun ((TV f) (PT Fun ((TV i) (TV i)))))
+                   (PT Fun ((PT List ((TV f))) (PT Fun ((TV i) (TV i)))))))) ,testpred-closure)
+
+    ; fold = fix + ns 0
+    (p-folda (A (A (A (V p-fold)
+              (V +))
+           (V d1234))
+        (K 0))
+      (C Int) 10)
 
     ; map = /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (map f (cdr x))
     ; (a -> b) -> List a -> List b
