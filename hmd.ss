@@ -945,6 +945,14 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (C Int) 10)
     (scope1 (A (A (PL (PV a) (PL (PV b) (V b))) (K 10)) (K 11))
       (C Int) 11)
+
+    (ml-const (ML ((PL (K 1) (K 10))
+                   (PL (K 2) (K 20))))
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
+    (ml-const-a-1 (A (V ml-const) (K 1))
+      (C Int) 10)
+    (ml-const-a-2 (A (V ml-const) (K 2))
+      (C Int) 20)
    ))
 
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
@@ -989,6 +997,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (a . d)
       (generate-nested-application `(A ,f ,a) d)))
 
+;; This doesn't do anything with the env other than cons onto it
+;; so maybe it should just return a list which is then appended.
 (define (pattern-match-and-extend-env p x env)
   (mtch `(,p ,x)
     (('T p pt) x)
@@ -1012,6 +1022,10 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ;; This is e.g. (cdr nil), arg isn't a cton
     (('PA fun arg) x)
       '()
+    ((KK k) k2)
+      (if (eq? k k2)
+        `(,env)
+        '())
         ))
 #;(tracefun-with
   (lambda (app runner) (mtch app (f p x env)
