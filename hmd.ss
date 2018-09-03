@@ -782,7 +782,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (K 0))
       (C Int) 10)
 
-    (p-fold (Fix (L (V rec) (L (V f) (ML ((PL (PA (PA (V Cons) (PV a)) (PV d))
+    (ml-fold (Fix (L (V rec) (L (V f) (ML ((PL (PA (PA (V Cons) (PV a)) (PV d))
                                               (L (V z) (A (A (V f) (V a)) (A (A (A (V rec) (V f)) (V d)) (V z)))))
                                           (PL (PV Nil)
                                               (L (V z) (V z))))))))
@@ -791,7 +791,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                    (PT Fun ((PT List ((TV f))) (PT Fun ((TV i) (TV i)))))))) ,testpred-closure)
 
     ; fold = fix + ns 0
-    (p-folda (A (A (A (V p-fold)
+    (ml-folda (A (A (A (V ml-fold)
               (V +))
            (V d1234))
         (K 0))
@@ -828,6 +828,15 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     ; fact 10 baby
     (fact10 (A (V fact) (K 10))
+     (C Int) 3628800)
+
+    (ml-fact (Fix (L (V rec)
+      (ML ((PL (K 0) (K 1))
+           (PL (PV n) (A (A (V *) (V n)) (A (V rec) (A (A (V -) (V n)) (K 1)))))))))
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
+
+    ; fact 10 baby
+    (ml-fact10 (A (V ml-fact) (K 10))
      (C Int) 3628800)
 
     (even-oprec
