@@ -819,6 +819,23 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (V d1234))
      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
 
+    (ml-map (Fix (L (V rec) (L (V f)
+        (ML ((PL (PA (PA (V Cons) (PV a)) (PV d))
+                 (A (A (V Cons) (A (V f) (V a))) (A (A (V rec) (V f)) (V d))))
+             (PL (V Nil) (V Nil)))))))
+      (Forall
+        ((TV f) (TV k))
+          (PT
+             Fun
+                ((PT Fun ((TV f) (TV k)))
+                    (PT Fun ((PT List ((TV f))) (PT List ((TV k)))))))) ,testpred-closure)
+
+    ; map (/. x x + x) ns
+    (ml-mapa (A (A (V ml-map)
+           (L (V x) (A (A (V +) (V x)) (V x))))
+        (V d1234))
+      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
+
     ; fact
     (fact (Fix (L (V rec)
        (L (V n) (If (A (A (V ==) (V n)) (K 0))
