@@ -79,6 +79,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (car . (Forall ((TV a)) (PT Fun ((PT List ((TV a))) (TV a)))))
     ; List a -> List a
     (cdr . (Forall ((TV a)) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))))
+    ; Tuple2 a b = Tuple2 a b
+    (Tuple2 . (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (PT Tuple2 ((TV a) (TV b)))))))))
   ))
 
 (define (get-constant-type k)
@@ -539,7 +541,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
           `(,(unify-vo-ec-to-subs vo-ec))
         #f
           #f)))
-(tracefun infer-find-a-sub)
+;(tracefun infer-find-a-sub)
 
 (define (infer-subs eqns)
   (apply-subs-to-subs-rhs (infer-subs-1 (unify-create-initial-ec-set eqns))))
@@ -965,7 +967,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (Forall ((TV j)) (PT Fun ((PT List ((TV j))) (PT List ((TV j)))))) ,testpred-closure)
     (rebuild-a (A (V rebuild) (V d1234))
       (PT List ((C Int))) (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))
-    ;;|#
 
     (scope0 (A (A (PL (PV a) (PL (PV b) (V a))) (K 10)) (K 11))
       (C Int) 10)
@@ -979,6 +980,19 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (C Int) 10)
     (ml-const-a-2 (A (V ml-const) (K 2))
       (C Int) 20)
+    ;;|#
+
+    ;; ml2a (a . d) () = 1
+    ;; ml2a () (a . d) = 2
+    (ml2a (ML ((PL (PA (PA (V Tuple2) (PA (PA (V Cons) (PV a)) (PV d))) (V Nil)) (K 1))
+               (PL (PA (PA (V Tuple2) (V Nil)) (PA (PA (V Cons) (PV a)) (PV d))) (K 2))))
+       (Forall ((TV h) (TV s))
+         (PT Fun ((PT Tuple2 ((PT List ((TV h))) (PT List ((TV s))))) (C Int)))) ,testpred-closure)
+       ;(Forall ((TV a)) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))) ,testpred-closure)
+    (ml2a-s (L (V x) (L (V y) (A (V ml2a) (A (A (V Tuple2) (V x)) (V y)))))
+      (Forall ((TV d) (TV e)) (PT Fun ((PT List ((TV d))) (PT Fun ((PT List ((TV e))) (C Int)))))) ,testpred-closure)
+    (ml2a-sa (A (A (V ml2a-s) (A (A (V Cons) (K 1)) (V Nil))) (V Nil))
+      (C Int) 1)
    ))
 
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
@@ -991,6 +1005,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (car . (Native ,(lambda (x) (mtch x ('Cons a d) a))))
   (cdr . (Native ,(lambda (x) (mtch x ('Cons a d) d))))
   (== . ,(native-curry-2 eq?))
+  (Tuple2 . ,(native-curry-2 (lambda (x y) `(Tuple2 ,x ,y))))
 ))
 
 (define (lookup x ass)
