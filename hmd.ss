@@ -435,6 +435,21 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (ec-combine-ecs s a-index b-index)
         s))))
 
+;; Add st as an equivalence class, merging with another if there
+;; are any elements in common
+(define (ec-set-add-set s st)
+  (mtch st
+    (a b . d)
+      (ec-set-add-set (ec-set-add s a b) `(,b . ,d))
+    x  ;; () and (x), nothing needed to be done
+      s))
+(define (ec-set-add-sets s sts)
+  (mtch sts
+    '()
+      s
+    (a . d)
+      (ec-set-add-sets (ec-set-add-set s a) d)))
+
 (ut '((a b))
     (ec-set-add (ec-set-make) 'a 'b))
 (ut '((b a))
@@ -1196,7 +1211,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (lambda (b) (mtch b (name . ('Closure . _)) #f (name . value) #t))
       program)))
 
-(define (main)
+(define (_main)
   (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) test-program)))
     (let ((typed-program (infer-program program)))
       (shew-program-types typed-program)
@@ -1204,3 +1219,38 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         ;(shew 'evaled evaled-program)
         ;(begin (shew 'evaled) (shew-elide-closures evaled-program))
         (verify-results typed-program evaled-program)))))
+
+;; Cycle finding takes a digraph in this form:
+;;   ((src0 sink0 sink1 ...) ...)
+
+;; Returns a list of cycles
+(define (find-cycles digraph path n)
+  (if (member? n path)
+    (begin
+      ;(shew `(loop ,(prefix-until n path)))
+      `(,(prefix-until n path)))
+    (let ((ts (lookup n digraph)))
+      ;(shew `(,n --> ,@ts))
+      (apply append
+        (map (lambda (t) (find-cycles digraph `(,n . ,path) t)) ts)))))
+;(tracefun find-cycles)
+
+(define (find-cycles-all digraph)
+  (let ((nodes (map car digraph)))
+    (let ((cycles (apply append (map (lambda (n) (find-cycles digraph '() n)) nodes))))
+      (shew 'cycles cycles)
+      (shew 'ecs (ec-set-add-sets (ec-set-make) cycles)))))
+
+(define proo '(
+  (a b) (b a h)
+  (c d e h) (e c)
+  (d e)
+  (f g)
+  (g h i)
+  (h)
+  (i)
+  ))
+
+(define (main)
+  (shew (find-cycles-all proo)))
+  ;(shew (dfs 'a 'a '(a))))

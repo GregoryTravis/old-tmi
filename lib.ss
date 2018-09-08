@@ -1230,3 +1230,10 @@
 (assert (equal? (all-pairs '(a b c)) '((a b) (a c) (b c))))
 (assert (equal? (all-pairs '(a b)) '((a b))))
 (assert (equal? (all-pairs '(a)) '()))
+
+(define (prefix-until a as)
+  (if (null? as)
+    '()
+    (if (eq? a (car as))
+      `(,(car as))
+      (cons (car as) (prefix-until a (cdr as))))))
