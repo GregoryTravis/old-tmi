@@ -1602,14 +1602,15 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       ))
 
 (define (find-global-refs program)
-  (map (lambda (rec) (mtch rec
-    (name value type evaled)
+  (map (lambda (nv) (mtch nv
+    (name value)
       `(,name . ,(find-unbound-refs value '()))))
     program))
 
 (define (main)
-  (let ((refs (find-global-refs test-program-no-fix)))
-    (shew 'refs refs)
-    (let ((refs (append refs (map (lambda (gb) (mtch gb (id . val) `(,id))) global-env))))
+  (let ((program (map (lambda (rec) (mtch rec (name value type evaled) `(,name ,value))) test-program-no-fix)))
+    (let ((refs (find-global-refs program)))
       (shew 'refs refs)
-      (shew (find-cycles-all refs)))))
+      (let ((refs (append refs (map (lambda (gb) (mtch gb (id . val) `(,id))) global-env))))
+        (shew 'refs refs)
+      (shew (find-cycles-all refs))))))
