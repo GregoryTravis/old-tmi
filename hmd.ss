@@ -441,8 +441,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (mtch st
     (a b . d)
       (ec-set-add-set (ec-set-add s a b) `(,b . ,d))
-    x  ;; () and (x), nothing needed to be done
-      s))
+    (a)
+      (ec-set-add-element s a)))
 (define (ec-set-add-sets s sts)
   (mtch sts
     '()
@@ -1010,6 +1010,320 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (C Int) 1)
    ))
 
+(define test-program-no-fix
+  `(
+    ;;#|
+    ; /. f /. x (f x) + x
+    ; (Int -> Int) -> Int -> Int
+    (foo (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
+      (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))
+      ,testpred-closure)
+
+    ; (/. f /. x (f x) + x) (/. x + 1) 2
+    ; Int
+    (fooa (A (A (V foo) (L (V x) (A (A (V +) (V x)) (K 1)))) (K 2))
+      (C Int)
+      5)
+
+    ; /. x x
+    ; a -> a
+    (id (L (V x) (V x))
+     (Forall ((TV a)) (PT Fun ((TV a) (TV a)))) ,testpred-closure)
+
+    ; (/. x x) 44
+    ; int
+    (ida (A (V id) (K 44))
+     (C Int) 44)
+
+    ; /. f /. x f (f x)
+    ; (a -> a) -> a -> a
+    (dapp (L (V f) (L (V x) (A (V f) (A (V f) (V x)))))
+     (Forall ((TV d)) (PT Fun ((PT Fun ((TV d) (TV d))) (PT Fun ((TV d) (TV d)))))) ,testpred-closure)
+
+    ; (/. f /. x f (f x)) (/. x x + x) 13
+    ; 52
+    (dappa (A (A (V dapp)
+           (L (V x) (A (A (V +) (V x)) (V x))))
+        (K 13))
+     (C Int) 52)
+
+    ; /. x /. y y
+    ; a -> b -> b
+    (xyy (L (V x) (L (V y) (V y)))
+     (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (TV b)))))) ,testpred-closure)
+
+    ; (/. x /. y y) 1 2
+    ; 2
+    (xxya (A (A (V xyy) (K 1)) (K 2))
+     (C Int) 2)
+
+    ; /. x /. y x
+    ; a -> b -> a
+    (xyx (L (V x) (L (V y) (V x)))
+     (Forall ((TV b) (TV a)) (PT Fun ((TV a) (PT Fun ((TV b) (TV a)))))) ,testpred-closure)
+
+    ; (/. x /. y x) 1 2
+    ; 1
+    (xyxa (A (A (V xyx) (K 1)) (K 2))
+     (C Int) 1)
+
+    (plus (V +)
+     (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))) ,testpred-native)
+    (three (K 3)
+     (C Int) 3)
+    (troo (K #t)
+     (C Bool) #t)
+    (fals (K #f)
+     (C Bool) #f)
+
+    (cns (A (A (V Cons) (K 1)) (V Nil))
+     (PT List ((C Int))) (Cons 1 Nil))
+    (carcns (A (V car) (V cns))
+     (C Int) 1)
+    (cdrcns (A (V cdr) (V cns))
+     (PT List ((C Int))) Nil)
+
+    (ift (If (K #t) (K 1) (K 2))
+     (C Int) 1)
+    (iff (If (K #f) (K 1) (K 2))
+     (C Int) 2)
+
+    (eqt (A (A (V ==) (K 1)) (K 1))
+     (C Bool) #t)
+    (eqf (A (A (V ==) (K 1)) (K 2))
+     (C Bool) #f)
+
+    ; /. a /. b if a == b then a else b
+    ; a -> a -> a
+    (ifab (L (V a) (L (V b) (If (A (A (V ==) (V a)) (V b)) (V a) (V b))))
+     (Forall ((TV c)) (PT Fun ((TV c) (PT Fun ((TV c) (TV c)))))) ,testpred-closure)
+
+    ; (/. a /. b if a == b then a else b) 1 2
+    ; 2
+    (ifaban (A (A (V ifab) (K 1)) (K 2))
+     (C Int) 2)
+
+    ; (/. a /. b if a == b then a else b) 1 1
+    ; 1
+    (ifabae (A (A (V ifab) (K 1)) (K 1))
+     (C Int) 1)
+
+    ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
+    (fold (L (V f) (L (V xs) (L (V z)
+            (If (A (A (V ==) (V xs)) (V Nil))
+              (V z)
+              (A (A (V f) (A (V car) (V xs))) (A (A (A (V fold) (V f)) (A (V cdr) (V xs))) (V z)))))))
+     (Forall ((TV m) (TV e))
+         (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
+                  (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
+
+    (d1234 (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil)))))
+      (PT List ((C Int)))
+      (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))
+
+    ; fold = fix + ns 0
+    (folda (A (A (A (V fold)
+              (V +))
+           (V d1234))
+        (K 0))
+      (C Int) 10)
+
+    (ml-fold (L (V f) (ML ((PL (PA (PA (V Cons) (PV a)) (PV d))
+                               (L (V z) (A (A (V f) (V a)) (A (A (A (V ml-fold) (V f)) (V d)) (V z)))))
+                           (PL (PV Nil)
+                               (L (V z) (V z))))))
+      (Forall ((TV f) (TV i))
+          (PT Fun ((PT Fun ((TV f) (PT Fun ((TV i) (TV i)))))
+                   (PT Fun ((PT List ((TV f))) (PT Fun ((TV i) (TV i)))))))) ,testpred-closure)
+
+    ; fold = fix + ns 0
+    (ml-folda (A (A (A (V ml-fold)
+              (V +))
+           (V d1234))
+        (K 0))
+      (C Int) 10)
+
+    ; map = /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (map f (cdr x))
+    ; (a -> b) -> List a -> List b
+    ; map = /. rec /. f /. x if (x == Nil) then Nil else Cons (f (car x)) (rec f (cdr x))
+    ; ((a -> b) -> List a -> List b) -> (a -> b) -> List a -> List b
+    (map (L (V f) (L (V x)
+            (If (A (A (V ==) (V x)) (V Nil))
+                (V Nil)
+                (A (A (V Cons) (A (V f) (A (V car) (V x))))
+                   (A (A (V map) (V f)) (A (V cdr) (V x)))))))
+     (Forall
+       ((TV o) (TV l))
+         (PT
+            Fun
+               ((PT Fun ((TV o) (TV l)))
+                   (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))) ,testpred-closure)
+
+    ; map (/. x x + x) ns
+    (mapa (A (A (V map)
+           (L (V x) (A (A (V +) (V x)) (V x))))
+        (V d1234))
+     (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
+
+    (ml-map (L (V f)
+        (ML ((PL (PA (PA (V Cons) (PV a)) (PV d))
+                 (A (A (V Cons) (A (V f) (V a))) (A (A (V ml-map) (V f)) (V d))))
+             (PL (V Nil) (V Nil)))))
+      (Forall
+        ((TV f) (TV k))
+          (PT
+             Fun
+                ((PT Fun ((TV f) (TV k)))
+                    (PT Fun ((PT List ((TV f))) (PT List ((TV k)))))))) ,testpred-closure)
+
+    ; map (/. x x + x) ns
+    (ml-mapa (A (A (V ml-map)
+           (L (V x) (A (A (V +) (V x)) (V x))))
+        (V d1234))
+      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
+
+    ; fact
+    (fact (L (V n) (If (A (A (V ==) (V n)) (K 0))
+                       (K 1)
+                       (A (A (V *) (V n)) (A (V fact) (A (A (V -) (V n)) (K 1))))))
+     (PT Fun ((C Int) (C Int))) ,testpred-closure)
+
+    ; fact 10 baby
+    (fact10 (A (V fact) (K 10))
+     (C Int) 3628800)
+
+    (ml-fact
+      (ML ((PL (K 0) (K 1))
+           (PL (PV n) (A (A (V *) (V n)) (A (V ml-fact) (A (A (V -) (V n)) (K 1)))))))
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
+
+    ; fact 10 baby
+    (ml-fact10 (A (V ml-fact) (K 10))
+     (C Int) 3628800)
+
+    (even
+      (L (V x) (If (A (A (V ==) (V x)) (K 0)) (K 1) (A (V odd) (A (A (V -) (V x)) (K 1)))))
+      (Forall ((TV a))
+        (PT Fun
+          ((TV a)
+           (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))))) ,testpred-closure)
+    (odd
+      (L (V x) (If (A (A (V ==) (V x)) (K 0)) (K 0) (A (V even) (A (A (V -) (V x)) (K 1)))))
+      (Forall ((TV b))
+        (PT Fun ((PT Fun ((C Int) (C Int)))
+                 (PT Fun ((TV b) (PT Fun ((C Int) (C Int)))))))) ,testpred-closure)
+    ;(even (Fixn (K 0) (PT FixList ((V even-oprec) (V odd-oprec))))
+      ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
+    ;(odd (Fixn (K 1) (PT FixList ((V even-oprec) (V odd-oprec))))
+      ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
+
+    (e4 (A (V even) (K 4))
+      (C Int) 1)
+    (e5 (A (V even) (K 5))
+      (C Int) 0)
+    (o4 (A (V odd) (K 4))
+      (C Int) 0)
+    (o5 (A (V odd) (K 5))
+      (C Int) 1)
+
+    ;; 3-way mutual recursion
+    (mod3
+      (L (V x)
+        (If (A (A (V ==) (V x)) (K 0))
+          (K 0)
+          (A (V mod3-1) (A (A (V -) (V x)) (K 1)))))
+      (Forall ((TV a) (TV c))
+        (PT Fun ((TV a)
+                 (PT Fun ((PT Fun ((C Int) (C Int)))
+                          (PT Fun ((TV c)
+                                   (PT Fun ((C Int) (C Int)))))))))) ,testpred-closure)
+    (mod3-1
+      (L (V x)
+        (If (A (A (V ==) (V x)) (K 0))
+          (K 1)
+          (A (V mod3-2) (A (A (V -) (V x)) (K 1)))))
+      (Forall ((TV a) (TV b))
+        (PT Fun ((TV a)
+                 (PT Fun ((TV b)
+                          (PT Fun ((PT Fun ((C Int) (C Int)))
+                                   (PT Fun ((C Int) (C Int)))))))))) ,testpred-closure)
+    (mod3-2
+      (L (V x)
+        (If (A (A (V ==) (V x)) (K 0))
+          (K 2)
+          (A (V mod3) (A (A (V -) (V x)) (K 1)))))
+      (Forall ((TV b) (TV c))
+        (PT Fun ((PT Fun ((C Int) (C Int)))
+                 (PT Fun ((TV b)
+                          (PT Fun ((TV c)
+                                   (PT Fun ((C Int) (C Int)))))))))) ,testpred-closure)
+    ;(mod3 (Fixn (K 0) (PT FixList ((V mod3-rec) (V mod3-1-rec) (V mod3-2-rec))))
+      ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
+    ;(mod3-1 (Fixn (K 1) (PT FixList ((V mod3-rec) (V mod3-1-rec) (V mod3-2-rec))))
+      ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
+    ;(mod3-2 (Fixn (K 2) (PT FixList ((V mod3-rec) (V mod3-1-rec) (V mod3-2-rec))))
+      ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
+
+    (mod3-5 (A (V mod3) (K 5))
+      (C Int) 2)
+    (mod3-6 (A (V mod3) (K 6))
+      (C Int) 0)
+    (mod3-7 (A (V mod3) (K 7))
+      (C Int) 1)
+
+    (plx (PL (PV x) (V x))
+      (Forall ((TV a)) (PT Fun ((TV a) (TV a)))) ,testpred-closure)
+    (plxa (A (PL (PV x) (V x)) (K 12))
+      (C Int) 12)
+    (coulder (PL (PA (PA (V Cons) (PV aa)) (PV dd)) (V dd))
+      (Forall ((TV c)) (PT Fun ((PT List ((TV c))) (PT List ((TV c)))))) ,testpred-closure)
+    (coulder-a (A (V coulder)
+                  (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (V Nil))))
+      (PT List ((C Int))) (Cons 2 Nil))
+    ;(coulder-a-fail (A (V coulder) (V Nil))
+      ;(PT List ((C Int))) (Cons 2 Nil))
+
+    (ml0 (ML ((PL (PA (PA (V Cons) (PV aa)) (PV dd)) (K 13))
+              (PL (PV Nil) (K 12))))
+      (Forall ((TV d)) (PT Fun ((PT List ((TV d))) (C Int)))) ,testpred-closure)
+    (ml0-a-p (A (V ml0) (A (A (V Cons) (K 1)) (V Nil)))
+      (C Int) 13)
+    (ml0-a-n (A (V ml0) (V Nil))
+      (C Int) 12)
+
+    (rebuild (ML ((PL (PA (PA (V Cons) (PV a)) (PV d)) (A (A (V Cons) (V a)) (A (V rebuild) (V d))))
+                  (PL (PV Nil) (V Nil))))
+      (Forall ((TV j)) (PT Fun ((PT List ((TV j))) (PT List ((TV j)))))) ,testpred-closure)
+    (rebuild-a (A (V rebuild) (V d1234))
+      (PT List ((C Int))) (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))
+
+    (scope0 (A (A (PL (PV a) (PL (PV b) (V a))) (K 10)) (K 11))
+      (C Int) 10)
+    (scope1 (A (A (PL (PV a) (PL (PV b) (V b))) (K 10)) (K 11))
+      (C Int) 11)
+
+    (ml-const (ML ((PL (K 1) (K 10))
+                   (PL (K 2) (K 20))))
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
+    (ml-const-a-1 (A (V ml-const) (K 1))
+      (C Int) 10)
+    (ml-const-a-2 (A (V ml-const) (K 2))
+      (C Int) 20)
+    ;;|#
+
+    ;; ml2a (a . d) () = 1
+    ;; ml2a () (a . d) = 2
+    (ml2a (ML ((PL (PA (PA (V Tuple2) (PA (PA (V Cons) (PV a)) (PV d))) (V Nil)) (K 1))
+               (PL (PA (PA (V Tuple2) (V Nil)) (PA (PA (V Cons) (PV a)) (PV d))) (K 2))))
+       (Forall ((TV h) (TV s))
+         (PT Fun ((PT Tuple2 ((PT List ((TV h))) (PT List ((TV s))))) (C Int)))) ,testpred-closure)
+       ;(Forall ((TV a)) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))) ,testpred-closure)
+    (ml2a-s (L (V x) (L (V y) (A (V ml2a) (A (A (V Tuple2) (V x)) (V y)))))
+      (Forall ((TV d) (TV e)) (PT Fun ((PT List ((TV d))) (PT Fun ((PT List ((TV e))) (C Int)))))) ,testpred-closure)
+    (ml2a-sa (A (A (V ml2a-s) (A (A (V Cons) (K 1)) (V Nil))) (V Nil))
+      (C Int) 1)
+   ))
+
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
 (define global-env `(
   (+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
@@ -1251,6 +1565,51 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (i)
   ))
 
+(define (find-pattern-binders pat)
+  (mtch pat
+    ('PA fun arg)
+      (append (find-pattern-binders fun) (find-pattern-binders arg))
+    ('V x)
+      '()
+    ('PV x)
+      `(,x)
+    ('K k)
+      '()
+      ))
+
+(define (find-unbound-refs e bound-ids)
+  (mtch e
+    ('L ('V x) body)
+      (find-unbound-refs body `(,x . ,bound-ids))
+    ('A fun arg)
+      (append (find-unbound-refs fun bound-ids) (find-unbound-refs arg bound-ids))
+    ('V x)
+      (if (member? x bound-ids) '() `(,x))
+    ('K k)
+      '()
+    ('If b t e)
+      (append (find-unbound-refs b bound-ids) (find-unbound-refs t bound-ids) (find-unbound-refs e bound-ids))
+    ('ML lams)
+      (apply append (map (lambda (e) (find-unbound-refs e bound-ids)) lams))
+    ('PL pat body)
+      (append
+        (find-unbound-refs pat bound-ids)
+        (find-unbound-refs body (append (find-pattern-binders pat) bound-ids)))
+    ('PA fun arg)
+      (append (find-unbound-refs fun bound-ids) (find-unbound-refs arg bound-ids))
+    ('PV v)
+      '()
+      ))
+
+(define (find-global-refs program)
+  (map (lambda (rec) (mtch rec
+    (name value type evaled)
+      `(,name . ,(find-unbound-refs value '()))))
+    program))
+
 (define (main)
-  (shew (find-cycles-all proo)))
-  ;(shew (dfs 'a 'a '(a))))
+  (let ((refs (find-global-refs test-program-no-fix)))
+    (shew 'refs refs)
+    (let ((refs (append refs (map (lambda (gb) (mtch gb (id . val) `(,id))) global-env))))
+      (shew 'refs refs)
+      (shew (find-cycles-all refs)))))
