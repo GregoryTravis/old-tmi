@@ -1237,3 +1237,11 @@
     (if (eq? a (car as))
       `(,(car as))
       (cons (car as) (prefix-until a (cdr as))))))
+
+(define (map-with-index f os) (map-with-index-1 f os 0))
+(define (map-with-index-1 f os i)
+  (mtch os
+    '()
+      '()
+    (a . d)
+      `(,(f i a) . ,(map-with-index-1 f d (+ i 1)))))

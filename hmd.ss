@@ -1552,8 +1552,10 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (find-cycles-all digraph)
   (let ((nodes (map car digraph)))
     (let ((cycles (apply append (map (lambda (n) (find-cycles digraph '() n)) nodes))))
-      (shew 'cycles cycles)
-      (shew 'ecs (ec-set-add-sets (ec-set-make) cycles)))))
+      ;(shew 'cycles cycles)
+      (let ((ecs (ec-set-add-sets (ec-set-make) cycles)))
+        ;(shew 'ecs ecs)
+        ecs))))
 
 (define proo '(
   (a b) (b a h)
@@ -1603,14 +1605,47 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define (find-global-refs program)
   (map (lambda (nv) (mtch nv
-    (name value)
+    (name . value)
       `(,name . ,(find-unbound-refs value '()))))
     program))
 
+    #|
+    (even-oprec
+      (L (V even-rec)
+        (L (V odd-rec)
+          (L (V x) (If (A (A (V ==) (V x)) (K 0)) (K 1) (A (V odd-rec) (A (A (V -) (V x)) (K 1)))))))
+    (even (Fixn (K 0) (PT FixList ((V even-oprec) (V odd-oprec))))
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
+      |#
+
+(define (->openrec-name s)
+  (->symbol (++ (->string s) "-openrec")))
+
+(define (generate-fixns-1 program cycle)
+  (apply append
+    (map-with-index
+      (lambda (i id)
+        (let ((openrec-form
+                (foldr
+                  (lambda (fun e) `(L (V ,fun) ,e))
+                  (lookup id program)
+                  cycle))
+              (tied
+                `(Fixn (K ,i) (PT FixList ,(map (lambda (fun) `(V ,(->openrec-name fun))) cycle)))))
+          `((,(->openrec-name id) . ,openrec-form)
+            (,id . ,tied))))
+      cycle)))
+
+(define (generate-fixns program cycles)
+  ;(shew 'program program)
+  (apply append (map (lambda (c) (generate-fixns-1 program c)) cycles)))
+
 (define (main)
-  (let ((program (map (lambda (rec) (mtch rec (name value type evaled) `(,name ,value))) test-program-no-fix)))
+  (let ((program (map (lambda (rec) (mtch rec (name value type evaled) `(,name . ,value))) test-program-no-fix)))
     (let ((refs (find-global-refs program)))
-      (shew 'refs refs)
+      ;(shew 'refs refs)
       (let ((refs (append refs (map (lambda (gb) (mtch gb (id . val) `(,id))) global-env))))
-        (shew 'refs refs)
-      (shew (find-cycles-all refs))))))
+        ;(shew 'refs refs)
+        (let ((cycles (find-cycles-all refs)))
+          (shew 'cycles cycles)
+          (shew (generate-fixns program cycles)))))))
