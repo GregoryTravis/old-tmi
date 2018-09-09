@@ -1,3 +1,4 @@
+(require mischief/sort)
 (dload "lib.ss")
 (dload "mtch.ss")
 
@@ -1344,6 +1345,13 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     #f
       (err 'lookup x ass)))
 
+(define (lookup-or x ass otherwise)
+  (mtch (assoc x ass)
+    (x . v)
+      v
+    #f
+      otherwise))
+
 (define (leval-check-type v t)
   (mtch (list v t)
     (('Closure lam env) t)
@@ -1621,7 +1629,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (->openrec-name s)
   (->symbol (++ (->string s) "-openrec")))
 
-(define (generate-fixns-1 program cycle)
+(define (generate-fixns program cycle)
   (apply append
     (map-with-index
       (lambda (i id)
@@ -1636,16 +1644,97 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (,id . ,tied))))
       cycle)))
 
+#|
 (define (generate-fixns program cycles)
   ;(shew 'program program)
   (apply append (map (lambda (c) (generate-fixns-1 program c)) cycles)))
+  |#
+
+(define (is-mutrec id) (starts-with (->string id) "mutrec-"))
+
+;; Sort the program with the order in sorted-clumped, but expand the mutrecs back into their
+;; original functions and tie recursive knot.
+(define (sort-program-expand-fixns program sorted-clumped rec-to-clump)
+  (let* ((clump-to-ids (map (lambda (g) (mtch g (mutrec . prs) `(,mutrec . ,(map car prs))))
+                            (group-byy cdr rec-to-clump)))
+         (clumps (map car clump-to-ids)))
+    (shew 'clump-to-ids clump-to-ids)
+    ;(shew 'all-mutrec-ids all-mutrec-ids)
+    (apply append
+      (map
+        (lambda (id)
+          (if (member? id clumps)
+            (generate-fixns program (lookup id clump-to-ids))
+            `((,id . ,(lookup id program)))))
+        sorted-clumped))))
+  #|
+  (let ((cycles (map (lambda (g) (mtch g (mutrec . prs) (map car prs)))
+                            (group-byy cdr rec-to-clump))))
+    ;(shew (group-byy cdr rec-to-clump))
+    ;(shew rec-to-clump)
+    (shew 'cycles cycles)
+    (let ((fixns (apply append (map (lambda (mutrecs) (generate-fixns program mutrecs)) cycles)))
+          (all-cycles (apply append cycles)))
+      (shew 'fixns fixns)
+      (let ((non-mutrec-program (grep (lambda (tld) (mtch tld (id . v) (not (member? id all-cycles)))) program)))
+        (shew 'non-mutrec-program non-mutrec-program)
+        (append non-mutrec-program fixns)))))
+|#
+
+(define (generate-mr->cn mutrecs)
+  (apply append
+    (map-with-index (lambda (i mrs) (map (lambda (mr) `(,mr . ,(->symbol (++ "mutrec-" (->string i))))) mrs))
+      mutrecs)))
+
+;; After mutrec substitution, there are multiple entries for mutrecs of size >= 1.  These also
+;; still contain self-references which should be removed
+(define (combine-mutrecs refs)
+  (map (lambda (group) (mtch group (id . refses)
+    (begin (shew 'group group)
+    (if (is-mutrec id)
+      (begin
+        (assert (member? id (apply append (map cdr refses))))
+        `(,id . ,(rember id (unique (apply append (map cdr refses))))))
+      (begin
+        (assert (eq? (length refses) 1))
+        (car refses))))))
+    (group-byy car refs)))
+
+;; Takes global ref digraph and the set of mututally recursive ids.  Generates a clump name for each mutrec
+;; and replaces mutrec ids with the the clump name.  Returns the updated graph and the mutrec->clumpname map.
+(define (clump-recursive refs mutrecs)
+  (let ((mr->cn (generate-mr->cn mutrecs)))
+    (shew 'mr->cn mr->cn)
+    `(,(combine-mutrecs (map-deep 1 (lambda (id) (lookup-or id mr->cn id)) refs))
+      ,mr->cn)
+    ))
+
+(define (sort-refs refs)
+  (topological-sort
+    (map car refs)
+    (lambda (id) (lookup id refs))
+    ;#:cycle (lambda (cycle) 12)
+    ))
 
 (define (main)
   (let ((program (map (lambda (rec) (mtch rec (name value type evaled) `(,name . ,value))) test-program-no-fix)))
+    ;; To make sure the sort is working right
+    (set! program (reverse program))
+
     (let ((refs (find-global-refs program)))
       ;(shew 'refs refs)
       (let ((refs (append refs (map (lambda (gb) (mtch gb (id . val) `(,id))) global-env))))
-        ;(shew 'refs refs)
+        (shew 'refs refs)
         (let ((cycles (find-cycles-all refs)))
           (shew 'cycles cycles)
-          (shew (generate-fixns program cycles)))))))
+          (mtch (clump-recursive refs cycles) (clumped rec-to-clump) (begin
+            (shew 'clumped clumped)
+            (shew 'rec-to-clump rec-to-clump)
+            (let ((sorted-clumped (sort-refs clumped)))
+              (shew 'sorted-clumped sorted-clumped)
+              (let ((sorted-unclumped
+                      (sort-program-expand-fixns (append program global-env) sorted-clumped rec-to-clump)))
+                (shew 'sorted-unclumped sorted-unclumped)
+                ;(shew 'sorted-unclumped-ids (map car sorted-unclumped))
+            )))))))))
+          ;(shew (generate-fixns program cycles)))))))

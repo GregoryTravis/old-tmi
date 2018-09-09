@@ -1245,3 +1245,8 @@
       '()
     (a . d)
       `(,(f i a) . ,(map-with-index-1 f d (+ i 1)))))
+
+(define (map-deep n f os)
+  (if (eq? n 0)
+    (map f os)
+    (map (lambda (sub-os) (map-deep (- n 1) f sub-os)) os)))
