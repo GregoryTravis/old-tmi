@@ -146,9 +146,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 ;(tracefun gen-inst-substitution instantiate-poly)
 
 (define (env-lookup-and-inst x env)
-  (mtch (assoc x env)
-    (x . t)
-      (instantiate-poly t)))
+  (instantiate-poly (lookup x env)))
 ;(tracefun env-lookup-and-inst)
 
 (define (tinf e type-env)
@@ -584,8 +582,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
               (let ((remove-singletons (grep (lambda (ec) (> (length ec) 1)) applied)))
                 (cons sub (infer-subs-1 remove-singletons)))))))))
 
-(define (infer-types e type-env)
-  (shew 'START)
+(define (infer-types name e type-env)
+  (shew 'START name)
   (set! ty (make-type-symgen))
   (shew e)
   (mtch (tinf e type-env)
@@ -676,13 +674,10 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
           te
           `(T ,e (Forall ,(free-type-vars t) ,t))))))
 
-(define (just-type e)
-  (mtch (infer-types e) ('T e t) t))
-
 (define (testpred-closure x) (mtch x ('Closure . _) #t))
 (define (testpred-native x) (mtch x ('Native . _) #t))
 
-(define test-program
+#;(define test-program
   `(
     ;;#|
     ; /. f /. x (f x) + x
@@ -785,9 +780,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (If (A (A (V ==) (V xs)) (V Nil))
               (V z)
               (A (A (V f) (A (V car) (V xs))) (A (A (A (V rec) (V f)) (A (V cdr) (V xs))) (V z)))))))))
-     (Forall ((TV m) (TV e))
-         (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
-                  (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
+     (Forall ((TV a) (TV c))
+         (PT Fun ((PT Fun ((TV a) (PT Fun ((TV c) (TV c)))))
+                  (PT Fun ((PT List ((TV a))) (PT Fun ((TV c) (TV c)))))))) ,testpred-closure)
 
     (d1234 (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil)))))
       (PT List ((C Int)))
@@ -804,9 +799,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                                               (L (V z) (A (A (V f) (V a)) (A (A (A (V rec) (V f)) (V d)) (V z)))))
                                           (PL (PV Nil)
                                               (L (V z) (V z))))))))
-      (Forall ((TV f) (TV i))
-          (PT Fun ((PT Fun ((TV f) (PT Fun ((TV i) (TV i)))))
-                   (PT Fun ((PT List ((TV f))) (PT Fun ((TV i) (TV i)))))))) ,testpred-closure)
+      (Forall ((TV a) (TV c))
+          (PT Fun ((PT Fun ((TV a) (PT Fun ((TV c) (TV c)))))
+                   (PT Fun ((PT List ((TV a))) (PT Fun ((TV c) (TV c)))))))) ,testpred-closure)
 
     ; fold = fix + ns 0
     (ml-folda (A (A (A (V ml-fold)
@@ -825,11 +820,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                 (A (A (V Cons) (A (V f) (A (V car) (V x))))
                    (A (A (V rec) (V f)) (A (V cdr) (V x)))))))))
      (Forall
-       ((TV o) (TV l))
+       ((TV a) (TV b))
          (PT
             Fun
-               ((PT Fun ((TV o) (TV l)))
-                   (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))) ,testpred-closure)
+               ((PT Fun ((TV a) (TV b)))
+                   (PT Fun ((PT List ((TV a))) (PT List ((TV b)))))))) ,testpred-closure)
 
     ; map (/. x x + x) ns
     (mapa (A (A (V map)
@@ -842,11 +837,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                  (A (A (V Cons) (A (V f) (V a))) (A (A (V rec) (V f)) (V d))))
              (PL (V Nil) (V Nil)))))))
       (Forall
-        ((TV f) (TV k))
+        ((TV a) (TV b))
           (PT
              Fun
-                ((PT Fun ((TV f) (TV k)))
-                    (PT Fun ((PT List ((TV f))) (PT List ((TV k)))))))) ,testpred-closure)
+                ((PT Fun ((TV a) (TV b)))
+                    (PT Fun ((PT List ((TV a))) (PT List ((TV b)))))))) ,testpred-closure)
 
     ; map (/. x x + x) ns
     (ml-mapa (A (A (V ml-map)
@@ -1114,9 +1109,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (If (A (A (V ==) (V xs)) (V Nil))
               (V z)
               (A (A (V f) (A (V car) (V xs))) (A (A (A (V fold) (V f)) (A (V cdr) (V xs))) (V z)))))))
-     (Forall ((TV m) (TV e))
-         (PT Fun ((PT Fun ((TV m) (PT Fun ((TV e) (TV e)))))
-                  (PT Fun ((PT List ((TV m))) (PT Fun ((TV e) (TV e)))))))) ,testpred-closure)
+     (Forall ((TV a) (TV c))
+         (PT Fun ((PT Fun ((TV a) (PT Fun ((TV c) (TV c)))))
+                  (PT Fun ((PT List ((TV a))) (PT Fun ((TV c) (TV c)))))))) ,testpred-closure)
 
     (d1234 (A (A (V Cons) (K 1)) (A (A (V Cons) (K 2)) (A (A (V Cons) (K 3)) (A (A (V Cons) (K 4)) (V Nil)))))
       (PT List ((C Int)))
@@ -1133,9 +1128,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                                (L (V z) (A (A (V f) (V a)) (A (A (A (V ml-fold) (V f)) (V d)) (V z)))))
                            (PL (PV Nil)
                                (L (V z) (V z))))))
-      (Forall ((TV f) (TV i))
-          (PT Fun ((PT Fun ((TV f) (PT Fun ((TV i) (TV i)))))
-                   (PT Fun ((PT List ((TV f))) (PT Fun ((TV i) (TV i)))))))) ,testpred-closure)
+      (Forall ((TV a) (TV c))
+          (PT Fun ((PT Fun ((TV a) (PT Fun ((TV c) (TV c)))))
+                   (PT Fun ((PT List ((TV a))) (PT Fun ((TV c) (TV c)))))))) ,testpred-closure)
 
     ; fold = fix + ns 0
     (ml-folda (A (A (A (V ml-fold)
@@ -1154,11 +1149,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                 (A (A (V Cons) (A (V f) (A (V car) (V x))))
                    (A (A (V map) (V f)) (A (V cdr) (V x)))))))
      (Forall
-       ((TV o) (TV l))
+       ((TV a) (TV b))
          (PT
             Fun
-               ((PT Fun ((TV o) (TV l)))
-                   (PT Fun ((PT List ((TV o))) (PT List ((TV l)))))))) ,testpred-closure)
+               ((PT Fun ((TV a) (TV b)))
+                   (PT Fun ((PT List ((TV a))) (PT List ((TV b)))))))) ,testpred-closure)
 
     ; map (/. x x + x) ns
     (mapa (A (A (V map)
@@ -1171,11 +1166,11 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                  (A (A (V Cons) (A (V f) (V a))) (A (A (V ml-map) (V f)) (V d))))
              (PL (V Nil) (V Nil)))))
       (Forall
-        ((TV f) (TV k))
+        ((TV a) (TV b))
           (PT
              Fun
-                ((PT Fun ((TV f) (TV k)))
-                    (PT Fun ((PT List ((TV f))) (PT List ((TV k)))))))) ,testpred-closure)
+                ((PT Fun ((TV a) (TV b)))
+                    (PT Fun ((PT List ((TV a))) (PT List ((TV b)))))))) ,testpred-closure)
 
     ; map (/. x x + x) ns
     (ml-mapa (A (A (V ml-map)
@@ -1204,15 +1199,21 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     (even
       (L (V x) (If (A (A (V ==) (V x)) (K 0)) (K 1) (A (V odd) (A (A (V -) (V x)) (K 1)))))
+      #|
       (Forall ((TV a))
         (PT Fun
           ((TV a)
            (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))))) ,testpred-closure)
+           |#
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
     (odd
       (L (V x) (If (A (A (V ==) (V x)) (K 0)) (K 0) (A (V even) (A (A (V -) (V x)) (K 1)))))
+      #|
       (Forall ((TV b))
         (PT Fun ((PT Fun ((C Int) (C Int)))
                  (PT Fun ((TV b) (PT Fun ((C Int) (C Int)))))))) ,testpred-closure)
+                 |#
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
     ;(even (Fixn (K 0) (PT FixList ((V even-oprec) (V odd-oprec))))
       ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
     ;(odd (Fixn (K 1) (PT FixList ((V even-oprec) (V odd-oprec))))
@@ -1233,31 +1234,19 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (If (A (A (V ==) (V x)) (K 0))
           (K 0)
           (A (V mod3-1) (A (A (V -) (V x)) (K 1)))))
-      (Forall ((TV a) (TV c))
-        (PT Fun ((TV a)
-                 (PT Fun ((PT Fun ((C Int) (C Int)))
-                          (PT Fun ((TV c)
-                                   (PT Fun ((C Int) (C Int)))))))))) ,testpred-closure)
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
     (mod3-1
       (L (V x)
         (If (A (A (V ==) (V x)) (K 0))
           (K 1)
           (A (V mod3-2) (A (A (V -) (V x)) (K 1)))))
-      (Forall ((TV a) (TV b))
-        (PT Fun ((TV a)
-                 (PT Fun ((TV b)
-                          (PT Fun ((PT Fun ((C Int) (C Int)))
-                                   (PT Fun ((C Int) (C Int)))))))))) ,testpred-closure)
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
     (mod3-2
       (L (V x)
         (If (A (A (V ==) (V x)) (K 0))
           (K 2)
           (A (V mod3) (A (A (V -) (V x)) (K 1)))))
-      (Forall ((TV b) (TV c))
-        (PT Fun ((PT Fun ((C Int) (C Int)))
-                 (PT Fun ((TV b)
-                          (PT Fun ((TV c)
-                                   (PT Fun ((C Int) (C Int)))))))))) ,testpred-closure)
+      (PT Fun ((C Int) (C Int))) ,testpred-closure)
     ;(mod3 (Fixn (K 0) (PT FixList ((V mod3-rec) (V mod3-1-rec) (V mod3-2-rec))))
       ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
     ;(mod3-1 (Fixn (K 1) (PT FixList ((V mod3-rec) (V mod3-1-rec) (V mod3-2-rec))))
@@ -1294,7 +1283,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     (rebuild (ML ((PL (PA (PA (V Cons) (PV a)) (PV d)) (A (A (V Cons) (V a)) (A (V rebuild) (V d))))
                   (PL (PV Nil) (V Nil))))
-      (Forall ((TV j)) (PT Fun ((PT List ((TV j))) (PT List ((TV j)))))) ,testpred-closure)
+      (Forall ((TV a)) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))) ,testpred-closure)
     (rebuild-a (A (V rebuild) (V d1234))
       (PT List ((C Int))) (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil)))))
 
@@ -1494,12 +1483,16 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define (infer-program program) (infer-program-1 program initial-type-env global-env))
 (define (infer-program-1 program type-env g-env)
+(shew 'huh (length program) (assoc 'mod3-1-openrec program))
   (mtch program
     ((name . body) . rest)
-      (mtch (infer-types body type-env)
-        ('T e t)
-          `((,name . (T ,e ,t))
-            . ,(infer-program-1 rest (append type-env `((,name . ,t))) g-env)))
+      (if (assoc name g-env)
+        ;; The stuff in the global env is already evaluated
+        (infer-program-1 rest type-env g-env)
+        (mtch (infer-types name body type-env)
+          ('T e t)
+            `((,name . (T ,e ,t))
+              . ,(infer-program-1 rest (append type-env `((,name . ,t))) g-env))))
     '()
       '()))
 
@@ -1514,7 +1507,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       '()))
 
 (define (verify-results typed-program evaled-program)
-  (map (lambda (per) (mtch per (name code expected-type expected-result)
+  (map (lambda (per) (mtch per (name code expected-type expected-result) (begin
+    ;(shew 'verify name)
     (let ((actual-type (mtch (lookup name typed-program) ('T e t) t))
           (actual-result (lookup name evaled-program)))
       (assert (equal? expected-type actual-type) expected-type actual-type)
@@ -1523,8 +1517,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (assert (expected-result actual-result) actual-result)
         (assert (equal? expected-result actual-result) expected-result actual-result))
       ;(shew `(test ,name))
-      )))
-    test-program)
+      ))))
+    test-program-no-fix)
   (shew 'test-ok))
 
 (define (shew-elide-closures program)
@@ -1609,6 +1603,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (append (find-unbound-refs fun bound-ids) (find-unbound-refs arg bound-ids))
     ('PV v)
       '()
+    ('Fixn n es)
+      (apply append (map (lambda (e) (find-unbound-refs e bound-ids)) es))
       ))
 
 (define (find-global-refs program)
@@ -1630,7 +1626,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (->symbol (++ (->string s) "-openrec")))
 
 (define (generate-fixns program cycle)
-  (apply append
+  (append
     (map-with-index
       (lambda (i id)
         (let ((openrec-form
@@ -1640,9 +1636,20 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                   cycle))
               (tied
                 `(Fixn (K ,i) (PT FixList ,(map (lambda (fun) `(V ,(->openrec-name fun))) cycle)))))
-          `((,(->openrec-name id) . ,openrec-form)
-            (,id . ,tied))))
-      cycle)))
+          `(,(->openrec-name id) . ,openrec-form)))
+      cycle)
+    (map-with-index
+      (lambda (i id)
+        (let ((openrec-form
+                (foldr
+                  (lambda (fun e) `(L (V ,fun) ,e))
+                  (lookup id program)
+                  cycle))
+              (tied
+                `(Fixn (K ,i) (PT FixList ,(map (lambda (fun) `(V ,(->openrec-name fun))) cycle)))))
+          `(,id . ,tied)))
+      cycle)
+      ))
 
 #|
 (define (generate-fixns program cycles)
@@ -1716,14 +1723,20 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ;#:cycle (lambda (cycle) 12)
     ))
 
+(define (remove-globals-from-refs refs g-env)
+  (let ((global-ids (map car g-env)))
+    (map (lambda (ref) (mtch ref (name . ids)
+           `(,name . ,(filter (lambda (id) (not (member? id global-ids))) ids))))
+      refs)))
+
 (define (main)
   (let ((program (map (lambda (rec) (mtch rec (name value type evaled) `(,name . ,value))) test-program-no-fix)))
     ;; To make sure the sort is working right
     (set! program (reverse program))
 
     (let ((refs (find-global-refs program)))
-      ;(shew 'refs refs)
-      (let ((refs (append refs (map (lambda (gb) (mtch gb (id . val) `(,id))) global-env))))
+      (shew 'refs refs)
+      (let ((refs (remove-globals-from-refs refs global-env)))
         (shew 'refs refs)
         (let ((cycles (find-cycles-all refs)))
           (shew 'cycles cycles)
@@ -1733,8 +1746,31 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (let ((sorted-clumped (sort-refs clumped)))
               (shew 'sorted-clumped sorted-clumped)
               (let ((sorted-unclumped
-                      (sort-program-expand-fixns (append program global-env) sorted-clumped rec-to-clump)))
+                      (sort-program-expand-fixns program #;(append program global-env) sorted-clumped rec-to-clump)))
                 (shew 'sorted-unclumped sorted-unclumped)
-                ;(shew 'sorted-unclumped-ids (map car sorted-unclumped))
-            )))))))))
-          ;(shew (generate-fixns program cycles)))))))
+                (shew (length sorted-unclumped))
+                (let* (;(refs-with-fixns (find-global-refs sorted-unclumped))
+                       (typed-program (infer-program sorted-unclumped)))
+                  (shew 'typed-program typed-program)
+                  (shew-program-types typed-program)
+                  (let ((evaled-program (eval-program typed-program global-env)))
+                    ;(shew 'evaled evaled-program)
+                    (begin (shew 'evaled) (shew-elide-closures evaled-program))
+                    (verify-results typed-program evaled-program))
+            ))))))))))
+
+#|
+      (shew-program-types typed-program)
+      (let ((evaled-program (eval-program typed-program global-env)))
+        ;(shew 'evaled evaled-program)
+        ;(begin (shew 'evaled) (shew-elide-closures evaled-program))
+        (verify-results typed-program evaled-program)))))
+
+  (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) test-program)))
+    (let ((typed-program (infer-program program)))
+      (shew-program-types typed-program)
+      (let ((evaled-program (eval-program typed-program global-env)))
+        ;(shew 'evaled evaled-program)
+        ;(begin (shew 'evaled) (shew-elide-closures evaled-program))
+        (verify-results typed-program evaled-program)))))
+        |#
