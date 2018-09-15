@@ -1,3 +1,12 @@
+trap ctrl_c INT
+function ctrl_c() {
+  echo ^C
+  exit 1
+}
+
 rm -f /tmp/racket-daemon-ctrl
 mkfifo /tmp/racket-daemon-ctrl
-racket -r daemon-main.ss
+while :
+do
+  racket -r daemon-main.ss
+done

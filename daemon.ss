@@ -83,7 +83,7 @@
   (start-background-reloader)
   (letrec ((loop (lambda ()
     (let ((ss (tcp-listen 5001 4 #t)))
-      ;(shew 'Listening)
+      (shew 'ready)
       (let-values (((bin bout) (tcp-accept ss)))
         ;(shew 'Connected)
         (reload-if-changed)

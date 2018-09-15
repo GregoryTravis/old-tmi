@@ -1,2 +1,2 @@
 send-quit > /dev/null
-echo '(begin (daemon-reload-all))' | nc localhost 5001
+echo "(begin (shew 'restarting) (exit))" | nc localhost 5001
