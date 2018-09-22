@@ -82,6 +82,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (cdr . (Forall ((TV a)) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))))
     ; Tuple2 a b = Tuple2 a b
     (Tuple2 . (Forall ((TV a) (TV b)) (PT Fun ((TV a) (PT Fun ((TV b) (PT Tuple2 ((TV a) (TV b)))))))))
+    ; Tuple3 a b c = Tuple3 a b c
+    (Tuple3 . (Forall ((TV a) (TV b) (TV c)) (PT Fun ((TV a) (PT Fun ((TV b)
+                                               (PT Fun ((TV c) (PT Tuple2 ((TV a) (TV b) (TV c)))))))))))
   ))
 
 (define (get-constant-type k)
@@ -1126,7 +1129,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     (ml-fold (L (V f) (ML ((PL (PA (PA (V Cons) (PV a)) (PV d))
                                (L (V z) (A (A (V f) (V a)) (A (A (A (V ml-fold) (V f)) (V d)) (V z)))))
-                           (PL (PV Nil)
+                           (PL (V Nil)
                                (L (V z) (V z))))))
       (Forall ((TV a) (TV c))
           (PT Fun ((PT Fun ((TV a) (PT Fun ((TV c) (TV c)))))
@@ -1134,6 +1137,24 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     ; fold = fix + ns 0
     (ml-folda (A (A (A (V ml-fold)
+              (V +))
+           (V d1234))
+        (K 0))
+      (C Int) 10)
+
+    (ml-fold-t (L (V f) (L (V l) (L (V z)
+                 (A
+                   (ML ((PL (PA (PA (PA (V Tuple3) (PV f)) (PA (PA (V Cons) (PV a)) (PV d))) (PV z))
+                            (A (A (V f) (V a)) (A (A (A (V ml-fold-t) (V f)) (V d)) (V z))))
+                        (PL (PA (PA (PA (V Tuple3) (PV f)) (V Nil)) (PV z))
+                             (V z))))
+                   (A (A (A (V Tuple3) (V f)) (V l)) (V z))))))
+      (Forall ((TV a) (TV c))
+          (PT Fun ((PT Fun ((TV a) (PT Fun ((TV c) (TV c)))))
+                   (PT Fun ((PT List ((TV a))) (PT Fun ((TV c) (TV c)))))))) ,testpred-closure)
+
+    ; fold = fix + ns 0
+    (ml-folda-t (A (A (A (V ml-fold-t)
               (V +))
            (V d1234))
         (K 0))
@@ -1315,6 +1336,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
    ))
 
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
+(define (native-curry-3 f) `(Native ,(lambda (x) `(Native ,(lambda (y) `(Native ,(lambda (z) (f x y z))))))))
 (define global-env `(
   (+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
   (- . ,(native-curry-2 -))
@@ -1325,6 +1347,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (cdr . (Native ,(lambda (x) (mtch x ('Cons a d) d))))
   (== . ,(native-curry-2 eq?))
   (Tuple2 . ,(native-curry-2 (lambda (x y) `(Tuple2 ,x ,y))))
+  (Tuple3 . ,(native-curry-3 (lambda (x y z) `(Tuple3 ,x ,y ,z))))
 ))
 
 (define (lookup x ass)
@@ -1440,7 +1463,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
               (v)
                 v
               '()
-                (err 'pattern-match-failure tp x))
+                (err 'pattern-match-failure ls x))
           (Native f)
             (f x)))
     ('If b t e)
