@@ -1446,19 +1446,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (generate-fixns program (lookup id clump-to-ids))
             `((,id . ,(lookup id program)))))
         sorted-clumped))))
-  #|
-  (let ((cycles (map (lambda (g) (mtch g (mutrec . prs) (map car prs)))
-                            (group-byy cdr rec-to-clump))))
-    ;(shew (group-byy cdr rec-to-clump))
-    ;(shew rec-to-clump)
-    (shew 'cycles cycles)
-    (let ((fixns (apply append (map (lambda (mutrecs) (generate-fixns program mutrecs)) cycles)))
-          (all-cycles (apply append cycles)))
-      (shew 'fixns fixns)
-      (let ((non-mutrec-program (grep (lambda (tld) (mtch tld (id . v) (not (member? id all-cycles)))) program)))
-        (shew 'non-mutrec-program non-mutrec-program)
-        (append non-mutrec-program fixns)))))
-|#
 
 (define (generate-mr->cn mutrecs)
   (apply append
@@ -1530,19 +1517,3 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                     (begin (shew 'evaled) (shew-elide-closures evaled-program))
                     (verify-results typed-program evaled-program))
             ))))))))))
-
-#|
-      (shew-program-types typed-program)
-      (let ((evaled-program (eval-program typed-program global-env)))
-        ;(shew 'evaled evaled-program)
-        ;(begin (shew 'evaled) (shew-elide-closures evaled-program))
-        (verify-results typed-program evaled-program)))))
-
-  (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) test-program)))
-    (let ((typed-program (infer-program program)))
-      (shew-program-types typed-program)
-      (let ((evaled-program (eval-program typed-program global-env)))
-        ;(shew 'evaled evaled-program)
-        ;(begin (shew 'evaled) (shew-elide-closures evaled-program))
-        (verify-results typed-program evaled-program)))))
-        |#
