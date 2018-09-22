@@ -1199,6 +1199,26 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (V d1234))
       (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
 
+    (ml-map-t (L (V f) (L (V l)
+                (A
+                  (ML ((PL (PA (PA (V Tuple2) (PV f)) (PA (PA (V Cons) (PV a)) (PV d)))
+                           (A (A (V Cons) (A (V f) (V a))) (A (A (V ml-map-t) (V f)) (V d))))
+                       (PL (PA (PA (V Tuple2) (PV f)) (V Nil))
+                           (V Nil))))
+                  (A (A (V Tuple2) (V f)) (V l)))))
+      (Forall
+        ((TV a) (TV b))
+          (PT
+             Fun
+                ((PT Fun ((TV a) (TV b)))
+                    (PT Fun ((PT List ((TV a))) (PT List ((TV b)))))))) ,testpred-closure)
+
+    ; map (/. x x + x) ns
+    (ml-mapa-t (A (A (V ml-map-t)
+           (L (V x) (A (A (V +) (V x)) (V x))))
+        (V d1234))
+      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
+
     ; fact
     (fact (L (V n) (If (A (A (V ==) (V n)) (K 0))
                        (K 1)
