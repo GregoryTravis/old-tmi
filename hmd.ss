@@ -1291,15 +1291,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (lambda (b) (mtch b (name . ('Closure . _)) #f (name . value) #t))
       program)))
 
-(define (_main)
-  (let ((program (map (lambda (x) (mtch x (n c t v) `(,n . ,c))) test-program)))
-    (let ((typed-program (infer-program program)))
-      (shew-program-types typed-program)
-      (let ((evaled-program (eval-program typed-program global-env)))
-        ;(shew 'evaled evaled-program)
-        ;(begin (shew 'evaled) (shew-elide-closures evaled-program))
-        (verify-results typed-program evaled-program)))))
-
 ;; Cycle finding takes a digraph in this form:
 ;;   ((src0 sink0 sink1 ...) ...)
 
