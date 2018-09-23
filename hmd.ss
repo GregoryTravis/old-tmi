@@ -1442,7 +1442,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (apply append
       (map
         (lambda (id)
-          (shew 'hey id (member? id clumps))
           (if (member? id clumps)
             (generate-fixns program (lookup id clump-to-ids))
             (if (assoc id program)
@@ -1459,14 +1458,13 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 ;; still contain self-references which should be removed
 (define (combine-mutrecs refs)
   (map (lambda (group) (mtch group (id . refses)
-    (begin (shew 'group group)
     (if (is-mutrec id)
       (begin
         (assert (member? id (apply append (map cdr refses))))
         `(,id . ,(rember id (unique (apply append (map cdr refses))))))
       (begin
         (assert (eq? (length refses) 1))
-        (car refses))))))
+        (car refses)))))
     (group-byy car refs)))
 
 ;; Takes global ref digraph and the set of mututally recursive ids.  Generates a clump name for each mutrec
