@@ -36,7 +36,16 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 ; Fix /. rec /. f /. xs /. z if (xs == []) z else (f (car xs) (rec f (cdr xs) z))
 |#
 
-(define (make-type-symgen)
+;; For when the nice one runs out
+(define (make-type-symgen-lots)
+  (let ((n 0))
+    (lambda ()
+      (let ((sym (string->symbol (++ "a" n))))
+        (set! n (+ n 1))
+        sym))))
+
+;; a, b, ... aa, ab, ...
+(define (make-type-symgen-nice)
   (let ((n 0))
     (lambda ()
       (assert (< n (* 26 27)))
@@ -49,6 +58,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (set! n (+ n 1))
         sym))))
 
+(define make-type-symgen make-type-symgen-nice)
 (define ty (make-type-symgen))
 
 #|
@@ -613,6 +623,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (shew 'sub)
             (shew sub)
             (shew-eqns (list sub))
+            ;(shew 'ecs-len (length ecs))
             (let ((applied (unify-apply-subs2 dove (list sub))))
               (shew 'applied)
               (shew-ecs applied)
@@ -625,18 +636,18 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   (shew e)
   (mtch (tinf e type-env)
     (typed-exp env eqns)
-      (begin
-        (shew typed-exp)
-        (let ((all-subs (infer-subs eqns)))
-          (shew 'all-subs)
-          (shew-eqns all-subs)
-          (let ((typed-term-subbed (apply-unifiers-to-term all-subs typed-exp)))
-            (shew 'typed-term-subbed typed-term-subbed)
-            (let ((quantified (quantify-type typed-term-subbed)))
-              (shew 'quantified quantified)
-                quantified))))))
-          ;(unify-big-check unified)
-          ;(assert (not (unify-ecs-is-type-error unified)))
+    (solve-and-apply typed-exp eqns)))
+
+(define (solve-and-apply typed-exp eqns)
+  (shew typed-exp)
+  (let ((all-subs (infer-subs eqns)))
+    (shew 'all-subs)
+    (shew-eqns all-subs)
+    (let ((typed-term-subbed (apply-unifiers-to-term all-subs typed-exp)))
+      (shew 'typed-term-subbed typed-term-subbed)
+      (let ((quantified (quantify-type typed-term-subbed)))
+        (shew 'quantified quantified)
+          quantified))))
 
 ;; Maybe doesn't need to be done via the pairs route.
 (define (unify-apply-subs2 ecs subs)
@@ -1073,6 +1084,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                (LS ((B (V a) (K 22)))
                  (V a))))
       (C Int) 32)
+
+    (main (K 123)
+      (C Int) 123)
    ))
 
 (define (native-curry-2 f) `(Native ,(lambda (x) `(Native ,(lambda (y) (f x y))))))
@@ -1259,6 +1273,16 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             . ,(infer-program-1 rest (append type-env `((,name . ,t))))))
     '()
       '()))
+
+;; This replacement for infer-program-1 works, but takes a really long time
+(define (infer-program-1-all-at-once program type-env)
+  (sr 'gosh
+  (let* ((bindings (map (lambda (pr) `(B (V ,(car pr)) ,(cdr pr))) program))
+         (ls `(LS ,bindings (V main))))
+    (mtch (tinf0 ls type-env '())
+      (typed-exp env unis)
+      (solve-and-apply typed-exp unis)))
+      ))
 
 (define (eval-program typed-program env)
   (mtch typed-program
