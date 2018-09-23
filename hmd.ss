@@ -318,7 +318,12 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
         (tbindings env unis)
           (mtch (tinf0 body env unis)
             (('T body body-t) env unis)
-              `((T (LS ,tbindings (T ,body ,body-t)) ,body-t)
+              `(
+
+              ; Calling this here works or doesn't break anything
+              ; ,(solve-and-apply `(T (LS ,tbindings (T ,body ,body-t)) ,body-t) unis)
+                (T (LS ,tbindings (T ,body ,body-t)) ,body-t)
+
                 ,env
                 ,unis)))
     ('B ('V v) e)
