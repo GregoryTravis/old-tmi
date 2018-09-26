@@ -747,7 +747,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define test-program-no-fix
   `(
-    ;;#|
     ; /. f /. x (f x) + x
     ; (Int -> Int) -> Int -> Int
     (foo (L (V f) (L (V x) (A (A (V +) (A (V f) (V x))) (V x))))
@@ -976,20 +975,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
     (even
       (L (V x) (If (A (A (V ==) (V x)) (K 0)) (K 1) (A (V odd) (A (A (V -) (V x)) (K 1)))))
-      #|
-      (Forall ((TV a))
-        (PT Fun
-          ((TV a)
-           (PT Fun ((PT Fun ((C Int) (C Int))) (PT Fun ((C Int) (C Int)))))))) ,testpred-closure)
-           |#
       (PT Fun ((C Int) (C Int))) ,testpred-closure)
     (odd
       (L (V x) (If (A (A (V ==) (V x)) (K 0)) (K 0) (A (V even) (A (A (V -) (V x)) (K 1)))))
-      #|
-      (Forall ((TV b))
-        (PT Fun ((PT Fun ((C Int) (C Int)))
-                 (PT Fun ((TV b) (PT Fun ((C Int) (C Int)))))))) ,testpred-closure)
-                 |#
       (PT Fun ((C Int) (C Int))) ,testpred-closure)
     ;(even (Fixn (K 0) (PT FixList ((V even-oprec) (V odd-oprec))))
       ;(PT Fun ((C Int) (C Int))) ,testpred-closure)
@@ -1088,7 +1076,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (Forall ((TV d) (TV e)) (PT Fun ((PT List ((TV d))) (PT Fun ((PT List ((TV e))) (C Int)))))) ,testpred-closure)
     (ml2a-sa (A (A (V ml2a-s) (A (A (V Cons) (K 1)) (V Nil))) (V Nil))
       (C Int) 1)
-    ;;|#
 
     (let0 (LS ((B (V a) (K 10))
                (B (V b) (K 20)))
@@ -1294,15 +1281,18 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     '()
       '()))
 
-;; This replacement for infer-program-1 works, but takes a really long time
+;; This replacement for infer-program-1 is very slow and is broken: it infers
+;; Int -> Int for id.
+;; Converts the (name . value) format to a LS and then back.
 (define (infer-program-1-all-at-once program type-env)
-  (sr 'gosh
-  (let* ((bindings (map (lambda (pr) `(B (V ,(car pr)) ,(cdr pr))) program))
-         (ls `(LS ,bindings (V main))))
-    (mtch (tinf0 ls type-env '())
-      (typed-exp env unis)
-      (solve-and-apply typed-exp unis)))
-      ))
+  (mtch
+    (let* ((bindings (map (lambda (pr) `(B (V ,(car pr)) ,(cdr pr))) program))
+           (ls `(LS ,bindings (V main))))
+      (mtch (tinf0 ls type-env '())
+        (typed-exp env unis)
+        (solve-and-apply typed-exp unis)))
+    ('T ('LS bindings main) t)
+      (map (lambda (binding) (mtch binding ('B ('V name) value) `(,name . ,value))) bindings)))
 
 (define (eval-program typed-program env)
   (mtch typed-program
