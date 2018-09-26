@@ -322,25 +322,22 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
               `((T (Fixn (K ,i) (PT FixList ,tes)) ,(nth i result-ts))
                 ,env
                 ,(append new-unis unis))))
-    ('LS bindings body)
-      (mtch (tinf0* bindings env unis)
-        (tbindings env unis)
-          (mtch (tinf0 body env unis)
-            (('T body body-t) env unis)
-              `(
-
-              ; Calling this here works or doesn't break anything
-              ; ,(solve-and-apply `(T (LS ,tbindings (T ,body ,body-t)) ,body-t) unis)
-                (T (LS ,tbindings (T ,body ,body-t)) ,body-t)
-
-                ,env
-                ,unis)))
-    ('B ('V v) e)
-      (mtch (tinf0 e env unis)
-        (('T e e-t) env unis)
-          `((B (V ,v) (T ,e ,e-t))
-            ((,v . ,e-t) . ,env)
-            ,unis))
+    ('LS (('B ('V x) val) . rest) body)
+      (mtch (tinf0 val env unis)
+        (('T val val-t) nenv nunis)
+          (mtch (solve-and-apply `(T ,val ,val-t) nunis)
+            ('T val val-t)
+              (mtch (tinf0 `(LS ,rest ,body) `((,x . ,val-t) . ,env) unis)
+                (('T ('LS rest body) body-t) nenv nunis)
+                  `((T (LS ((B (V ,x) (T ,val ,val-t)) . ,rest) ,body) ,body-t)
+                    ,env
+                    ,nunis))))
+    ('LS '() body)
+      (mtch (tinf0 body env unis)
+        (('T body body-t) env unis)
+          `((T (LS () (T ,body ,body-t)) ,body-t)
+            ,env
+            , unis))
     ('If b th el)
       (let ((result-t (ty)))
         (mtch (tinf0 b env unis)
@@ -388,9 +385,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       ;`(PT Fun (,(apply-unifiers-to-type-term unifiers a) ,(apply-unifiers-to-type-term unifiers b)))
     ('PT tc targs)
       `(PT ,tc ,(map (lambda (t) (apply-unifiers-to-type-term unifiers t)) targs))
+    ('Forall vars body)
+      term
     ))
-;(tracefun apply-unifiers apply-unifiers-to-type-term )
-;(tracefun apply-unifiers-to-type-term )
 
 (define (apply-unifiers-to-term unifiers e)
   (mtch e
@@ -423,7 +420,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     ('K k)
       e))
 
-;(tracefun apply-unifiers-to-term)
+;(tracefun apply-unifiers-to-term apply-unifiers-to-type-term)
 
 (define (ec-set-make) '())
 
@@ -668,6 +665,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
       (let ((quantified (quantify-type typed-term-subbed)))
         (shew 'quantified quantified)
           quantified))))
+;(tracefun solve-and-apply)
 
 ;; Maybe doesn't need to be done via the pairs route.
 (define (unify-apply-subs2 ecs subs)
@@ -1270,7 +1268,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
           typed-program))
       "\n")))
 
-(define (infer-program program) (infer-program-1 program initial-type-env))
+(define (infer-program program) (infer-program-1-all-at-once program initial-type-env))
 (define (infer-program-1 program type-env)
   (mtch program
     ((name . body) . rest)
