@@ -950,7 +950,7 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (ml-mapa-t (A (A (V ml-map-t)
            (L (V x) (A (A (V +) (V x)) (V x))))
         (V d1234))
-      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil))))) 
+      (PT List ((C Int))) (Cons 2 (Cons 4 (Cons 6 (Cons 8 Nil)))))
 
     ; fact
     (fact (L (V n) (If (A (A (V ==) (V n)) (K 0))
@@ -1079,7 +1079,6 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                (B (V b) (K 20)))
               (A (A (V +) (V a)) (V b)))
       (C Int) 30)
-
     (let1 (LS ((B (V a) (K 10))
                (B (V b) (A (A (V +) (V a)) (V a))))
               (A (A (V Cons) (V a)) (A (A (V Cons) (V b)) (V Nil))))
@@ -1089,6 +1088,9 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                (LS ((B (V a) (K 22)))
                  (V a))))
       (C Int) 32)
+    (let3 (LS ((B (V trip) (L (V x) (A (A (V *) (V x)) (K 3)))))
+            (A (A (V map) (V trip)) (V d1234)))
+      (PT List ((C Int))) (Cons 3 (Cons 6 (Cons 9 (Cons 12 Nil)))))
 
     (main (K 123)
       (C Int) 123)
@@ -1283,6 +1285,8 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 ;; Int -> Int for id.
 ;; Converts the (name . value) format to a LS and then back.
 (define (infer-program-1-all-at-once program type-env)
+  (shew 'START)
+  (set! ty (make-type-symgen))
   (mtch
     (let* ((bindings (map (lambda (pr) `(B (V ,(car pr)) ,(cdr pr))) program))
            (ls `(LS ,bindings (V main))))
