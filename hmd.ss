@@ -1099,6 +1099,10 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
             (A (A (V Cons) (A (V leven) (K 7))) (A (A (V Cons) (A (V lodd) (K 9))) (V Nil))))
       (PT List ((C Int))) (Cons 0 (Cons 1 Nil)))
 
+    (let5 (LR ((B (V fooh) (L (V x) (A (V odd) (V x)))))
+            (A (V fooh) (K 5)))
+      (C Int) 1)
+
     (main (K 123)
       (C Int) 123)
    ))
