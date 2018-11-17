@@ -84,12 +84,16 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
   '(
     ; int -> int -> int
     (+ . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
+    (op+ . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ; int -> int -> int
     (* . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
+    (op* . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ; int -> int -> int
     (- . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
+    (op- . (PT Fun ((C Int) (PT Fun ((C Int) (C Int))))))
     ; a -> a -> Bool
     (== . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((TV a) (C Bool)))))))
+    (op== . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((TV a) (C Bool)))))))
     ; a -> List a -> List a
     (Cons . (Forall ((TV a)) (PT Fun ((TV a) (PT Fun ((PT List ((TV a))) (PT List ((TV a)))))))))
     ; List a
@@ -1135,13 +1139,17 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 (define (native-curry-3 f) `(Native ,(lambda (x) `(Native ,(lambda (y) `(Native ,(lambda (z) (f x y z))))))))
 (define global-env `(
   (+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
+  (op+ . (Native ,(lambda (x) `(Native ,(lambda (y) (+ x y))))))
   (- . ,(native-curry-2 -))
+  (op- . ,(native-curry-2 -))
   (* . ,(native-curry-2 *))
+  (op* . ,(native-curry-2 *))
   (Cons . (Native ,(lambda (a) `(Native ,(lambda (d) `(Cons ,a ,d))))))
   (Nil . Nil)
   (car . (Native ,(lambda (x) (mtch x ('Cons a d) a))))
   (cdr . (Native ,(lambda (x) (mtch x ('Cons a d) d))))
   (== . ,(native-curry-2 eq?))
+  (op== . ,(native-curry-2 eq?))
   (Tuple2 . ,(native-curry-2 (lambda (x y) `(Tuple2 ,x ,y))))
   (Tuple3 . ,(native-curry-3 (lambda (x y z) `(Tuple3 ,x ,y ,z))))
   (Return . (Native ,(lambda (x) `(Return ,x))))
@@ -1655,22 +1663,110 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
     (assert (exact-integer? n))
     n))
 
+(define (hmd-compile-is-caf binding)
+  (mtch binding
+    ('definition ('identifier . _) . _)
+      #t
+    x
+      #f))
+
+(define (hmd-compile-group-by-name bindings)
+  (group-byy
+    (lambda (binding)
+      (mtch binding
+        ('definition ('identifier name-s . _) . _)
+          name-s
+        ('definition (app (('identifier name-s . _) . _)) . _)
+          name-s))
+    bindings))
+
+(define (hmd-compile-group-caf clauses)
+  (mtch clauses
+    (('definition ('identifier name-s . _) ('equals . _) value))
+      `(B (V ,(string->symbol name-s)) ,(hmd-compile value))))
+
+(define (hmd-compile-def-to-lams def)
+  (mtch def
+    ('definition ('app (_ . args)) ('equals . _) body)
+      `(PL ,(hmd-compile-arglist args) ,(hmd-compile body))))
+
+(define (hmd-compile-arglist pat)
+  (mtch pat
+    (a) (hmd-compile-pat a)
+    pat (hmd-compile-pat (hmd-compile-tupleize-list pat))))
+
+(define (hmd-compile-tupleize-list pat)
+  (let ((tuple-ctor (++ "Tuple" (->string (length pat)))))
+    `(app ((identifier ,tuple-ctor) . ,pat))))
+    ;`(app ((V ,tuple-ctor) . ,pat)))))
+    ;(hmd-compile-curry-pat `((V ,tuple-ctor) . ,pat))))
+
+(define (hmd-compile-curry-pat-app es)
+  (mtch es
+    (f a)
+      `(PA ,f ,a)
+    (f a . rest)
+      (hmd-compile-curry-pat-app `(,(hmd-compile-curry-pat-app `(,f ,a)) . ,rest))))
+
+(define (hmd-compile-pat pat)
+  (mtch pat
+    ('app es)
+      (hmd-compile-curry-pat-app (map hmd-compile-pat es))
+    ('constructor name-s . _)
+      `(V ,(string->symbol name-s))
+    ('identifier name-s . _)
+      `(PV ,(string->symbol name-s))
+    ('integer i . _)
+      `(K ,(intstring->int i))
+    ))
+
+#|
+    (ml2a (ML ((PL (PA (PA (V Tuple2) (PA (PA (V Cons) (PV a)) (PV d))) (V Nil)) (K 1))
+               (PL (PA (PA (V Tuple2) (V Nil)) (PA (PA (V Cons) (PV a)) (PV d))) (K 2))))
+          |#
+
+(define (hmd-compile-group-ml name clauses)
+  ;; Cannot be CAFs since there are multiple
+  (assert (all? (map (fnot hmd-compile-is-caf) clauses)))
+  ;; Should all have the same # of args
+  (shew 'clauses clauses)
+  (let ((lams (map hmd-compile-def-to-lams clauses)))
+    (shew 'lams lams)
+    `(B (V ,(->symbol name)) (ML ,lams))))
+
+;; Group by name and turn into multilambdas
+(define (hmd-compile-bindings bindings)
+  (let ((grouped-by-name (hmd-compile-group-by-name bindings)))
+    (shew 'GBN grouped-by-name)
+    (map (lambda (group) (mtch group (name . clauses)
+           (cond
+             ((and (eq? (length clauses) 1) (hmd-compile-is-caf (car clauses))) (hmd-compile-group-caf clauses))
+             (#t (hmd-compile-group-ml name clauses)))))
+         grouped-by-name)))
+
 (define (hmd-compile e)
   (mtch e
     ('let bindings body)
-      `(LR ,(map hmd-compile bindings) ,(hmd-compile body))
-    ('definition ('identifier name-s . _) ('equals . _) value)
-      `(B (V ,(string->symbol name-s)) ,(hmd-compile value))
+      `(LR ,(hmd-compile-bindings bindings) ,(hmd-compile body))
+    ;('definition ('identifier name-s . _) ('equals . _) value)
+      ;`(B (V ,(string->symbol name-s)) ,(hmd-compile value))
+    ;('definition (('identifier f-name-s . _) . args) ('equals . _) body)
+      ;`(B (V ,(string->symbol f-name-s))
+          ;(PL 
     ('app (f arg))
       `(A ,(hmd-compile f) ,(hmd-compile arg))
     ('app (f arg . rest))
       `(A ,(hmd-compile `(app (,f ,arg . ,(rdc rest)))) ,(hmd-compile (rac rest)))
+    ('if b th el)
+      `(If ,(hmd-compile b) ,(hmd-compile th) ,(hmd-compile el))
     ('constructor name-s . _)
       `(V ,(string->symbol name-s))
     ('identifier name-s . _)
       `(V ,(string->symbol name-s))
     ('integer i . _)
       `(K ,(intstring->int i))))
+
+(tracefun hmd-compile hmd-compile-pat hmd-compile-def-to-lams hmd-compile-group-ml)
 
 (define (compile-file filename)
   ; Not sure where this extra list comes from

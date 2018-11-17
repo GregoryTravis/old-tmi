@@ -1,1 +1,11 @@
-main = Return 1
+j (Cons a Nil) = 14
+odd 0 = (0 == 1)
+odd n = if (odd (n - 1)) then (0 == 1) else (0 == 0)
+verv = if (odd 3) == (odd 2) then 20 else 21
+;; ggg a b c = 15
+even n = if n == 0 then 30 else 31
+foo = let r = 12
+       in r
+bar = let r = 13
+       in r
+main = Return [(j (Cons 1 [])), verv, (even 1), foo, bar] ;; , (ggg 3 4 5)]

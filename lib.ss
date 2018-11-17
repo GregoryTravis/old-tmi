@@ -532,6 +532,7 @@
 (define (divide-by-pred p lyst)
   (cons (grep p lyst) (grep (fnot p) lyst)))
 
+;; Preserves ordering of first instance of each group.
 (define (group-byy f lyst)
   (if (null? lyst)
       '()
