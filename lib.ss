@@ -1251,3 +1251,6 @@
   (if (eq? n 0)
     (map f os)
     (map (lambda (sub-os) (map-deep (- n 1) f sub-os)) os)))
+
+(define (all-eq-one os)
+  (mtch (unique os) (o) o))
