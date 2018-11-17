@@ -1338,9 +1338,10 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
            ;(ls `(LS ,bindings (V main)))
            (ls program)
            )
+      ;(tinf0 ls type-env '())
       (mtch (tinf0 ls type-env '())
         (typed-exp env unis)
-        (solve-and-apply typed-exp unis)))
+          (solve-and-apply typed-exp unis)))
     ('T ('LS bindings main) t)
       (map (lambda (binding) (mtch binding ('B ('V name) value) `(,name . ,value))) bindings)))
 ;(tracefun infer-program-1-all-at-once)
@@ -1697,16 +1698,17 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
 
 (define (hmd-compile-tupleize-list pat)
   (let ((tuple-ctor (++ "Tuple" (->string (length pat)))))
-    `(app ((identifier ,tuple-ctor) . ,pat))))
+    `(app ((constructor ,tuple-ctor) . ,pat))))
     ;`(app ((V ,tuple-ctor) . ,pat)))))
     ;(hmd-compile-curry-pat `((V ,tuple-ctor) . ,pat))))
 
-(define (hmd-compile-curry-pat-app es)
+(define (hmd-compile-curry-pat-app es) (hmd-compile-curry-generic-app 'PA es))
+(define (hmd-compile-curry-generic-app ctor es)
   (mtch es
     (f a)
-      `(PA ,f ,a)
+      `(,ctor ,f ,a)
     (f a . rest)
-      (hmd-compile-curry-pat-app `(,(hmd-compile-curry-pat-app `(,f ,a)) . ,rest))))
+      (hmd-compile-curry-generic-app ctor `(,(hmd-compile-curry-generic-app ctor `(,f ,a)) . ,rest))))
 
 (define (hmd-compile-pat pat)
   (mtch pat
@@ -1725,14 +1727,52 @@ fix :: ((a -> b) -> (a -> b)) -> (a -> b)
                (PL (PA (PA (V Tuple2) (V Nil)) (PA (PA (V Cons) (PV a)) (PV d))) (K 2))))
           |#
 
+(define (hmd-compile-curry-app es) (hmd-compile-curry-generic-app 'A es))
+(define (hmd-compile-generate-curried-ml-wrapper args body)
+  (mtch args
+    (a . d)
+      `(L (V ,a) ,(hmd-compile-generate-curried-ml-wrapper d body))
+    '()
+      body))
+
+(define ml-curry-symgen (tagged-symbol-generator-generator 'ml-curry))
+
+(define (hmd-compile-tupleize-ml-curry-app pat)
+  (let ((tuple-ctor (->symbol (++ "Tuple" (->string (length pat))))))
+    `((V ,tuple-ctor) . ,pat)))
+
 (define (hmd-compile-group-ml name clauses)
   ;; Cannot be CAFs since there are multiple
   (assert (all? (map (fnot hmd-compile-is-caf) clauses)))
   ;; Should all have the same # of args
-  (shew 'clauses clauses)
-  (let ((lams (map hmd-compile-def-to-lams clauses)))
-    (shew 'lams lams)
-    `(B (V ,(->symbol name)) (ML ,lams))))
+  (let ((num-args (all-eq-one
+                    (map (lambda (def) (mtch def ('definition ('app args) . _) (- (length args) 1)))
+                         clauses))))
+    (shew 'clauses clauses)
+    (shew 'num-args num-args)
+    (if (> num-args 1)
+      (let ((lams (map hmd-compile-def-to-lams clauses)))
+        (shew 'lams lams)
+        (let* ((vars (ntimes-f num-args ml-curry-symgen))
+               (v-vars (map (lambda (var) `(V ,var)) vars)))
+          `(B (V ,(->symbol name))
+              ,(hmd-compile-generate-curried-ml-wrapper
+                 vars
+                 `(A (ML ,lams)
+                     ,(hmd-compile-curry-app (hmd-compile-tupleize-ml-curry-app v-vars)))))))
+      (let ((lams (map hmd-compile-def-to-lams clauses)))
+        (shew 'lams lams)
+        `(B (V ,(->symbol name)) (ML ,lams))))))
+
+#|
+    (ml-map-t (L (V f) (L (V l)
+                (A
+                  (ML ((PL (PA (PA (V Tuple2) (PV f)) (PA (PA (V Cons) (PV a)) (PV d)))
+                           (A (A (V Cons) (A (V f) (V a))) (A (A (V ml-map-t) (V f)) (V d))))
+                       (PL (PA (PA (V Tuple2) (PV f)) (V Nil))
+                           (V Nil))))
+                  (A (A (V Tuple2) (V f)) (V l)))))
+              |#
 
 ;; Group by name and turn into multilambdas
 (define (hmd-compile-bindings bindings)
