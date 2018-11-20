@@ -9,4 +9,5 @@ foo = let r = 12
        in r
 bar = let r = 13
        in r
-main = Return [(j (Cons 1 [])), verv, (even 1), foo, bar, (ggg 3 4 5), (fff 6 7)]
+t18 a = case a of Cons a Nil => a + 100
+main = Return [(j (Cons 1 [])), verv, (even 1), foo, bar, (ggg 3 4 5), (fff 6 7), (t18 (Cons 23 Nil))]
