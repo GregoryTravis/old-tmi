@@ -1,2 +1,3 @@
-#send-quit > /dev/null
-(echo '(begin (dload "hmd.ss") (main "input.tmi"))' | nc localhost 5001) 2>&1 | tee out
+rm -f tmi tmi.hi
+ghc -fprof-auto -fprof-cafs -prof -o tmi tmi.hs
+./tmi
