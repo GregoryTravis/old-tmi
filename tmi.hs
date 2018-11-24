@@ -42,20 +42,23 @@ bigRegex = "^(" ++ combined ++ ")(.*)"
         subRes = map enParen $ map snd tokenPatterns
         enParen x = "(" ++ x ++ ")"
 
+nextToken s = case (matchRegex re2 s) of
+                Just m -> ((getTokenName m, head m), last m)
+                otherwise -> error $ "Bad token at \"" ++ s ++ "\""
+      where
+        re2 = mkRegexWithOpts bigRegex False True 
+        regexNames = map fst tokenPatterns
+        getTokenName m = regexNames !! (fromJust $ findIndex ((head m) ==) (tail m))
+
 main = do
   s <- readFile "input.tmi"
   --putStrLn $ show ("bar" =~ "(foo|bar)" :: Bool)
-  let re2 = mkRegexWithOpts bigRegex False True 
-  let re3 = mkRegexWithOpts "([ \\t\\n])" False True 
-  putStrLn bigRegex
-  putStrLn s
-  putStrLn $ show (matchRegex re2 s)
-  putStrLn (tail s)
-  putStrLn $ show (matchRegex re2 (tail s))
-  putStrLn $ show $ matchOne s
-  putStrLn $ show $ matchOne (tail s)
-  where matchOne s = case (matchRegex re2 s) of Just m -> (regexNames !! (fromJust $ findIndex ((head m) ==) (tail m)), head m)
-        regexNames = map fst tokenPatterns
-        re2 = mkRegexWithOpts bigRegex False True 
-
-  --(whitespace "\\s+")
+  --let re2 = mkRegexWithOpts bigRegex False True 
+  --let re3 = mkRegexWithOpts "([ \\t\\n])" False True 
+  --putStrLn bigRegex
+  --putStrLn s
+  --putStrLn $ show (matchRegex re2 s)
+  --putStrLn (tail s)
+  --putStrLn $ show (matchRegex re2 (tail s))
+  putStrLn $ show $ nextToken s
+  putStrLn $ show $ nextToken (tail s)
