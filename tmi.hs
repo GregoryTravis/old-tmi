@@ -4,7 +4,7 @@ import Text.Regex.Posix
 import Text.Regex
 
 tokenPatterns = [
-  ("whitespace", "[ \\t\\n]+"),
+  ("whitespace", "[ \t\n]+"),
   --("let_keyword", "let"),
   --("in_keyword", "in(?![a-zA-Z0-9])"),
   --("do_keyword", "do(?![a-zA-Z0-9])"),
@@ -50,15 +50,10 @@ nextToken s = case (matchRegex re2 s) of
         regexNames = map fst tokenPatterns
         getTokenName m = regexNames !! (fromJust $ findIndex ((head m) ==) (tail m))
 
+tokenizeString s = case (nextToken s) of
+  (token, "") -> [token]
+  (token, rest) -> token : (tokenizeString rest)
+
 main = do
   s <- readFile "input.tmi"
-  --putStrLn $ show ("bar" =~ "(foo|bar)" :: Bool)
-  --let re2 = mkRegexWithOpts bigRegex False True 
-  --let re3 = mkRegexWithOpts "([ \\t\\n])" False True 
-  --putStrLn bigRegex
-  --putStrLn s
-  --putStrLn $ show (matchRegex re2 s)
-  --putStrLn (tail s)
-  --putStrLn $ show (matchRegex re2 (tail s))
-  putStrLn $ show $ nextToken s
-  putStrLn $ show $ nextToken (tail s)
+  putStrLn $ show $ tokenizeString s
