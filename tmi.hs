@@ -65,13 +65,12 @@ bigRegex = "^(" ++ combined ++ ")(.*$)"
 
 nextToken :: BS.ByteString -> ((String, BS.ByteString), BS.ByteString)
 nextToken s = case (match re2 s []) of
-                Just (_ : mtch : m) -> eesp (s, m, length tokenPatterns, length m) ((getTokenName mtch m, mtch), last m)
+                Just (_ : mtch : m) -> ((getTokenName mtch m, mtch), last m)
                 otherwise -> error $ "Bad token at \"" ++ (BS.unpack s) ++ "\""
-                --Just m -> (m, "")
       where
         re2 = compile (BS.pack bigRegex) [multiline]
         regexNames = map fst tokenPatterns
-        getTokenName mtch m = regexNames !! (fromJust $ findIndex (mtch ==) m)
+        getTokenName mtch m = regexNames !! (fromJust $ elemIndex mtch m)
 
 tokenizeString :: BS.ByteString -> [(String, BS.ByteString)]
 tokenizeString s =
@@ -82,7 +81,4 @@ tokenizeString s =
 
 main = do
   s <- readFile "input.tmi"
-  --putStrLn $ show $ match (compile (BS.pack "([a-z]+\\s+[a-z]+)|(5*)") [multiline]) (BS.pack "5555") []
   putStrLn $ show $ tokenizeString (BS.pack s)
-  putStrLn $ show $ esp 100
-  putStrLn $ show $ eesp "asdf" 100
