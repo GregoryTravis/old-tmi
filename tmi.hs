@@ -51,17 +51,16 @@ tokenPatterns = [
   -- Must insert dummies if you add more here
   ]
 
-bigRegex = "^(" ++ combined ++ ")(.*$)"
+bigRegex = compile (BS.pack $ "^(" ++ combined ++ ")(.*$)") [dotall]
   where combined = intercalate "|" subRes
         subRes = map enParen $ map snd tokenPatterns
         enParen x = "(" ++ x ++ ")"
 
 nextToken :: BS.ByteString -> ((String, BS.ByteString), BS.ByteString)
-nextToken s = case (match re2 s []) of
+nextToken s = case (match bigRegex s []) of
                 Just (_ : mtch : m) -> ((getTokenName mtch m, mtch), last m)
                 otherwise -> error $ "Bad token at \"" ++ (BS.unpack s) ++ "\""
       where
-        re2 = compile (BS.pack bigRegex) [dotall]
         regexNames = map fst tokenPatterns
         getTokenName mtch m = regexNames !! (fromJust $ elemIndex mtch m)
 
