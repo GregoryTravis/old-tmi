@@ -16,10 +16,8 @@ eesp s a = unsafePerformIO $ do
 tokenPatterns = [
   ("whitespace", "[ \\t\\n]+"),
   ("let_keyword", "let"),
-
   ("in_keyword", "in(?![a-zA-Z0-9])"),
   ("do_keyword", "do(?![a-zA-Z0-9])"),
-
   ("larrow", "<-"),
   ("case_keyword", "case"),
   ("of_keyword", "of"),
@@ -46,7 +44,9 @@ tokenPatterns = [
   ("lcb", "\\{"),
   ("rcb", "\\}"),
   --("string", "\"((\\\\\\\\)|(\\\\\")|[^\"])*\"")
+  -- Must insert dummies if you move this up
   ("string", "(\"((\\\\\")|[^\"])*\")")
+  -- Must insert dummies if you add more here
   ]
 
 bigRegex = "^(" ++ combined ++ ")(.*$)"
