@@ -37,17 +37,10 @@ tokenPatterns = [
   ("comment", ";;"),
   ("colon", ":"),
   ("semicolon", ";"),
-
-  --("equals", "=(?=\\s)"),
-  ("equals", "="),
-
+  ("equals", "=(?=\\s)"),
+  ("unary-operator", "!(?!=)"), -- "!(?!=)|~"
   ("operator", "[=<>+/\\-_!@$%^&|*?]+"),
-
-  --("lambda", "/\\.(?=\\s)"),
-  ("lambda", "/\\."),
-  --("unary-operator", "!(?!=)"), -- "!(?!=)|~"
-  ("unary-operator", "!"), -- "!(?!=)|~"
-
+  ("lambda", "/\\.(?=\\s)"),
   ("lparen", "[\\(]"),
   ("rparen", "[\\)]"),
   ("lsb", "[\\[]"),
