@@ -14,7 +14,7 @@ eesp s a = unsafePerformIO $ do
   return a
 
 tokenPatterns = [
-  ("whitespace", "[ \t\n]+"),
+  ("whitespace", "[ \\t\\n]+"),
   ("let_keyword", "let"),
 
   ("in_keyword", "in(?![a-zA-Z0-9])"),
@@ -59,7 +59,7 @@ nextToken s = case (match re2 s []) of
                 Just (_ : mtch : m) -> ((getTokenName mtch m, mtch), last m)
                 otherwise -> error $ "Bad token at \"" ++ (BS.unpack s) ++ "\""
       where
-        re2 = compile (BS.pack bigRegex) [multiline]
+        re2 = compile (BS.pack bigRegex) [dotall]
         regexNames = map fst tokenPatterns
         getTokenName mtch m = regexNames !! (fromJust $ elemIndex mtch m)
 
