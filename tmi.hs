@@ -1,3 +1,4 @@
+import Data.Char (ord)
 import qualified Data.ByteString.Char8 as BS
 import Data.List
 import Data.Maybe
@@ -64,11 +65,16 @@ nextToken s = case (match re2 s []) of
         getTokenName mtch m = regexNames !! (fromJust $ elemIndex mtch m)
 
 tokenizeString :: BS.ByteString -> [(String, BS.ByteString)]
-tokenizeString s =
-  let (token, rest) = (nextToken s) in
-    if ((BS.length rest) == 0)
-      then [token]
-      else token : (tokenizeString rest)
+tokenizeString s
+  | s == BS.empty = []
+  | otherwise =
+    case (nextToken s) of
+      (("comment",_), rest) -> tokenizeString $ skipNewline rest
+      (token, rest) -> token : (tokenizeString rest)
+  where skipNewline :: BS.ByteString -> BS.ByteString
+        skipNewline s = case BS.elemIndex '\n' s of
+                          Just n -> BS.drop (n + 1) s
+                          Nothing -> BS.empty
 
 main = do
   s <- readFile "input.tmi"
