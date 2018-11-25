@@ -1,14 +1,24 @@
+import qualified Data.ByteString.Char8 as BS
 import Data.List
 import Data.Maybe
-import Text.Regex.Posix
-import Text.Regex
+import System.IO.Unsafe
+import Text.Regex.PCRE.Light
+--import Text.Regex
+
+esp a = unsafePerformIO $ do
+  putStrLn $ show $ a
+  return a
+
+eesp s a = unsafePerformIO $ do
+  putStrLn $ show $ s
+  return a
 
 tokenPatterns = [
   ("whitespace", "[ \t\n]+"),
   ("let_keyword", "let"),
 
   --("in_keyword", "in(?![a-zA-Z0-9])"),
-  ("in_keyword", "in"),
+  ("in_keyword", "in(?![a-zA-Z0-9])"),
   --("do_keyword", "do(?![a-zA-Z0-9])"),
   ("do_keyword", "do"),
 
@@ -30,12 +40,14 @@ tokenPatterns = [
 
   --("equals", "=(?=\\s)"),
   ("equals", "="),
+
+  ("operator", "[=<>+/\\-_!@$%^&|*?]+"),
+
   --("lambda", "/\\.(?=\\s)"),
   ("lambda", "/\\."),
   --("unary-operator", "!(?!=)"), -- "!(?!=)|~"
   ("unary-operator", "!"), -- "!(?!=)|~"
 
-  ("operator", "[=<>+/\\-_!@$%^&|*?]+"),
   ("lparen", "[\\(]"),
   ("rparen", "[\\)]"),
   ("lsb", "[\\[]"),
@@ -46,23 +58,31 @@ tokenPatterns = [
   ("asdf", "asdf")
   ]
 
-bigRegex = "^(" ++ combined ++ ")(.*)"
+bigRegex = "^(" ++ combined ++ ")(.*$)"
   where combined = intercalate "|" subRes
         subRes = map enParen $ map snd tokenPatterns
         enParen x = "(" ++ x ++ ")"
 
-nextToken s = case (matchRegex re2 s) of
-                Just m -> ((getTokenName m, head m), last m)
-                otherwise -> error $ "Bad token at \"" ++ s ++ "\""
+nextToken :: BS.ByteString -> ((String, BS.ByteString), BS.ByteString)
+nextToken s = case (match re2 s []) of
+                Just (_ : mtch : m) -> eesp (s, m, length tokenPatterns, length m) ((getTokenName mtch m, mtch), last m)
+                otherwise -> error $ "Bad token at \"" ++ (BS.unpack s) ++ "\""
+                --Just m -> (m, "")
       where
-        re2 = mkRegexWithOpts bigRegex False True 
+        re2 = compile (BS.pack bigRegex) [multiline]
         regexNames = map fst tokenPatterns
-        getTokenName m = regexNames !! (fromJust $ findIndex ((head m) ==) (tail m))
+        getTokenName mtch m = regexNames !! (fromJust $ findIndex (mtch ==) m)
 
-tokenizeString s = case (nextToken s) of
-  (token, "") -> [token]
-  (token, rest) -> token : (tokenizeString rest)
+tokenizeString :: BS.ByteString -> [(String, BS.ByteString)]
+tokenizeString s =
+  let (token, rest) = (nextToken s) in
+    if ((BS.length rest) == 0)
+      then [token]
+      else token : (tokenizeString rest)
 
 main = do
   s <- readFile "input.tmi"
-  putStrLn $ show $ tokenizeString s
+  --putStrLn $ show $ match (compile (BS.pack "([a-z]+\\s+[a-z]+)|(5*)") [multiline]) (BS.pack "5555") []
+  putStrLn $ show $ tokenizeString (BS.pack s)
+  putStrLn $ show $ esp 100
+  putStrLn $ show $ eesp "asdf" 100
