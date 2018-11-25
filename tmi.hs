@@ -17,10 +17,8 @@ tokenPatterns = [
   ("whitespace", "[ \t\n]+"),
   ("let_keyword", "let"),
 
-  --("in_keyword", "in(?![a-zA-Z0-9])"),
   ("in_keyword", "in(?![a-zA-Z0-9])"),
-  --("do_keyword", "do(?![a-zA-Z0-9])"),
-  ("do_keyword", "do"),
+  ("do_keyword", "do(?![a-zA-Z0-9])"),
 
   ("larrow", "<-"),
   ("case_keyword", "case"),
