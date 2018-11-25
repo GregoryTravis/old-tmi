@@ -2,6 +2,7 @@ import Data.Char (ord)
 import qualified Data.ByteString.Char8 as BS
 import Data.List
 import Data.Maybe
+import System.IO
 import System.IO.Unsafe
 import Text.Regex.PCRE.Light
 --import Text.Regex
@@ -36,8 +37,8 @@ tokenPatterns = [
   ("semicolon", ";"),
   ("equals", "=(?=\\s)"),
   ("unary-operator", "!(?!=)"), -- "!(?!=)|~"
-  ("operator", "[=<>+/\\-_!@$%^&|*?]+"),
   ("lambda", "/\\.(?=\\s)"),
+  ("operator", "[=<>+/\\-_!@$%^&|*?]+"),
   ("lparen", "[\\(]"),
   ("rparen", "[\\)]"),
   ("lsb", "[\\[]"),
@@ -46,7 +47,7 @@ tokenPatterns = [
   ("rcb", "\\}"),
   --("string", "\"((\\\\\\\\)|(\\\\\")|[^\"])*\"")
   -- Must insert dummies if you move this up
-  ("string", "(\"((\\\\\")|[^\"])*\")")
+  ("string", "(\"((\\\\([tn]|\\\\))|(\\\\\")|[^\"])*\")")
   -- Must insert dummies if you add more here
   ]
 
@@ -77,5 +78,6 @@ tokenizeString s
                           Nothing -> BS.empty
 
 main = do
+  hSetBuffering stdout NoBuffering
   s <- readFile "input.tmi"
   putStrLn $ show $ tokenizeString (BS.pack s)
