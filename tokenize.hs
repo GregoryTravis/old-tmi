@@ -1,10 +1,16 @@
-module Tokenize ( tokenizeString ) where
+module Tokenize
+( tokenizeString
+, PosToken
+, Token) where
 
 import Data.Char (ord)
 import qualified Data.ByteString.Char8 as BS
 import Data.List
 import Data.Maybe
 import Text.Regex.PCRE.Light
+
+data Token = Token String String deriving Show
+data PosToken = PosToken String String (Int, Int) deriving Show
 
 tokenPatterns = [
   ("whitespace", "[ \\t\\n]+"),
@@ -47,21 +53,21 @@ bigRegex = compile (BS.pack $ "^(" ++ combined ++ ")(.*$)") [dotall]
         subRes = map enParen $ map snd tokenPatterns
         enParen x = "(" ++ x ++ ")"
 
-nextToken :: BS.ByteString -> ((String, BS.ByteString), BS.ByteString)
+nextToken :: BS.ByteString -> (Token, BS.ByteString)
 nextToken s = case (match bigRegex s []) of
-                Just (_ : mtch : m) -> ((getTokenName mtch m, mtch), last m)
+                Just (_ : mtch : m) -> (Token (getTokenName mtch m) (BS.unpack mtch), last m)
                 otherwise -> error $ "Bad token at \"" ++ (BS.unpack s) ++ "\""
       where
         regexNames = map fst tokenPatterns
         getTokenName mtch m = regexNames !! (fromJust $ elemIndex mtch m)
 
-tokenizeString1 :: BS.ByteString -> (Int, Int) -> [((String, BS.ByteString), (Int, Int))]
+tokenizeString1 :: BS.ByteString -> (Int, Int) -> [PosToken]
 tokenizeString1 s pos
   | s == BS.empty = []
   | otherwise =
     case (nextToken s) of
-      (("comment",s), rest) -> (tokenizeString1 rest (advanceByString pos s))
-      (token@(_,s), rest) -> (token, pos) : (tokenizeString1 rest (advanceByString pos s))
+      (Token "comment" s, rest) -> (tokenizeString1 rest (advanceByString pos (BS.pack s)))
+      (token@(Token name s), rest) -> (PosToken name s pos) : (tokenizeString1 rest (advanceByString pos (BS.pack s)))
   where advanceByString :: (Int, Int) -> BS.ByteString -> (Int, Int)
         advanceByString (col, row) s
           | s == BS.empty = (col, row)
