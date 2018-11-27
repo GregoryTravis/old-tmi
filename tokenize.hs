@@ -75,5 +75,4 @@ tokenizeString1 s pos
           | otherwise = advanceByString (col + 1, row) (BS.tail s)
         --advanceByString pos s = advance pos ((BS.length s) - numNewlines) numNewlines
           --where numNewlines = BS.length (BS.filter ('\n' ==) s)
-tokenizeString s = tokenizeString1 s (0, 0)
-
+tokenizeString s = tokenizeString1 (BS.pack s) (0, 0)
