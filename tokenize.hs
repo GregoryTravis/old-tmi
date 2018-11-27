@@ -23,7 +23,7 @@ tokenPatterns = [
   ("constructor", "[A-Z][a-zA-Z0-9_]*"),
   ("identifier", "[a-zA-Z0-9_][a-zA-Z0-9_=<>+/\\-_!@$%^&|*?]*"),
   ("comma", ","),
-  ("comment", ";;"),
+  ("comment", ";;[^\\n]*\\n"),
   ("colon", ":"),
   ("semicolon", ";"),
   ("equals", "=(?=\\s)"),
@@ -60,19 +60,11 @@ tokenizeString1 s pos
   | s == BS.empty = []
   | otherwise =
     case (nextToken s) of
-      (("comment",_), rest) -> tokenizeString1 (skipNewline rest) (advanceByString pos $ BS.take ((BS.length s) - (BS.length (skipNewline rest))) s)
+      (("comment",s), rest) -> (tokenizeString1 rest (advanceByString pos s))
       (token@(_,s), rest) -> (token, pos) : (tokenizeString1 rest (advanceByString pos s))
-  where skipNewline :: BS.ByteString -> BS.ByteString
-        skipNewline s = case BS.elemIndex '\n' s of
-                          Just n -> BS.drop (n + 1) s
-                          Nothing -> BS.empty
-        --advance (col, row) dcol drow = (col + dcol, row + drow)
-        advanceByString :: (Int, Int) -> BS.ByteString -> (Int, Int)
-        --advanceByString pos s = eesp (pos, s) $ qadvanceByString pos s
+  where advanceByString :: (Int, Int) -> BS.ByteString -> (Int, Int)
         advanceByString (col, row) s
           | s == BS.empty = (col, row)
           | (BS.head s == '\n') = advanceByString (0, row + 1) (BS.tail s)
           | otherwise = advanceByString (col + 1, row) (BS.tail s)
-        --advanceByString pos s = advance pos ((BS.length s) - numNewlines) numNewlines
-          --where numNewlines = BS.length (BS.filter ('\n' ==) s)
 tokenizeString s = tokenizeString1 (BS.pack s) (0, 0)
