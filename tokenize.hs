@@ -66,8 +66,10 @@ tokenizeString1 s pos
   | s == BS.empty = []
   | otherwise =
     case (nextToken s) of
-      (Token "comment" s, rest) -> (tokenizeString1 rest (advanceByString pos (BS.pack s)))
-      (token@(Token name s), rest) -> (PosToken name s pos) : (tokenizeString1 rest (advanceByString pos (BS.pack s)))
+      (Token "comment" s, rest) ->
+        (tokenizeString1 rest (advanceByString pos (BS.pack s)))
+      (token@(Token name s), rest) ->
+        (PosToken name s pos) : (tokenizeString1 rest (advanceByString pos (BS.pack s)))
   where advanceByString :: (Int, Int) -> BS.ByteString -> (Int, Int)
         advanceByString (col, row) s
           | s == BS.empty = (col, row)
