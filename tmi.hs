@@ -7,7 +7,7 @@ main = do
   s <- readFile "input.tmi"
   let tokens = tokenizeString s
   putStrLn $ show tokens
-  --putStrLn $ renderTokens tokens
+  putStrLn $ renderTokens tokens
   let prep = preprocess tokens
   putStrLn $ show prep
-  --putStrLn $ renderTokens prep
+  putStrLn $ renderTokens prep

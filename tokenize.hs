@@ -1,6 +1,6 @@
 module Tokenize
 ( tokenizeString
---, renderTokens
+, renderTokens
 , PosToken (..)
 , Token (..)) where
 
@@ -81,6 +81,23 @@ tokenizeString1 s pos
           | (BS.head s == '\n') = advanceByString (0, row + 1) (BS.tail s)
           | otherwise = advanceByString (col + 1, row) (BS.tail s)
 tokenizeString s = removeWhitespace $ tokenizeString1 (BS.pack s) (0, 0)
+
+insertBetweenPairs f (x0 : x1 : xs) = x0 : f x0 x1 : insertBetweenPairs f (x1 : xs)
+insertBetweenPairs f [x] = [x]
+--insertBetweenPairs f _ = _
+
+addWhitespaceBetween (PosToken t0 s0 pos0) (PosToken t1 s1 pos1) =
+  let wsStart = addCols pos0 s0
+   in PosToken "whitespace" (addWhitespace wsStart pos1) wsStart
+  where
+    addCols (c, r) s = (c + length s, r)
+    addWhitespace (c0, r0) (c1, r1)
+      | r0 < r1 = (replicate (r1 - r0) '\n') ++ (replicate c1 ' ')
+      | r0 == r1 = (replicate (c1 - c0) ' ')
+
+addWhitespace1 tokens = insertBetweenPairs addWhitespaceBetween tokens
+renderTokens tokens = concat $ map getString $ addWhitespace1 tokens
+  where getString (PosToken _ s _) = s
 
 {-
 advanceTo currentCol currentRow destCol destRow =
