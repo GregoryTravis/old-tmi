@@ -11,13 +11,13 @@ preprocess1 tokens groupStack =
     then case (tokens, groupStack) of
            -- Dedent from an 'in' inside a let
            (token@(PosToken "in_keyword" _ _) : ts, Group Let _ : gs) ->
-             PosToken "p-rcb" "}" (0, 0) : token : preprocess1 ts gs
+             PosToken "p-rcb" "}" (rightBefore token) : token : preprocess1 ts gs
            -- Detent from an 'in' otherwise (redundant to the next one?)
-           (PosToken "in_keyword" _ _ : _, g : gs) ->
-             PosToken "p-rcb" "}" (0, 0) : preprocess1 tokens gs
+           (token@(PosToken "in_keyword" _ _) : _, g : gs) ->
+             PosToken "p-rcb" "}" (rightBefore token) : preprocess1 tokens gs
            -- Any other dedent
-           (_, g : gs) ->
-             PosToken "p-rcb" "}" (0, 0) : preprocess1 tokens gs
+           (token : _, g : gs) ->
+             PosToken "p-rcb" "}" (rightBefore token) : preprocess1 tokens gs
 
 {-
 (define (preprocess tokens group-stack)
@@ -36,24 +36,27 @@ preprocess1 tokens groupStack =
              []
            -- Open a let block
            token@(PosToken "let_keyword" _ _) : next : rest ->
-             token : PosToken "p-lcb" "{" (0, 0) : preprocess1 (next : rest) (Group Let next : groupStack)
+             token : PosToken "p-lcb" "{" (rightAfter token) : preprocess1 (next : rest) (Group Let next : groupStack)
            -- Open a where block
            token@(PosToken "where_keyword" _ _) : next : rest ->
-             token : PosToken "p-lcb" "{" (0, 0) : preprocess1 (next : rest) (Group Where next : groupStack)
+             token : PosToken "p-lcb" "{" (rightAfter token) : preprocess1 (next : rest) (Group Where next : groupStack)
            -- Open an of block
            token@(PosToken "of_keyword" _ _) : next : rest ->
-             token : PosToken "p-lcb" "{" (0, 0) : preprocess1 (next : rest) (Group Of next : groupStack)
+             token : PosToken "p-lcb" "{" (rightAfter token) : preprocess1 (next : rest) (Group Of next : groupStack)
            -- Closing let decls, open an in block
            token@(PosToken "in_keyword" _ _) : rest ->
-             case groupStack of (Group Let _) : gsRest -> PosToken "p-rcb" "}" (0, 0) : token : preprocess1 rest gsRest
+             case groupStack of (Group Let _) : gsRest -> PosToken "p-rcb" "}" (rightBefore token) : token : preprocess1 rest gsRest
            token@(PosToken "do_keyword" _ _) : next : rest ->
-             token : PosToken "p-lcb" "{" (0, 0) : preprocess1 (next : rest) (Group Do next : groupStack)
+             token : PosToken "p-lcb" "{" (rightAfter token) : preprocess1 (next : rest) (Group Do next : groupStack)
            token : ts ->
              (if shouldInsertSemiColon tokens groupStack
-               then [PosToken "semicolon" ";" (0, 0)]
+               then [PosToken "semicolon" ";" (rightBefore token)]
                else []) ++ (token : preprocess1 ts groupStack)
 
 preprocess tokens = preprocess1 tokens []
+
+rightAfter (PosToken _ s (c, r)) = (c + length s, r)
+rightBefore (PosToken _ _ (c, r)) = (c - 1, r)
 
 {-
     (mtch tokens
