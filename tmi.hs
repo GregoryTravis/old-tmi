@@ -1,6 +1,9 @@
 import System.IO
+import Parser
 import Preprocess
 import Tokenize
+
+data Foo = Foo Int
 
 main = do
   hSetBuffering stdout NoBuffering
@@ -11,3 +14,4 @@ main = do
   let prep = preprocess tokens
   putStrLn $ show prep
   putStrLn $ renderTokens prep
+  putStrLn $ show grammar
