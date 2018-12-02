@@ -15,3 +15,4 @@ main = do
   putStrLn $ show prep
   putStrLn $ renderTokens prep
   putStrLn $ show grammar
+  putStrLn $ show $ binarizeGrammar grammar

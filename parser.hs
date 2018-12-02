@@ -1,25 +1,78 @@
 module Parser
-( grammar ) where
+( grammar
+, binarizeGrammar ) where
 
-data GExp nt = NT nt | T String | Alt [GExp nt] | Seq [GExp nt]
+data GExp = NT String | T String | Alt [GExp] | Seq [GExp]
   deriving Show
-data Rule nt = Rule nt (GExp nt)
+data Rule = Rule String GExp
   deriving Show
-data Grammar nt = Grammar [Rule nt]
+data Grammar = Grammar [Rule]
   deriving Show
 
-data NTs = Top | Subject | Predicate | NounPhrase | DirectObject
+--niceGrammar (Grammar rules) = (intercalate "\n" (map niceRule rules)
+
+--data NTs = "Top" | "Subject" | "Predicate" | "NounPhrase" | "DirectObject"
 --data Ts = Noun | Verb | Article | Adjective
-  deriving Show
-grammar :: Grammar NTs
+  --deriving Show
+grammar :: Grammar
 grammar = Grammar [
-  Rule Top $ Seq [NT Subject, NT Predicate],
-  Rule Subject $ NT NounPhrase,
-  Rule NounPhrase $ Seq [Alt [T "Noun", Seq [T "Article", NT NounPhrase]],
-                         Seq [T "Article", T "Adjective", NT NounPhrase]],
-  Rule Predicate $ Seq [T "Verb", NT DirectObject],
-  Rule DirectObject $ NT NounPhrase
+  Rule "Top" $ Seq [NT "Subject", NT "Predicate"],
+  Rule "Subject" $ NT "NounPhrase",
+  Rule "NounPhrase" $ Seq [Alt [T "Noun", Seq [T "Article", NT "NounPhrase"]],
+                           Seq [T "Article", T "Adjective", NT "NounPhrase"]],
+  Rule "Predicate" $ Seq [T "Verb", NT "DirectObject"],
+  Rule "DirectObject" $ NT "NounPhrase"
   ]
+
+binarizeGrammar :: Grammar -> Grammar
+binarizeGrammar (Grammar rules) = Grammar $ binarizeRules rules 0
+
+binarizeRules :: [Rule] -> Int -> [Rule]
+binarizeRules (r : rs) n =
+  case binarizeRule r n of (rules, newN) -> rules ++ binarizeRules rs newN
+binarizeRules [] n = []
+
+binarizeRule :: Rule -> Int -> ([Rule], Int)
+binarizeRule (Rule nt exp) n =
+  case binarizeExp exp n of
+    (newExp, rules, n) -> (Rule nt newExp : rules, n)
+
+binarizeExp :: GExp -> Int -> (GExp, [Rule], Int)
+binarizeExp (Alt (a : b : c : rest)) n =
+  let newSym = "yy" ++ (show n)
+   in case binarizeExp a (n + 1) of
+     (newA, aRules, newN) ->
+       case binarizeExp (Alt (b : c : rest)) newN of
+         (newExp, rules, newN) -> (Alt [newA, NT newSym], aRules ++ [(Rule newSym newExp)] ++ rules, newN)
+binarizeExp (Alt [a, b]) n =
+  case binarizeExp a n of
+    (newA, aRules, newN) ->
+      case binarizeExp b newN of
+        (newB, bRules, newNewN) ->
+          (Alt [newA, newB], aRules ++ bRules, newNewN)
+binarizeExp (Alt [a]) n =
+  case binarizeExp a n of
+    (newA, aRules, newN) ->
+      (Alt [newA], aRules, newN)
+binarizeExp e@(Alt []) n = (e, [], n)
+binarizeExp (Seq (a : b : c : rest)) n =
+  let newSym = "yy" ++ (show n)
+   in case binarizeExp a (n + 1) of
+     (newA, aRules, newN) ->
+       case binarizeExp (Seq (b : c : rest)) newN of
+         (newExp, rules, newN) -> (Seq [newA, NT newSym], aRules ++ [(Rule newSym newExp)] ++ rules, newN)
+binarizeExp (Seq [a, b]) n =
+  case binarizeExp a n of
+    (newA, aRules, newN) ->
+      case binarizeExp b newN of
+        (newB, bRules, newNewN) ->
+          (Seq [newA, newB], aRules ++ bRules, newNewN)
+binarizeExp (Seq [a]) n =
+  case binarizeExp a n of
+    (newA, aRules, newN) ->
+      (Seq [newA], aRules, newN)
+binarizeExp e@(Seq []) n = (e, [], n)
+binarizeExp x n = (x, [], n)
 
 {-
 
