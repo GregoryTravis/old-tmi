@@ -16,3 +16,4 @@ main = do
   putStrLn $ renderTokens prep
   putStrLn $ show grammar
   putStrLn $ show $ binarizeGrammar grammar
+  putStrLn $ show haha

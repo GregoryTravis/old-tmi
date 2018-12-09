@@ -1,6 +1,10 @@
 module Parser
 ( grammar
+, haha
 , binarizeGrammar ) where
+
+import Data.List (find)
+import Tokenize
 
 data GExp = NT String | T String | Alt [GExp] | Seq [GExp]
   deriving Show
@@ -18,8 +22,9 @@ grammar :: Grammar
 grammar = Grammar [
   Rule "Top" $ Seq [NT "Subject", NT "Predicate"],
   Rule "Subject" $ NT "NounPhrase",
-  Rule "NounPhrase" $ Seq [Alt [T "Noun", Seq [T "Article", NT "NounPhrase"]],
-                           Seq [T "Article", T "Adjective", NT "NounPhrase"]],
+  Rule "NounPhrase" $ Alt [T "Noun",
+                           Seq [T "Adjective", T "Noun"],
+                           Seq [T "Article", T "Adjective", T "Noun"]],
   Rule "Predicate" $ Seq [T "Verb", NT "DirectObject"],
   Rule "DirectObject" $ NT "NounPhrase"
   ]
@@ -74,62 +79,55 @@ binarizeExp (Seq [a]) n =
 binarizeExp e@(Seq []) n = (e, [], n)
 binarizeExp x n = (x, [], n)
 
+lookupRule :: Grammar -> String -> Maybe Rule
+lookupRule (Grammar rules) sym = find match rules
+  where match :: Rule -> Bool
+        match (Rule nt exp) = nt == sym
+
+data Feh = PNT String Feh | PT String String | PSeq [Feh] deriving Show
+
+parse :: Grammar -> GExp -> [PosToken] -> Maybe (Feh, [PosToken])
+parse grammar (NT sym) tokens =
+  case (lookupRule grammar sym) of
+    Just (Rule nt exp) ->
+      case parse grammar exp tokens of
+        Just (x, newTokens) -> Just (PNT sym x, newTokens)
+        Nothing -> Nothing
+    Nothing -> Nothing
+parse grammar (T sym) (PosToken ty s _ : ts)
+  | ty == sym = Just (PT sym s, ts)
+  | otherwise = Nothing
+parse grammar (T sym) [] = Nothing
+parse grammar (Alt [a, b]) tokens =
+  case parse grammar a tokens of
+    Just x -> Just x
+    Nothing -> parse grammar b tokens
+parse grammar (Seq [a, b]) tokens =
+  case parse grammar a tokens of
+    Just (fehA, newTokens) ->
+      case parse grammar b newTokens of
+        Just (fehB, newNewTokens) ->
+          Just $ (PSeq [fehA, fehB], newNewTokens)
+        Nothing -> Nothing
+    Nothing -> Nothing
+parse grammar x@(Alt _) tokens = error ("nope" ++ show x)
+parse grammar (Seq _) tokens = error "nope2"
+
+haha = parse (binarizeGrammar grammar) (NT "Top") [
+  --PosToken "Article" "q" (0, 0),
+  PosToken "Noun" "q" (0, 0),
+  PosToken "Verb" "q" (0, 0),
+  --PosToken "Article" "q" (0, 0),
+  --PosToken "Adjective" "q" (0, 0),
+  PosToken "Article" "q" (0, 0),
+  PosToken "Adjective" "q" (0, 0),
+  PosToken "Noun" "q" (0, 0)
+  ]
+
 {-
-
-(define _grammar
-  '((S (seq subject predicate))
-    (subject noun-phrase)
-    (noun-phrase (alt noun (seq article noun-phrase) (seq article adjective noun-phrase)))
-    (predicate (seq verb direct-object))
-    (direct-object noun-phrase)))
-
-(define grammar
-  '((S (seq subject predicate))
-    (subject np)
-    (np (alt noun np0))
-    (np0 (alt np1 np2))
-    (np1 (seq article noun))
-    (np2 (seq article np3))
-    (np3 (seq adjective noun))
-    (predicate (seq verb direct-object))
-    (direct-object np)))
 
 (define parsed (top-parse '(article noun verb article adjective article adjective noun)))
 
-(define (flatten-expression e)
-  (if (atom? e)
-    (list e '())
-    (mtch e
-      (node-type . es)
-        (let* ((nes (map flatten-expression es))
-               (new-es (map car nes))
-               (rules (apply append (map cadr nes)))
-               (ns (gb-symgen)))
-          `(,ns ((,ns (,node-type . ,new-es)) . ,rules))))))
-(define (binarize-expression e)
-  (mtch e
-    (node-type a b c . rest)
-      (let* ((ns (gb-symgen)))
-        (mtch (binarize-expression `(,node-type ,b ,c . ,rest))
-          (se rules)
-            `((,node-type ,a ,ns) ((,ns ,se) . ,rules))))
-    e
-      (list e '())))
-;(tracefun flatten-expression)
-(define (binarize-grammar g)
-  (map-append (lambda (rule)
-    (mtch rule
-      (sym e)
-        (mtch (binarize-expression e)
-          (ne rules)
-            `((,sym ,ne) . ,rules))))
-    (map-append (lambda (rule)
-      (mtch rule
-        (sym e)
-          (mtch (flatten-expression e)
-            (ne rules)
-              `((,sym ,ne) . ,rules))))
-      g)))
 (define grammar '(
   ;(S decls)
   (S plet)
