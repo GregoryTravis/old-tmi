@@ -99,7 +99,9 @@ unbinarizeParse (PSeq [f, f2@(PNT ntName d@(PSeq fs))])
   | otherwise =
       PSeq [(unbinarizeParse f), (unbinarizeParse f2)]
 unbinarizeParse (PSeq fs) = PSeq (map unbinarizeParse fs)
-unbinarizeParse (PNT s f) = PNT s (unbinarizeParse f)
+unbinarizeParse (PNT s f)
+  | startswith "yyalt" s = unbinarizeParse f
+  | otherwise = PNT s (unbinarizeParse f)
 unbinarizeParse x@(PT _ _) = x
 
 -- (PSeq [PT "let_keyword" "let",PNT "yy0" (PSeq [PT "p-lcb" "{",PNT "yy1" 
