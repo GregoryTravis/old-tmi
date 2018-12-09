@@ -14,6 +14,7 @@ main = do
   let prep = preprocess tokens
   putStrLn $ show prep
   putStrLn $ renderTokens prep
-  putStrLn $ show grammar
-  putStrLn $ show $ binarizeGrammar grammar
-  putStrLn $ show haha
+  --putStrLn $ show grammar
+  --putStrLn $ show $ binarizeGrammar grammar
+  --putStrLn $ show haha
+  putStrLn $ show $ parseTmi prep
