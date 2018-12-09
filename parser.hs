@@ -1,10 +1,13 @@
 module Parser
 ( grammar
+, tmiGrammar
 , haha
 , binarizeGrammar
+, unbinarizeParse
 , parseTmi ) where
 
 import Data.List (find)
+import Data.List.Utils (startswith)
 import Tokenize
 
 data GExp = NT String | T String | Alt [GExp] | Seq [GExp]
@@ -45,7 +48,7 @@ binarizeRule (Rule nt exp) n =
 
 binarizeExp :: GExp -> Int -> (GExp, [Rule], Int)
 binarizeExp (Alt (a : b : c : rest)) n =
-  let newSym = "yy" ++ (show n)
+  let newSym = "yyalt" ++ (show n)
    in case binarizeExp a (n + 1) of
      (newA, aRules, newN) ->
        case binarizeExp (Alt (b : c : rest)) newN of
@@ -62,7 +65,7 @@ binarizeExp (Alt [a]) n =
       (Alt [newA], aRules, newN)
 binarizeExp e@(Alt []) n = (e, [], n)
 binarizeExp (Seq (a : b : c : rest)) n =
-  let newSym = "yy" ++ (show n)
+  let newSym = "yyseq" ++ (show n)
    in case binarizeExp a (n + 1) of
      (newA, aRules, newN) ->
        case binarizeExp (Seq (b : c : rest)) newN of
@@ -86,6 +89,20 @@ lookupRule (Grammar rules) sym = find match rules
         match (Rule nt exp) = nt == sym
 
 data Feh = PNT String Feh | PT String String | PSeq [Feh] deriving Show
+
+unbinarizeParse :: Feh -> Feh
+unbinarizeParse (PSeq [f, f2@(PNT ntName d@(PSeq fs))])
+  | startswith "yyseq" ntName =
+      case unbinarizeParse d of
+        PSeq fs -> PSeq $ (unbinarizeParse f) : fs
+        _ -> error "wut"
+  | otherwise =
+      PSeq [(unbinarizeParse f), (unbinarizeParse f2)]
+unbinarizeParse (PSeq fs) = PSeq (map unbinarizeParse fs)
+unbinarizeParse (PNT s f) = PNT s (unbinarizeParse f)
+unbinarizeParse x@(PT _ _) = x
+
+-- (PSeq [PT "let_keyword" "let",PNT "yy0" (PSeq [PT "p-lcb" "{",PNT "yy1" 
 
 parse :: Grammar -> GExp -> [PosToken] -> Maybe (Feh, [PosToken])
 parse grammar (NT sym) tokens =

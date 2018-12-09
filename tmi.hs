@@ -17,4 +17,7 @@ main = do
   --putStrLn $ show grammar
   --putStrLn $ show $ binarizeGrammar grammar
   --putStrLn $ show haha
-  putStrLn $ show $ parseTmi prep
+  putStrLn $ show $ binarizeGrammar tmiGrammar
+  let parsed = parseTmi prep
+  putStrLn $ show parsed
+  putStrLn $ show $ (case parsed of Just (f, []) -> unbinarizeParse f)
