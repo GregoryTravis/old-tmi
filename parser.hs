@@ -1,9 +1,9 @@
 module Parser
 ( grammar
-, tmiGrammar
+--, tmiGrammar
 , haha
-, binarizeGrammar
-, unbinarizeParse
+--, binarizeGrammar
+--, unbinarizeParse
 , parseTmi ) where
 
 import Data.List (find)
@@ -104,8 +104,6 @@ unbinarizeParse (PNT s f)
   | otherwise = PNT s (unbinarizeParse f)
 unbinarizeParse x@(PT _ _) = x
 
--- (PSeq [PT "let_keyword" "let",PNT "yy0" (PSeq [PT "p-lcb" "{",PNT "yy1" 
-
 parse :: Grammar -> GExp -> [PosToken] -> Maybe (Feh, [PosToken])
 parse grammar (NT sym) tokens =
   case (lookupRule grammar sym) of
@@ -174,4 +172,6 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-parseTmi tokens = parse (binarizeGrammar tmiGrammar) (NT "Top") tokens
+parseTmi tokens = case parse (binarizeGrammar tmiGrammar) (NT "Top") tokens of
+                       Just (binarizedParse, []) -> Just (unbinarizeParse binarizedParse)
+                       Nothing -> Nothing
