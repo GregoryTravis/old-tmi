@@ -1,7 +1,9 @@
 import Data.Maybe (fromJust)
 import System.IO
+
 import Parser
 import Preprocess
+import Semantic
 import Tokenize
 
 data Foo = Foo Int
@@ -15,5 +17,6 @@ main = do
   let prep = preprocess tokens
   putStrLn $ show prep
   putStrLn $ renderTokens prep
-  let parsed = parseTmi prep
-  putStrLn $ show $ fromJust parsed
+  let parsed = fromJust $ parseTmi prep
+  putStrLn $ show parsed
+  putStrLn $ show $ p2s parsed

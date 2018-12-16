@@ -1,9 +1,5 @@
 module Parser
-( grammar
---, tmiGrammar
-, haha
---, binarizeGrammar
---, unbinarizeParse
+( Feh (..)
 , parseTmi ) where
 
 import Data.List (find)
