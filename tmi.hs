@@ -5,8 +5,7 @@ import Parser
 import Preprocess
 import Semantic
 import Tokenize
-
-data Foo = Foo Int
+import Util
 
 main = do
   hSetBuffering stdout NoBuffering
@@ -19,4 +18,5 @@ main = do
   putStrLn $ renderTokens prep
   let parsed = fromJust $ parseTmi prep
   putStrLn $ show parsed
-  putStrLn $ show $ p2s parsed
+  --putStrLn $ unpack $ toStrict $ pShow $ p2s parsed
+  msp $ p2s parsed
