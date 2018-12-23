@@ -41,8 +41,8 @@ tokenPatterns = [
   ("rparen", "[\\)]"),
   ("lsb", "[\\[]"),
   ("rsb", "[\\]]"),
-  ("lcb", "\\{"),
-  ("rcb", "\\}"),
+  ("p-lcb", "\\{"),
+  ("p-rcb", "\\}"),
   --("string", "\"((\\\\\\\\)|(\\\\\")|[^\"])*\"")
   -- Must insert dummies if you move this up
   ("string", "(\"((\\\\([tn]|\\\\))|(\\\\\")|[^\"])*\")")

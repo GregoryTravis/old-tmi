@@ -143,7 +143,7 @@ tmiGrammar = Grammar [
   Rule "plet" $ Seq [T "let_keyword", T "p-lcb", NT "decls", T "p-rcb", T "in_keyword", NT "exp"],
   Rule "pwhere-suffix" $ Seq [T "where_keyword", T "p-lcb", NT "decls", T "p-rcb"],
   Rule "pdo" $ Alt [Seq [T "do_keyword", T "p-lcb", NT "exp", T "p-rcb"],
-                    Seq [T "do_keyword", NT "p-lcb", NT "do_assignments", T "semicolon", NT "exp", T "p-rcb"]],
+                    Seq [T "do_keyword", T "p-lcb", NT "do_assignments", T "semicolon", NT "exp", T "p-rcb"]],
   Rule "do_assignments" $ Alt [Seq [NT "do_assignment", T "semicolon", NT "do_assignments"], NT "do_assignment"],
   Rule "do_assignment" $ Seq [NT "exp", T "larrow", NT "exp"],
   Rule "definition" $ Seq [NT "exp", T "equals", NT "exp"],

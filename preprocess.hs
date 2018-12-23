@@ -53,7 +53,7 @@ preprocess1 tokens groupStack =
                then [PosToken "semicolon" ";" (rightBefore token)]
                else []) ++ (token : preprocess1 ts groupStack)
 
-preprocess tokens = preprocess1 tokens []
+preprocess tokens = preprocess1 tokens [Group Let (PosToken "identifier" "dummy" (0,0))]
 
 rightAfter (PosToken _ s (c, r)) = (c + length s, r)
 rightBefore (PosToken _ _ (c, r)) = (c - 1, r)
