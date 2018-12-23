@@ -163,7 +163,7 @@ tmiGrammar = Grammar [
   Rule "case_clauses" $ Alt [Seq [NT "case_clause", T "semicolon", NT "case_clauses"], NT "case_clause"],
   Rule "case_clause" $ Seq [NT "exp", T "rdbl_arrow", NT "exp"],
   Rule "pif" $ Seq [T "if_keyword", NT "exp", T "then_keyword", NT "exp", T "else_keyword", NT "exp"],
-  Rule "phash" $ Alt [Seq [T "lcb", T "rcb"], Seq [T "lcb", NT "phash-entries", T "rcb"]],
+  Rule "phash" $ Alt [Seq [T "p-lcb", T "p-rcb"], Seq [T "p-lcb", NT "phash-entries", T "p-rcb"]],
   Rule "phash-entries" $ Alt [Seq [NT "phash-entry", T "comma", NT "phash-entries"], NT "phash-entry"],
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]

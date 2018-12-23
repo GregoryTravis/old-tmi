@@ -13,7 +13,7 @@ main = do
   let tokens = tokenizeString s
   putStrLn $ show tokens
   putStrLn $ renderTokens tokens
-  let prep = preprocess tokens
+  let prep = (preprocess tokens)
   putStrLn $ show prep
   putStrLn $ renderTokens prep
   let parsed = fromJust $ parseTmi prep

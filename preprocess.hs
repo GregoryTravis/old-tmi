@@ -1,6 +1,9 @@
 module Preprocess where
 
+import Debug.Trace (trace)
+
 import Tokenize
+import Util
 -- module Preprocess (preprocess) where
 
 -- Elements on the group stack -- ctor keyword and token is the one whose column we compare to
@@ -15,6 +18,11 @@ preprocess1 tokens groupStack =
            -- Detent from an 'in' otherwise (redundant to the next one?)
            (token@(PosToken "in_keyword" _ _) : _, g : gs) ->
              PosToken "p-rcb" "}" (rightBefore token) : preprocess1 tokens gs
+           -- EOF dedent: put the added token where the EOF was and move the EOF to be after it
+           ([token@(PosToken "EOF" "eof" pos)], g : gs) ->
+             PosToken "p-rcb" "}" pos : preprocess1 [PosToken "EOF" "eof" (rightAfter token)] gs
+           ([PosToken "EOF" "eof" pos], []) ->
+             []
            -- Any other dedent
            (token : _, g : gs) ->
              PosToken "p-rcb" "}" (rightBefore token) : preprocess1 tokens gs
@@ -32,8 +40,10 @@ preprocess1 tokens groupStack =
 -}
     else case tokens of
            -- Done
-           [] ->
+           [PosToken "EOF" "eof" pos] ->
              []
+           [] ->
+             error "No EOF"
            -- Open a let block
            token@(PosToken "let_keyword" _ _) : next : rest ->
              token : PosToken "p-lcb" "{" (rightAfter token) : preprocess1 (next : rest) (Group Let next : groupStack)
@@ -53,7 +63,10 @@ preprocess1 tokens groupStack =
                then [PosToken "semicolon" ";" (rightBefore token)]
                else []) ++ (token : preprocess1 ts groupStack)
 
-preprocess tokens = preprocess1 tokens [Group Let (PosToken "identifier" "dummy" (0,0))]
+-- Add sentinel EOF to the end of tokens
+-- Start with a fake Let group on the stack, since the TLFs are sort of implicitly in a big let
+preprocess tokens = (preprocess1 (tokens ++ eof) [Group Let (PosToken "identifier" "dummy" (0,0))])
+  where eof = [PosToken "EOF" "eof" (rightAfter (last tokens))]
 
 rightAfter (PosToken _ s (c, r)) = (c + length s, r)
 rightBefore (PosToken _ _ (c, r)) = (c - 1, r)
@@ -98,10 +111,11 @@ shouldInsertSemiColon _ _ = False
     x #f))
 -}
 
+-- The Let at the very end is the fake one we added at the start, so don't close it
+isDedentBlockClose [PosToken "EOF" _ _] [Group Let _] = False
+isDedentBlockClose [PosToken "EOF" _ _] _ = True
 isDedentBlockClose (PosToken _ _ tPos : _) (Group groupType (PosToken _ _ gPos) : _) =
   groupType /= In && isDedent tPos gPos
-isDedentBlockClose [] (Group Of _ : _) = True
-isDedentBlockClose [] (Group Where _ : _) = True
 isDedentBlockClose _ _ = False
 
 {-
