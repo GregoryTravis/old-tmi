@@ -5,7 +5,7 @@ module Semantic
 import Parser (Feh (..))
 
 data Sem = Decls [Sem] | Def Sem Sem | Id String | Let Sem Sem | SInt Int | App [Sem] | Op String |
-  Do [Sem] Sem | Binding Sem Sem | Um Feh
+  Do [Sem] Sem | Binding Sem Sem | Lambda Sem Sem | Um Feh
   deriving Show
 
 p2s :: Feh -> Sem
@@ -25,6 +25,8 @@ p2s (PNT "pdo" (PSeq [_, _, bindings, _, ret, _])) = Do (map p2s (unwrap binding
   where unwrap (PNT "do_assignments" (PSeq [binding, _, bindings])) = binding : unwrap bindings
         unwrap (PNT "do_assignments" binding) = [binding]
 p2s (PNT "do_assignment" (PSeq [var, _, exp])) = Binding (p2s var) (p2s exp)
+p2s (PNT "parenexp" (PSeq [_, exp, _])) = p2s exp
+p2s (PNT "lambda-exp" (PSeq [_, args, body])) = Lambda (p2s args) (p2s body)
 p2s (PT "identifier" id) = Id id
 p2s (PT "integer" id) = SInt (read id :: Int)
 p2s (PT "operator" op) = Op op
