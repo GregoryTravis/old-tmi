@@ -6,7 +6,7 @@ import Parser (Feh (..))
 
 data Sem = Decls [Sem] | Def Sem Sem | Id String | Let Sem Sem | SInt Int | App [Sem] | Op String
   | Do [Sem] Sem | Binding Sem Sem | Lambda Sem Sem | Ctor String | Str String | Where Sem [Sem]
-  | If Sem Sem Sem | List [Sem] | Case Sem [Sem] | Clause Sem Sem
+  | If Sem Sem Sem | List [Sem] | Case Sem [Sem] | Clause Sem Sem | PHash [Sem] | Entry Sem Sem
   | Um Feh
   deriving Show
 
@@ -40,6 +40,11 @@ p2s (PNT "listexp" (PSeq [_, cses, _])) = List (map p2s (unwrap cses))
   where unwrap (PNT "comma-separated-exp-sequence" (PSeq [e, _, es])) = e : unwrap es
         unwrap (PNT "comma-separated-exp-sequence" e) = [e]
 p2s (PNT "parenexp" (PSeq [_, exp, _])) = p2s exp
+p2s (PNT "phash" (PSeq [(PT "p-lcb" _), (PT "p-rcb" _)])) = PHash []
+p2s (PNT "phash" (PSeq [_, entries, _])) = PHash (map p2s (unwrap entries))
+  where unwrap (PNT "phash-entries" (PSeq [entry, _, entries])) = entry : unwrap entries
+        unwrap (PNT "phash-entries" entry) = [entry]
+p2s (PNT "phash-entry" (PSeq [id, _, e]))= Entry (p2s id) (p2s e)
 p2s (PNT "lambda-exp" (PSeq [_, args, body])) = Lambda (p2s args) (p2s body)
 p2s (PT "identifier" id) = Id id
 p2s (PT "constructor" id) = Ctor id
