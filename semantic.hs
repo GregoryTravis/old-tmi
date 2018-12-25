@@ -4,8 +4,10 @@ module Semantic
 
 import Parser (Feh (..))
 
-data Sem = Decls [Sem] | Def Sem Sem | Id String | Let Sem Sem | SInt Int | App [Sem] | Op String |
-  Do [Sem] Sem | Binding Sem Sem | Lambda Sem Sem | Ctor String | Str String | Um Feh
+data Sem = Decls [Sem] | Def Sem Sem | Id String | Let Sem Sem | SInt Int | App [Sem] | Op String
+  | Do [Sem] Sem | Binding Sem Sem | Lambda Sem Sem | Ctor String | Str String | Where Sem [Sem]
+  | If Sem Sem Sem | List [Sem] | Case Sem [Sem] | Clause Sem Sem
+  | Um Feh
   deriving Show
 
 p2s :: Feh -> Sem
@@ -24,7 +26,19 @@ p2s (PNT "plet" (PSeq [_, _, decls, _, _, e])) = Let (p2s decls) (p2s e)
 p2s (PNT "pdo" (PSeq [_, _, bindings, _, ret, _])) = Do (map p2s (unwrap bindings)) (p2s ret)
   where unwrap (PNT "do_assignments" (PSeq [binding, _, bindings])) = binding : unwrap bindings
         unwrap (PNT "do_assignments" binding) = [binding]
+p2s (PNT "where-exp" (PSeq [PNT "non-where-exp" e, suffices])) = Where (p2s e) (unwrap suffices)
+  where unwrap (PNT "pwhere-suffices" (PSeq [suffix, suffices])) = (p2s suffix) : unwrap suffices
+        unwrap (PNT "pwhere-suffices" (PNT "pwhere-suffix" (PSeq [_, _, decls, _]))) = [p2s decls]
+p2s (PNT "case" (PSeq [_, e, _, _, clauses, _])) = Case (p2s e) (map p2s (unwrap clauses))
+  where unwrap (PNT "case_clauses" (PSeq [clause, _, clauses])) = clause : unwrap clauses
+        unwrap (PNT "case_clauses" clause) = [clause]
+p2s (PNT "case_clause" (PSeq [pat, _, exp])) = Clause (p2s pat) (p2s exp)
 p2s (PNT "do_assignment" (PSeq [var, _, exp])) = Binding (p2s var) (p2s exp)
+p2s (PNT "pif" (PSeq [_, b, _, t, _, e])) = If (p2s b) (p2s t) (p2s e)
+p2s (PNT "listexp" (PSeq [(PT "lsb" _), (PT "rsb" _)])) = List []
+p2s (PNT "listexp" (PSeq [_, cses, _])) = List (map p2s (unwrap cses))
+  where unwrap (PNT "comma-separated-exp-sequence" (PSeq [e, _, es])) = e : unwrap es
+        unwrap (PNT "comma-separated-exp-sequence" e) = [e]
 p2s (PNT "parenexp" (PSeq [_, exp, _])) = p2s exp
 p2s (PNT "lambda-exp" (PSeq [_, args, body])) = Lambda (p2s args) (p2s body)
 p2s (PT "identifier" id) = Id id
