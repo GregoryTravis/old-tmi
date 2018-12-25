@@ -51,4 +51,5 @@ p2s (PT "constructor" id) = Ctor id
 p2s (PT "integer" id) = SInt (read id :: Int)
 p2s (PT "string" s) = Str s
 p2s (PT "operator" op) = Op op
+p2s (PT "unary-operator" op) = Op op
 p2s x = Um x
