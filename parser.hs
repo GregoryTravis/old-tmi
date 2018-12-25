@@ -152,7 +152,7 @@ tmiGrammar = Grammar [
   Rule "listexp" $ Alt [Seq [T "lsb", T "rsb"], Seq [T "lsb", NT "comma-separated-exp-sequence", T "rsb"]],
   Rule "comma-separated-exp-sequence" $ Alt [Seq [NT "exp", T "comma", NT "comma-separated-exp-sequence"], NT "exp"],
   Rule "lambda-exp" $ Seq [T "lambda", NT "parenexp", NT "exp"],
-  Rule "base-exp" $ Alt [NT "constructor", T "identifier", T "integer", T "operator", T "unary-operator",
+  Rule "base-exp" $ Alt [T "constructor", T "identifier", T "integer", T "operator", T "unary-operator",
                          NT "parenexp", NT "listexp", NT "lambda-exp", T "string", NT "phash"],
   Rule "base-exp-seq" $ Alt [Seq [NT "base-exp", NT "base-exp-seq"], NT "base-exp"],
   Rule "exp" $ Alt [NT "where-exp", NT "non-where-exp"],
