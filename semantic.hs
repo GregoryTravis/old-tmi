@@ -23,6 +23,7 @@ p2s (PNT "base-exp-seq" (PSeq [be, bes])) =
   case (p2s bes) of App es -> App $ (p2s be) : es
 p2s (PNT "base-exp-seq" e) = App [p2s e]
 p2s (PNT "plet" (PSeq [_, _, decls, _, _, e])) = Let (p2s decls) (p2s e)
+p2s (PNT "pdo" (PSeq [_, _, ret, _])) = Do [] (p2s ret)
 p2s (PNT "pdo" (PSeq [_, _, bindings, _, ret, _])) = Do (map p2s (unwrap bindings)) (p2s ret)
   where unwrap (PNT "do_assignments" (PSeq [binding, _, bindings])) = binding : unwrap bindings
         unwrap (PNT "do_assignments" binding) = [binding]
