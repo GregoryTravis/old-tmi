@@ -139,7 +139,7 @@ haha = parse (binarizeGrammar grammar) (NT "Top") [
   ]
 
 tmiGrammar = Grammar [
-  Rule "Top" $ NT "decls",
+  Rule "Top" $ NT "plet",
   Rule "plet" $ Seq [T "let_keyword", T "p-lcb", NT "decls", T "p-rcb", T "in_keyword", NT "exp"],
   Rule "pwhere-suffix" $ Seq [T "where_keyword", T "p-lcb", NT "decls", T "p-rcb"],
   Rule "pdo" $ Alt [Seq [T "do_keyword", T "p-lcb", NT "exp", T "p-rcb"],

@@ -66,8 +66,12 @@ preprocess1 tokens groupStack =
 
 -- Add sentinel EOF to the end of tokens
 -- Start with a fake Let group on the stack, since the TLFs are sort of implicitly in a big let
-preprocess tokens = (preprocess1 (tokens ++ eof) [Group Let (PosToken "identifier" "dummy" (0,0))])
-  where eof = [PosToken "EOF" "eof" (rightAfter (last tokens))]
+preprocess tokens = (preprocess1 (pre ++ tokens ++ post) [])
+  where pre = [PosToken "let_keyword" "let" (-1, -1)]
+        post = [PosToken "in_keyword" "in" (-1, postLine),
+                PosToken "identifier" "main" (2, postLine),
+                PosToken "EOF" "eof" (7, postLine)]
+        postLine = case (last tokens) of PosToken _ _ (_, lastLine) -> lastLine + 1
 
 rightAfter (PosToken _ s (c, r)) = (c + length s, r)
 rightBefore (PosToken _ _ (c, r)) = (c - 1, r)
