@@ -9,6 +9,7 @@ import Util
 -- Elements on the group stack -- ctor keyword and token is the one whose column we compare to
 data GroupType = Let | Where | Of | Do | In deriving (Eq, Show)
 data Group = Group GroupType PosToken deriving Show
+--preprocess1 tokens groupStack | trace ("preprocess1" ++ (show tokens) ++ (show groupStack) ++ (show (isDedentBlockClose tokens groupStack)) ++ (show (shouldInsertSemiColon tokens groupStack))) False = undefined
 preprocess1 tokens groupStack =
   if isDedentBlockClose tokens groupStack
     then case (tokens, groupStack) of
