@@ -4,6 +4,7 @@ module Parser
 
 import Data.List (find)
 import Data.List.Utils (startswith)
+import Debug.Trace (trace)
 import Tokenize
 
 data GExp = NT String | T String | Alt [GExp] | Seq [GExp]
@@ -128,33 +129,36 @@ memoize f = unsafePerformIO $ do
                     return y
 -}
 
-parse :: Grammar -> GExp -> [PosToken] -> Maybe (Feh, [PosToken])
-parse grammar (NT sym) tokens =
+parse :: Grammar -> [PosToken] -> GExp -> Int -> Maybe (Feh, Int)
+--parse _ _ e pos | trace ("parse " ++ (show e) ++ " " ++ (show pos)) False = undefined
+parse grammar tokens (NT sym) pos =
   case (lookupRule grammar sym) of
     Just (Rule nt exp) ->
-      case parse grammar exp tokens of
-        Just (x, newTokens) -> Just (PNT sym x, newTokens)
+      case parse grammar tokens exp pos of
+        Just (x, newPos) -> Just (PNT sym x, newPos)
         Nothing -> Nothing
     Nothing -> Nothing
-parse grammar (T sym) (PosToken ty s _ : ts)
-  | ty == sym = Just (PT sym s, ts)
-  | otherwise = Nothing
-parse grammar (T sym) [] = Nothing
-parse grammar (Alt [a, b]) tokens =
-  case parse grammar a tokens of
+parse grammar tokens (T sym) pos =
+  if pos < length tokens
+    then case (tokens !! pos) of PosToken ty s _ -> if ty == sym then Just (PT sym s, pos + 1) else Nothing
+    else Nothing
+--parse grammar tokens (T sym) _ = Nothing
+parse grammar tokens (Alt [a, b]) pos =
+  case parse grammar tokens a pos of
     Just x -> Just x
-    Nothing -> parse grammar b tokens
-parse grammar (Seq [a, b]) tokens =
-  case parse grammar a tokens of
-    Just (fehA, newTokens) ->
-      case parse grammar b newTokens of
-        Just (fehB, newNewTokens) ->
-          Just $ (PSeq [fehA, fehB], newNewTokens)
+    Nothing -> parse grammar tokens b pos
+parse grammar tokens (Seq [a, b]) pos =
+  case parse grammar tokens a pos of
+    Just (fehA, newPos) ->
+      case parse grammar tokens b newPos of
+        Just (fehB, newnewPos) ->
+          Just $ (PSeq [fehA, fehB], newnewPos)
         Nothing -> Nothing
     Nothing -> Nothing
-parse grammar x@(Alt _) tokens = error ("nope" ++ show x)
-parse grammar (Seq _) tokens = error "nope2"
+parse grammar tokens x@(Alt _) _ = error ("nope" ++ show x)
+parse grammar tokens (Seq _) _ = error "nope2"
 
+{-
 haha = parse (binarizeGrammar grammar) (NT "Top") [
   --PosToken "Article" "q" (0, 0),
   PosToken "Noun" "q" (0, 0),
@@ -165,6 +169,7 @@ haha = parse (binarizeGrammar grammar) (NT "Top") [
   PosToken "Adjective" "q" (0, 0),
   PosToken "Noun" "q" (0, 0)
   ]
+-}
 
 tmiGrammar = Grammar [
   Rule "Top" $ NT "plet",
@@ -196,6 +201,6 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-parseTmi tokens = case parse (binarizeGrammar tmiGrammar) (NT "Top") tokens of
-                       Just (binarizedParse, []) -> Just (unbinarizeParse binarizedParse)
+parseTmi tokens = case parse (binarizeGrammar tmiGrammar) tokens (NT "Top") 0 of
+                       Just (binarizedParse, finalPos) | finalPos == length tokens -> Just (unbinarizeParse binarizedParse)
                        Nothing -> Nothing
