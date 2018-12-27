@@ -4,6 +4,8 @@ module Parser
 
 import Data.List (find)
 import Data.List.Utils (startswith)
+import qualified Data.Vector as V
+import Data.Vector (Vector, (!))
 import Debug.Trace (trace)
 import Tokenize
 
@@ -129,7 +131,7 @@ memoize f = unsafePerformIO $ do
                     return y
 -}
 
-parse :: Grammar -> [PosToken] -> GExp -> Int -> Maybe (Feh, Int)
+parse :: Grammar -> Vector PosToken -> GExp -> Int -> Maybe (Feh, Int)
 --parse _ _ e pos | trace ("parse " ++ (show e) ++ " " ++ (show pos)) False = undefined
 parse grammar tokens (NT sym) pos =
   case (lookupRule grammar sym) of
@@ -139,8 +141,8 @@ parse grammar tokens (NT sym) pos =
         Nothing -> Nothing
     Nothing -> Nothing
 parse grammar tokens (T sym) pos =
-  if pos < length tokens
-    then case (tokens !! pos) of PosToken ty s _ -> if ty == sym then Just (PT sym s, pos + 1) else Nothing
+  if pos < V.length tokens
+    then case (tokens ! pos) of PosToken ty s _ -> if ty == sym then Just (PT sym s, pos + 1) else Nothing
     else Nothing
 --parse grammar tokens (T sym) _ = Nothing
 parse grammar tokens (Alt [a, b]) pos =
@@ -201,6 +203,6 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-parseTmi tokens = case parse (binarizeGrammar tmiGrammar) tokens (NT "Top") 0 of
+parseTmi tokens = case parse (binarizeGrammar tmiGrammar) (V.fromList tokens) (NT "Top") 0 of
                        Just (binarizedParse, finalPos) | finalPos == length tokens -> Just (unbinarizeParse binarizedParse)
                        Nothing -> Nothing

@@ -4,8 +4,8 @@ module Tokenize
 , PosToken (..)
 , Token (..)) where
 
-import Data.Char (ord)
 import qualified Data.ByteString.Char8 as BS
+import Data.Char (ord)
 import Data.List
 import Data.Maybe
 import Text.Regex.PCRE.Light
