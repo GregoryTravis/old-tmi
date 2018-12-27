@@ -100,6 +100,34 @@ unbinarizeParse (PNT s f)
   | otherwise = PNT s (unbinarizeParse f)
 unbinarizeParse x@(PT _ _) = x
 
+{-
+memoize :: Ord a => (a -> b) -> (a -> b)
+memoize f = unsafePerformIO $ do 
+    r <- newIORef Map.empty
+    return $ \ x -> unsafePerformIO $ do 
+        m <- readIORef r
+        case Map.lookup x m of
+            Just y  -> return y
+            Nothing -> do 
+                    let y = f x
+                    writeIORef r (Map.insert x y m)
+                    return y
+-}
+
+{-
+memoize :: Ord a => (a -> b) -> (a -> b)
+memoize f = unsafePerformIO $ do 
+    r <- newIORef Map.empty
+    return $ \ x -> unsafePerformIO $ do 
+        m <- readIORef r
+        case Map.lookup x m of
+            Just y  -> return y
+            Nothing -> do 
+                    let y = f x
+                    writeIORef r (Map.insert x y m)
+                    return y
+-}
+
 parse :: Grammar -> GExp -> [PosToken] -> Maybe (Feh, [PosToken])
 parse grammar (NT sym) tokens =
   case (lookupRule grammar sym) of
