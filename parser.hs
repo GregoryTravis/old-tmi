@@ -2,15 +2,18 @@ module Parser
 ( Feh (..)
 , parseTmi ) where
 
+import Data.IORef (newIORef, readIORef, writeIORef)
 import Data.List (find)
 import Data.List.Utils (startswith)
+import qualified Data.Map as Map
 import qualified Data.Vector as V
 import Data.Vector (Vector, (!))
 import Debug.Trace (trace)
+import System.IO.Unsafe (unsafePerformIO)
 import Tokenize
 
 data GExp = NT String | T String | Alt [GExp] | Seq [GExp]
-  deriving Show
+  deriving (Show, Ord, Eq)
 data Rule = Rule String GExp
   deriving Show
 data Grammar = Grammar [Rule]
@@ -117,19 +120,29 @@ memoize f = unsafePerformIO $ do
                     return y
 -}
 
-{-
-memoize :: Ord a => (a -> b) -> (a -> b)
+memoize :: (Ord a, Ord b) => (a -> b -> c) -> (a -> b -> c)
 memoize f = unsafePerformIO $ do 
     r <- newIORef Map.empty
-    return $ \ x -> unsafePerformIO $ do 
+    hitCountRef <- newIORef 0
+    callCountRef <- newIORef 0
+    putStrLn "Wrapping"
+    return $ \ x y -> unsafePerformIO $ do 
+        hitCount <- readIORef hitCountRef
+        callCount <- readIORef callCountRef
+        writeIORef callCountRef $ callCount + 1
         m <- readIORef r
-        case Map.lookup x m of
-            Just y  -> return y
-            Nothing -> do 
-                    let y = f x
-                    writeIORef r (Map.insert x y m)
-                    return y
--}
+        res <- case Map.lookup (x, y) m of
+                   Just v  -> do
+                     writeIORef hitCountRef $ hitCount + 1
+                     return v
+                   Nothing -> do 
+                           let v = f x y
+                           writeIORef r (Map.insert (x, y) v m)
+                           return v
+        hitCount <- readIORef hitCountRef
+        callCount <- readIORef callCountRef
+        putStrLn $ "MEM " ++ (show hitCount) ++ " " ++ (show callCount)
+        return res
 
 parse :: Grammar -> Vector PosToken -> GExp -> Int -> Maybe (Feh, Int)
 --parse _ _ e pos | trace ("parse " ++ (show e) ++ " " ++ (show pos)) False = undefined
@@ -159,6 +172,7 @@ parse grammar tokens (Seq [a, b]) pos =
     Nothing -> Nothing
 parse grammar tokens x@(Alt _) _ = error ("nope" ++ show x)
 parse grammar tokens (Seq _) _ = error "nope2"
+memoizedParse grammar tokens = memoize (parse grammar tokens)
 
 {-
 haha = parse (binarizeGrammar grammar) (NT "Top") [
@@ -203,6 +217,6 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-parseTmi tokens = case parse (binarizeGrammar tmiGrammar) (V.fromList tokens) (NT "Top") 0 of
+parseTmi tokens = case memoizedParse (binarizeGrammar tmiGrammar) (V.fromList tokens) (NT "Top") 0 of
                        Just (binarizedParse, finalPos) | finalPos == length tokens -> Just (unbinarizeParse binarizedParse)
                        Nothing -> Nothing
