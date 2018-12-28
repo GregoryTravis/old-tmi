@@ -2,6 +2,7 @@ module Parser
 ( Feh (..)
 , parseTmi ) where
 
+import Data.Function (fix)
 import Data.IORef (newIORef, readIORef, writeIORef)
 import Data.List (find)
 import Data.List.Utils (startswith)
@@ -106,86 +107,58 @@ unbinarizeParse (PNT s f)
   | otherwise = PNT s (unbinarizeParse f)
 unbinarizeParse x@(PT _ _) = x
 
-{-
-memoize :: Ord a => (a -> b) -> (a -> b)
+memoize :: (Ord a, Ord b) => (rec -> a -> b -> c) -> (rec -> a -> b -> c)
 memoize f = unsafePerformIO $ do 
     r <- newIORef Map.empty
-    return $ \ x -> unsafePerformIO $ do 
-        m <- readIORef r
-        case Map.lookup x m of
-            Just y  -> return y
-            Nothing -> do 
-                    let y = f x
-                    writeIORef r (Map.insert x y m)
-                    return y
--}
-
-memoize :: (Ord a, Ord b) => (a -> b -> c) -> (a -> b -> c)
-memoize f = unsafePerformIO $ do 
-    r <- newIORef Map.empty
-    hitCountRef <- newIORef 0
-    callCountRef <- newIORef 0
-    putStrLn "Wrapping"
-    return $ \ x y -> unsafePerformIO $ do 
-        hitCount <- readIORef hitCountRef
-        callCount <- readIORef callCountRef
-        writeIORef callCountRef $ callCount + 1
+    --hitCountRef <- newIORef 0
+    --callCountRef <- newIORef 0
+    --putStrLn "Wrapping"
+    return $ \ rec x y -> unsafePerformIO $ do 
+        --hitCount <- readIORef hitCountRef
+        --callCount <- readIORef callCountRef
+        --writeIORef callCountRef $ callCount + 1
         m <- readIORef r
         res <- case Map.lookup (x, y) m of
                    Just v  -> do
-                     writeIORef hitCountRef $ hitCount + 1
+                     --writeIORef hitCountRef $ hitCount + 1
                      return v
                    Nothing -> do 
-                           let v = f x y
+                           let v = f rec x y
                            writeIORef r (Map.insert (x, y) v m)
                            return v
-        hitCount <- readIORef hitCountRef
-        callCount <- readIORef callCountRef
-        putStrLn $ "MEM " ++ (show hitCount) ++ " " ++ (show callCount)
+        --hitCount <- readIORef hitCountRef
+        --callCount <- readIORef callCountRef
+        --putStrLn $ "MEM " ++ (show hitCount) ++ " " ++ (show callCount)
         return res
 
-parse :: Grammar -> Vector PosToken -> GExp -> Int -> Maybe (Feh, Int)
---parse _ _ e pos | trace ("parse " ++ (show e) ++ " " ++ (show pos)) False = undefined
-parse grammar tokens (NT sym) pos =
-  case (lookupRule grammar sym) of
-    Just (Rule nt exp) ->
-      case parse grammar tokens exp pos of
-        Just (x, newPos) -> Just (PNT sym x, newPos)
-        Nothing -> Nothing
-    Nothing -> Nothing
-parse grammar tokens (T sym) pos =
-  if pos < V.length tokens
-    then case (tokens ! pos) of PosToken ty s _ -> if ty == sym then Just (PT sym s, pos + 1) else Nothing
-    else Nothing
---parse grammar tokens (T sym) _ = Nothing
-parse grammar tokens (Alt [a, b]) pos =
-  case parse grammar tokens a pos of
-    Just x -> Just x
-    Nothing -> parse grammar tokens b pos
-parse grammar tokens (Seq [a, b]) pos =
-  case parse grammar tokens a pos of
-    Just (fehA, newPos) ->
-      case parse grammar tokens b newPos of
-        Just (fehB, newnewPos) ->
-          Just $ (PSeq [fehA, fehB], newnewPos)
-        Nothing -> Nothing
-    Nothing -> Nothing
-parse grammar tokens x@(Alt _) _ = error ("nope" ++ show x)
-parse grammar tokens (Seq _) _ = error "nope2"
-memoizedParse grammar tokens = memoize (parse grammar tokens)
-
-{-
-haha = parse (binarizeGrammar grammar) (NT "Top") [
-  --PosToken "Article" "q" (0, 0),
-  PosToken "Noun" "q" (0, 0),
-  PosToken "Verb" "q" (0, 0),
-  --PosToken "Article" "q" (0, 0),
-  --PosToken "Adjective" "q" (0, 0),
-  PosToken "Article" "q" (0, 0),
-  PosToken "Adjective" "q" (0, 0),
-  PosToken "Noun" "q" (0, 0)
-  ]
--}
+memoizedParse :: Grammar -> Vector PosToken -> GExp -> Int -> Maybe (Feh, Int)
+memoizedParse grammar tokens = fix (memoize parseOR)
+  where parseOR :: (GExp -> Int -> Maybe (Feh, Int)) -> GExp -> Int -> Maybe (Feh, Int)
+        parseOR rec (NT sym) pos =
+          case (lookupRule grammar sym) of
+            Just (Rule nt exp) ->
+              case rec exp pos of
+                Just (x, newPos) -> Just (PNT sym x, newPos)
+                Nothing -> Nothing
+            Nothing -> Nothing
+        parseOR rec (T sym) pos =
+          if pos < V.length tokens
+            then case (tokens ! pos) of PosToken ty s _ -> if ty == sym then Just (PT sym s, pos + 1) else Nothing
+            else Nothing
+        parseOR rec (Alt [a, b]) pos =
+          case rec a pos of
+            Just x -> Just x
+            Nothing -> rec b pos
+        parseOR rec (Seq [a, b]) pos =
+          case rec a pos of
+            Just (fehA, newPos) ->
+              case rec b newPos of
+                Just (fehB, newnewPos) ->
+                  Just $ (PSeq [fehA, fehB], newnewPos)
+                Nothing -> Nothing
+            Nothing -> Nothing
+        parseOR rec x@(Alt _) _ = error ("nope" ++ show x)
+        parseOR rec (Seq _) _ = error "nope2"
 
 tmiGrammar = Grammar [
   Rule "Top" $ NT "plet",
