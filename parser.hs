@@ -1,10 +1,15 @@
 module Parser
 ( Feh (..)
-, parseTmi ) where
+, parseTmi
+, splitParse
+) where
 
+import Data.Either
 import Data.Function (fix)
 import Data.IORef (newIORef, readIORef, writeIORef)
-import Data.List (find)
+import Data.List (partition, find)
+import Data.Maybe-- (isJust)
+import qualified Data.List.Split as Split
 import Data.List.Utils (startswith)
 import qualified Data.Map as Map
 import qualified Data.Vector as V
@@ -12,6 +17,9 @@ import Data.Vector (Vector, (!))
 import Debug.Trace (trace)
 import System.IO.Unsafe (unsafePerformIO)
 import Tokenize
+
+import Preprocess
+import Util
 
 data GExp = NT String | T String | Alt [GExp] | Seq [GExp]
   deriving (Show, Ord, Eq)
@@ -91,7 +99,7 @@ lookupRule (Grammar rules) sym = find match rules
   where match :: Rule -> Bool
         match (Rule nt exp) = nt == sym
 
-data Feh = PNT String Feh | PT String String | PSeq [Feh] deriving Show
+data Feh = PNT String Feh | PT String String | PSeq [Feh] deriving (Eq, Show)
 
 unbinarizeParse :: Feh -> Feh
 unbinarizeParse (PSeq [f, f2@(PNT ntName d@(PSeq fs))])
@@ -190,6 +198,29 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-parseTmi tokens = case memoizedParse (binarizeGrammar tmiGrammar) (V.fromList tokens) (NT "Top") 0 of
-                       Just (binarizedParse, finalPos) | finalPos == length tokens -> Just (unbinarizeParse binarizedParse)
-                       Nothing -> Nothing
+parseTmiAs :: [PosToken] -> String -> Maybe Feh
+parseTmiAs tokens top =
+  case memoizedParse (binarizeGrammar tmiGrammar) (V.fromList tokens) (NT top) 0 of
+    Just (binarizedParse, finalPos) | finalPos == length tokens -> Just (unbinarizeParse binarizedParse)
+    Nothing -> Nothing
+parseTmi :: [PosToken] -> Maybe Feh
+parseTmi tokens = parseTmiAs tokens "Top"
+parseTmiDef :: [PosToken] -> Maybe Feh
+parseTmiDef tokens = parseTmiAs tokens "definition"
+
+splitParse :: [PosToken] -> Either [Feh] [[PosToken]]
+splitParse tokens =
+    case partitionEithers $ map parseOrTokens $ map preprocess $ splitTLD tokens of
+      (oks, []) -> Left oks
+      (_, bads) -> Right bads
+  where splitTLD xs = removeEmptyFirst (Split.split tld xs)
+        tld = Split.keepDelimsL $ Split.whenElt isCol0
+        isCol0 (PosToken _ _ (0, _)) = True
+        isCol0 _ = False
+        removeEmptyFirst ([] : xs) = xs
+        removeEmptyFirst x = x
+        --wrapLet fehs = Let (Decls fehs)
+        parseOrTokens :: [PosToken] -> Either Feh [PosToken]
+        parseOrTokens tokens = case parseTmi tokens of
+          Just feh -> Left feh
+          Nothing -> Right tokens

@@ -9,7 +9,7 @@ write-handler url params bout = ffi web-respond bout (string-append "yesss " url
 add-handler url params bout = let
    a = string->number (deref params "a")
    b = string->number (deref params "b")
-in ffi web-respond bout (string-append (number->string (a + b)))
+ in ffi web-respond bout (string-append (number->string (a + b)))
 
 ;; One day this will look something like:
 ;;   db-handler a b c = (foo/a=a/b=b).c <- c
@@ -22,7 +22,7 @@ db-handler url params bout = let
    dn = deref-node "c"
    on = one-node
    down = compose-nodes dn (compose-nodes on (compose-nodes wn2 wn))
-in do
+ in do
   [] <- apply-mutation down c
   ffi web-respond bout "wrote"
 

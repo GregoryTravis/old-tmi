@@ -19,4 +19,16 @@ main = do
   let parsed = fromJust $ parseTmi prep
   putStrLn $ show parsed
   --putStrLn $ unpack $ toStrict $ pShow $ p2s parsed
-  msp $ p2s parsed
+  let sem = p2s parsed
+  msp sem
+  let parsed2 = splitParse tokens
+  --putStrLn $ show parsed2
+  --msp parsed2
+  case parsed2 of
+    Left parsed -> do
+      let sem2 = relet $ map unlet $ map p2s parsed
+      msp sem2
+      msp $ sem == sem2
+    Right bads -> msp bads
+  where unlet (Let (Decls [def]) _) = def
+        relet defs = Let (Decls defs) (App [(Id "main")])

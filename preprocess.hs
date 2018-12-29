@@ -1,5 +1,8 @@
-module Preprocess where
+module Preprocess
+( preprocess
+) where
 
+import Data.List (splitAt)
 import Debug.Trace (trace)
 
 import Tokenize
@@ -66,12 +69,19 @@ preprocess1 tokens groupStack =
 
 -- Add sentinel EOF to the end of tokens
 -- Start with a fake Let group on the stack, since the TLFs are sort of implicitly in a big let
-preprocess tokens = (preprocess1 (pre ++ tokens ++ post) [])
+preprocess x | eesp ("PREP " ++ (show x)) False = undefined
+preprocess tokens = preprocess1 (wrapTLDs tokens) []
+wrapTLDs tokens = pre ++ tokens ++ post
   where pre = [PosToken "let_keyword" "let" (-1, -1)]
         post = [PosToken "in_keyword" "in" (-1, postLine),
                 PosToken "identifier" "main" (2, postLine),
                 PosToken "EOF" "eof" (7, postLine)]
         postLine = case (last tokens) of PosToken _ _ (_, lastLine) -> lastLine + 1
+--unwrapTLDs x | eesp ("HHH" ++ show x) False = undefined
+unwrapTLDs (PosToken "let_keyword" _ _ : tokens) =
+  case splitAt (length tokens - 2) tokens of
+    (decls, inMain) -> case inMain of
+      [PosToken "in_keyword" _ _, PosToken "identifier" "main" _] -> decls
 
 rightAfter (PosToken _ s (c, r)) = (c + length s, r)
 rightBefore (PosToken _ _ (c, r)) = (c - 1, r)

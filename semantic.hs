@@ -1,5 +1,6 @@
 module Semantic
 ( p2s
+, Sem(..)
 ) where
 
 import Parser (Feh (..))
@@ -8,7 +9,7 @@ data Sem = Decls [Sem] | Def Sem Sem | Id String | Let Sem Sem | SInt Int | App 
   | Do [Sem] Sem | Binding Sem Sem | Lambda Sem Sem | Ctor String | Str String | Where Sem [Sem]
   | If Sem Sem Sem | List [Sem] | Case Sem [Sem] | Clause Sem Sem | PHash [Sem] | Entry Sem Sem
   | Um Feh
-  deriving Show
+  deriving (Eq, Show)
 
 p2s :: Feh -> Sem
 p2s (PNT "Top" f) = p2s f
