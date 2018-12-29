@@ -69,7 +69,7 @@ preprocess1 tokens groupStack =
 
 -- Add sentinel EOF to the end of tokens
 -- Start with a fake Let group on the stack, since the TLFs are sort of implicitly in a big let
-preprocess x | eesp ("PREP " ++ (show x)) False = undefined
+--preprocess x | eesp ("PREP " ++ (show x)) False = undefined
 preprocess tokens = preprocess1 (wrapTLDs tokens) []
 wrapTLDs tokens = pre ++ tokens ++ post
   where pre = [PosToken "let_keyword" "let" (-1, -1)]
