@@ -1,7 +1,7 @@
 import Data.Maybe (fromJust)
 import System.IO
 
-import Parser
+import TmiParser
 import Preprocess
 import Semantic
 import Tokenize
@@ -13,11 +13,11 @@ main = do
   let tokens = tokenizeString s
   let prep = (preprocess tokens)
 
-  let parsed = fromJust $ parseTmi prep
+  let parsed = fromJust $ tmiParse prep
   let sem = p2s parsed
   msp $ length (show sem)
 
-  let parsed2 = splitParse tokens
+  let parsed2 = tmiSplitParse tokens
   case parsed2 of
     Left parsed -> do
       let sem2 = relet $ map unlet $ map p2s parsed
