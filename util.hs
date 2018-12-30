@@ -3,8 +3,10 @@ module Util
 , eesp
 , sp
 , msp
+, fromLeftReal
 ) where
 
+import Data.Either
 import Data.Text (unpack)
 import Data.Text.Lazy (toStrict)
 import System.IO.Unsafe
@@ -20,3 +22,6 @@ eesp s a = unsafePerformIO $ do
 
 sp x = unpack $ toStrict $ pShowNoColor $ x
 msp x = putStrLn $ sp x
+
+-- Really surprised this doesn't exit
+fromLeftReal (Left a) = a

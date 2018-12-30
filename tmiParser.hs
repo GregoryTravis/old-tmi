@@ -8,7 +8,9 @@ import qualified Data.List.Split as Split
 
 import Parser
 import Preprocess
+import Semantic
 import Tokenize
+import Util
 
 tmiGrammar = Grammar [
   Rule "Top" $ NT "plet",
@@ -40,13 +42,15 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-tmiParse :: [PosToken] -> Maybe Feh
-tmiParse tokens = memoizedParse tmiGrammar "Top" tokens
+tmiParse :: [PosToken] -> Maybe Sem
+tmiParse tokens = case memoizedParse tmiGrammar "Top" tokens of
+                    Just feh -> Just $ p2s feh
+                    Nothing -> Nothing
 
-tmiSplitParse :: [PosToken] -> Either [Feh] [[PosToken]]
+tmiSplitParse :: [PosToken] -> Either Sem [[PosToken]]
 tmiSplitParse tokens =
     case partitionEithers $ map parseOrTokens $ map preprocess $ splitTLD tokens of
-      (oks, []) -> Left oks
+      (oks, []) -> Left $ reLet oks
       (_, bads) -> Right bads
   where splitTLD xs = removeEmptyFirst (Split.split tld xs)
         tld = Split.keepDelimsL $ Split.whenElt isCol0
@@ -55,7 +59,10 @@ tmiSplitParse tokens =
         removeEmptyFirst ([] : xs) = xs
         removeEmptyFirst x = x
         --wrapLet fehs = Let (Decls fehs)
-        parseOrTokens :: [PosToken] -> Either Feh [PosToken]
+        parseOrTokens :: [PosToken] -> Either Sem [PosToken]
         parseOrTokens tokens = case tmiParse tokens of
-          Just feh -> Left feh
+          Just sem -> Left sem
           Nothing -> Right tokens
+        reLet sems = addLIM (map removeLIM sems)
+          where removeLIM (Let (Decls [decl]) (App [(Id "main")])) = decl
+                addLIM decls = Let (Decls decls) (App [(Id "main")])
