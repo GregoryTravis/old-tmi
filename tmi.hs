@@ -12,7 +12,7 @@ main = do
   let tokens = tokenizeString s
   let prep = (preprocess tokens)
 
-  let sem = fromJust $ tmiParse prep
+  let sem = fromLeftReal $ tmiParse prep
   msp $ length (show sem)
 
   let sem2 = fromLeftReal $ tmiSplitParse tokens

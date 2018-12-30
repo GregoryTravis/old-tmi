@@ -42,16 +42,16 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-tmiParse :: [PosToken] -> Maybe Sem
+tmiParse :: [PosToken] -> Either Sem [[PosToken]]
 tmiParse tokens = case parse tmiGrammar "Top" tokens of
-                    Just feh -> Just $ p2s feh
-                    Nothing -> Nothing
+                    Just feh -> Left $ p2s feh
+                    Nothing -> Right [tokens]
 
 tmiSplitParse :: [PosToken] -> Either Sem [[PosToken]]
 tmiSplitParse tokens =
-    case partitionEithers $ map parseOrTokens $ map preprocess $ splitTLD tokens of
+    case partitionEithers $ map tmiParse $ map preprocess $ splitTLD tokens of
       (oks, []) -> Left $ reLet oks
-      (_, bads) -> Right bads
+      (_, [bad]) -> Right bad
   where splitTLD xs = removeEmptyFirst (Split.split tld xs)
         tld = Split.keepDelimsL $ Split.whenElt isCol0
         isCol0 (PosToken _ _ (0, _)) = True
@@ -59,10 +59,6 @@ tmiSplitParse tokens =
         removeEmptyFirst ([] : xs) = xs
         -- Commented this out because the first token should always be at column 0
         --removeEmptyFirst x = x
-        parseOrTokens :: [PosToken] -> Either Sem [PosToken]
-        parseOrTokens tokens = case tmiParse tokens of
-          Just sem -> Left sem
-          Nothing -> Right tokens
         reLet sems = addLIM (map removeLIM sems)
           where removeLIM (Let (Decls [decl]) (App [(Id "main")])) = decl
                 addLIM decls = Let (Decls decls) (App [(Id "main")])
