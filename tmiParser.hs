@@ -43,7 +43,7 @@ tmiGrammar = Grammar [
   ]
 
 tmiParse :: [PosToken] -> Maybe Sem
-tmiParse tokens = case memoizedParse tmiGrammar "Top" tokens of
+tmiParse tokens = case parse tmiGrammar "Top" tokens of
                     Just feh -> Just $ p2s feh
                     Nothing -> Nothing
 

@@ -3,7 +3,7 @@ module Parser
 , GExp(..)
 , Grammar(..)
 , Rule(..)
-, memoizedParse
+, parse
 ) where
 
 import Data.Function (fix)
@@ -134,8 +134,8 @@ memoize f = unsafePerformIO $ do
         --putStrLn $ "MEM " ++ (show hitCount) ++ " " ++ (show callCount)
         return res
 
-memoizedParse1 :: Grammar -> Vector PosToken -> GExp -> Int -> Maybe (Feh, Int)
-memoizedParse1 grammar tokens = fix (memoize parseOR)
+parse1 :: Grammar -> Vector PosToken -> GExp -> Int -> Maybe (Feh, Int)
+parse1 grammar tokens = fix (memoize parseOR)
   where parseOR :: (GExp -> Int -> Maybe (Feh, Int)) -> GExp -> Int -> Maybe (Feh, Int)
         parseOR rec (NT sym) pos =
           case (lookupRule grammar sym) of
@@ -163,8 +163,8 @@ memoizedParse1 grammar tokens = fix (memoize parseOR)
         parseOR rec x@(Alt _) _ = error ("nope" ++ show x)
         parseOR rec (Seq _) _ = error "nope2"
 
-memoizedParse :: Grammar -> String -> [PosToken] -> Maybe Feh
-memoizedParse grammar top tokens =
-  case memoizedParse1 (binarizeGrammar grammar) (V.fromList tokens) (NT top) 0 of
+parse :: Grammar -> String -> [PosToken] -> Maybe Feh
+parse grammar top tokens =
+  case parse1 (binarizeGrammar grammar) (V.fromList tokens) (NT top) 0 of
     Just (binarizedParse, finalPos) | finalPos == length tokens -> Just (unbinarizeParse binarizedParse)
     Nothing -> Nothing
