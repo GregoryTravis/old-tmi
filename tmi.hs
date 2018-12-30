@@ -7,6 +7,5 @@ import Util
 
 main = do
   hSetBuffering stdout NoBuffering
-  s <- readFile "input.tmi"
-  let tokens = tokenizeString s
-  msp $ tmiParse tokens
+  sem <- tmiParseFile "input.tmi"
+  msp sem

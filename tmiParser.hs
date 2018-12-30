@@ -1,5 +1,5 @@
 module TmiParser
-( tmiParse
+( tmiParseFile
 ) where
 
 import Data.Either
@@ -69,3 +69,9 @@ tmiParseBoth tokens =
 
 -- Until we are confident
 tmiParse = tmiParseBoth
+
+tmiParseString s = tmiParse $ tokenizeString s
+
+tmiParseFile filename = do
+  s <- readFile filename
+  return $ tmiParseString s
