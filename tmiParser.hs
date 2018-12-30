@@ -1,6 +1,5 @@
 module TmiParser
 ( tmiParse
-, tmiSplitParse
 ) where
 
 import Data.Either
@@ -42,14 +41,14 @@ tmiGrammar = Grammar [
   Rule "phash-entry" $ Seq [T "identifier", T "colon", NT "exp"]
   ]
 
-tmiParse :: [PosToken] -> Either Sem [[PosToken]]
-tmiParse tokens = case parse tmiGrammar "Top" tokens of
+tmiParseWhole :: [PosToken] -> Either Sem [[PosToken]]
+tmiParseWhole tokens = case parse tmiGrammar "Top" (preprocess tokens) of
                     Just feh -> Left $ p2s feh
                     Nothing -> Right [tokens]
 
 tmiSplitParse :: [PosToken] -> Either Sem [[PosToken]]
 tmiSplitParse tokens =
-    case partitionEithers $ map tmiParse $ map preprocess $ splitTLD tokens of
+    case partitionEithers $ map tmiParseWhole $ splitTLD tokens of
       (oks, []) -> Left $ reLet oks
       (_, [bad]) -> Right bad
   where splitTLD xs = removeEmptyFirst (Split.split tld xs)
@@ -62,3 +61,11 @@ tmiSplitParse tokens =
         reLet sems = addLIM (map removeLIM sems)
           where removeLIM (Let (Decls [decl]) (App [(Id "main")])) = decl
                 addLIM decls = Let (Decls decls) (App [(Id "main")])
+
+tmiParseBoth tokens =
+  let sem = fromLeftReal $ tmiParseWhole tokens
+      sem2 = fromLeftReal $ tmiSplitParse tokens
+   in case (sem, sem2) of (a, b) | a == b -> a
+
+-- Until we are confident
+tmiParse = tmiParseBoth
