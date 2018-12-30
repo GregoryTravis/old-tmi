@@ -57,8 +57,8 @@ tmiSplitParse tokens =
         isCol0 (PosToken _ _ (0, _)) = True
         isCol0 _ = False
         removeEmptyFirst ([] : xs) = xs
-        removeEmptyFirst x = x
-        --wrapLet fehs = Let (Decls fehs)
+        -- Commented this out because the first token should always be at column 0
+        --removeEmptyFirst x = x
         parseOrTokens :: [PosToken] -> Either Sem [PosToken]
         parseOrTokens tokens = case tmiParse tokens of
           Just sem -> Left sem
