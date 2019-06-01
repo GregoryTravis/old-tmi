@@ -23,5 +23,5 @@ eesp s a = unsafePerformIO $ do
 sp x = unpack $ toStrict $ pShowNoColor $ x
 msp x = putStrLn $ sp x
 
--- Really surprised this doesn't exit
+-- Really surprised this doesn't exist
 fromLeftReal (Left a) = a
